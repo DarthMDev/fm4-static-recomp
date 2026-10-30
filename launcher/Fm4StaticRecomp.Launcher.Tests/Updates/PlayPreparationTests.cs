@@ -12,7 +12,7 @@ public class PlayPreparationTests
     {
         using var temp = new TempDir();
         var layout = new InstallLayout(temp.Path);
-        var store = new ProfileStore(layout, Platforms.Current);
+        var store = new ProfileStore(layout, Platforms.Current, "vanilla");
         var fresh = store.Create("Fresh");
         Assert.Null(PlayPreparation.BackupIfNeeded(fresh, "0.1.0", store, layout, Platforms.Current));
         temp.File(Path.Combine("profiles", fresh.Id, "user", "B13EBABEBABEBABE", "save.bin"), [1]);

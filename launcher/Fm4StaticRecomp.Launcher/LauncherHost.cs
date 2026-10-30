@@ -34,7 +34,7 @@ public sealed class LauncherHost
         Platform = Platforms.Current;
         Settings = LauncherSettings.Load(layout.LauncherToml);
         Setup = SetupState.Load(layout.SetupState);
-        Profiles = new ProfileStore(layout, Platform);
+        Profiles = new ProfileStore(layout, Platform, Setup.Game ?? "vanilla");
         Versions = new VersionStore(layout, Settings);
         Content = new ContentInstaller(layout, Platform);
         Runner = new SetupRunner(layout, Platform);

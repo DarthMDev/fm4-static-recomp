@@ -1,4 +1,3 @@
-using System.Buffers.Binary;
 using System.Security.Cryptography;
 using System.Text;
 using Fm4StaticRecomp.Launcher.Core.Content;
@@ -17,17 +16,6 @@ public static class Pfp4Installer
     private const string GameDb = @"Media\db\gamedb.slt";
     private const string Packages = @"4D530910\00000002";
     private const string Headers = @"4D530910\Headers\00000002";
-    // ContentManager::WriteContentHeaderFile's XCONTENT_AGGREGATE_DATA, big-endian; a licence
-    // mask, when the package has one, follows as a little-endian u32.
-    private const int HeaderSize = 0x148;
-    private const int DisplayNameOffset = 0x08;
-    private const int DisplayNameChars = 128;
-    private const int FileNameOffset = 0x108;
-    private const int FileNameChars = 42;
-    private const int TitleIdOffset = 0x140;
-    private const uint DeviceId = 1;
-    private const uint ContentType = 2;
-    private const uint TitleId = 0x4D530910;
 
     public static long ContentBytes(Pfp4Manifest manifest) => Entries(manifest).Sum(e => e.Size);
 
@@ -164,14 +152,7 @@ public static class Pfp4Installer
         var names = Settings.TomlFile.Load(Path.Combine(content, "names.toml"));
         foreach (var package in manifest.Packages)
         {
-            var header = new byte[HeaderSize + (package.LicenseMask is null ? 0 : 4)];
-            BinaryPrimitives.WriteUInt32BigEndian(header, DeviceId);
-            BinaryPrimitives.WriteUInt32BigEndian(header.AsSpan(4), ContentType);
-            var name = package.DisplayName.Length > DisplayNameChars ? package.DisplayName[..DisplayNameChars] : package.DisplayName;
-            Encoding.BigEndianUnicode.GetBytes(name, header.AsSpan(DisplayNameOffset));
-            Encoding.ASCII.GetBytes(package.Folder.AsSpan(0, Math.Min(package.Folder.Length, FileNameChars)), header.AsSpan(FileNameOffset));
-            BinaryPrimitives.WriteUInt32BigEndian(header.AsSpan(TitleIdOffset), TitleId);
-            if (package.LicenseMask is { } mask) BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(HeaderSize), mask);
+            var header = ContentHeader.Build(ContentHeader.Marketplace, package.DisplayName, package.Folder, package.LicenseMask);
             File.WriteAllBytes(Path.Combine(folder, package.Folder + ".header"), header);
             names.Set(ContentInstaller.Key(package.Folder), package.DisplayName, quoted: true);
         }

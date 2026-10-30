@@ -96,7 +96,7 @@ public partial class MainWindow
         SetBusy(true);
         try
         {
-            var profile = await Task.Run(() => host.Profiles.Import(folder, values[0]));
+            var profile = await Task.Run(() => host.Profiles.Import(folder, values[0], host.Setup.Game ?? "vanilla"));
             SaveActiveProfile(profile);
         }
         finally
