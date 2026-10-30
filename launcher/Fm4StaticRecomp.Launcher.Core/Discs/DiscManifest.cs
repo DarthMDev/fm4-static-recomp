@@ -12,7 +12,8 @@ public sealed record ManifestFile(
 public sealed record Disc1Release(
     [property: JsonPropertyName("name")] string Name,
     [property: JsonPropertyName("media_id")] string MediaId,
-    [property: JsonPropertyName("files")] IReadOnlyList<ManifestFile> Files);
+    [property: JsonPropertyName("files")] IReadOnlyList<ManifestFile> Files,
+    [property: JsonPropertyName("mod")] bool Mod = false);
 
 public sealed record Disc1Manifest(
     [property: JsonPropertyName("releases")] IReadOnlyList<Disc1Release> Releases,
@@ -46,8 +47,13 @@ public sealed record DiscManifest(
         return manifest;
     }
 
+    // A mod's own default.xex is a code source, never a disc: it is only built from.
+    public IEnumerable<Disc1Release> DiscReleases => Disc1.Releases.Where(r => !r.Mod);
+
+    public Disc1Release ModRelease => Disc1.Releases.Single(r => r.Mod);
+
     public Disc1Release? Release(string mediaId) =>
-        Disc1.Releases.FirstOrDefault(r => string.Equals(r.MediaId, mediaId, StringComparison.OrdinalIgnoreCase));
+        DiscReleases.FirstOrDefault(r => string.Equals(r.MediaId, mediaId, StringComparison.OrdinalIgnoreCase));
 
     public IReadOnlyList<ManifestFile> Disc1Files(Disc1Release release) => [.. Disc1.Files, .. release.Files];
 }

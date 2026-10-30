@@ -32,10 +32,10 @@ public class DiscManifestTests
     {
         var real = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"..\..\..\..\..\config\supported-discs.json"));
         var manifest = DiscManifest.Load(real);
-        Assert.Equal(["61D62D9F", "26FF1101", "42C67824", "33E7B39F"], manifest.Disc1.Releases.Select(r => r.MediaId));
+        Assert.Equal(["61D62D9F", "26FF1101", "42C67824", "33E7B39F"], manifest.DiscReleases.Select(r => r.MediaId));
         Assert.Equal(4001, manifest.Disc1.Files.Count);
         Assert.Equal(4, manifest.Disc2.Packages.Count);
-        foreach (var release in manifest.Disc1.Releases)
+        foreach (var release in manifest.DiscReleases)
         {
             // The installer keys the files by path, ignoring case: one entry per path.
             var files = manifest.Disc1Files(release);
@@ -45,5 +45,17 @@ public class DiscManifestTests
         var rev1 = manifest.Release("42C67824")!;
         Assert.Contains(manifest.Disc1Files(rev1), f => f.Path == "Media/tracks/LeMans/patch_bin.zip");
         Assert.DoesNotContain(manifest.Disc1Files(manifest.Release("61D62D9F")!), f => f.Path == "Media/tracks/LeMans/patch_bin.zip");
+    }
+
+    [Fact]
+    public void The_mod_release_is_not_a_disc_release()
+    {
+        var real = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"..\..\..\..\..\config\supported-discs.json"));
+        var manifest = DiscManifest.Load(real);
+        Assert.Equal("Project Forza Plus 4 1.3", manifest.ModRelease.Name);
+        Assert.Equal("FEA11E87FF8434E51ED8E683023EA17281DEC02A5ED8FA226B1C73726CF15128",
+            manifest.ModRelease.Files.Single(f => f.Path == "default.xex").Sha256);
+        Assert.DoesNotContain(manifest.DiscReleases, r => r.Mod);
+        Assert.Null(manifest.Release("633772A0"));
     }
 }

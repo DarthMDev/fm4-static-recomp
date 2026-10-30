@@ -1402,6 +1402,19 @@
       "sha256": "049FC4019BE70641A4333C5F6BA7C65BCCC40F27CC16C750290E340558E40787"
      }
     ]
+   },
+   {
+    "name": "Project Forza Plus 4 1.3",
+    "media_id": "633772A0",
+    "code_image": "1.0",
+    "mod": true,
+    "files": [
+     {
+      "path": "default.xex",
+      "size": 16068608,
+      "sha256": "FEA11E87FF8434E51ED8E683023EA17281DEC02A5ED8FA226B1C73726CF15128"
+     }
+    ]
    }
   ],
   "files": [

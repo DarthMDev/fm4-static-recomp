@@ -300,7 +300,7 @@ public partial class MainWindow
                 var found = check.FoundSha256.Length > 0 ? check.FoundSha256 : "no default.xex";
                 var text = check.Release is null
                     ? $"This disc's media ID is {(check.MediaId.Length > 0 ? check.MediaId : "unknown")} and its default.xex has SHA-256 {found}; " +
-                      $"the launcher supports {string.Join(" and ", manifest.Disc1.Releases.Select(r => r.Name))}. Rev 1 discs are not supported."
+                      $"the launcher supports {string.Join(", ", manifest.DiscReleases.Select(r => r.Name))}."
                     : $"{check.Release.Name}'s default.xex should have SHA-256 {check.ExpectedSha256}; this one has {found}.";
                 AppendLog($"Disc 1 refused: {text}");
                 ProgressPanel.IsVisible = false;

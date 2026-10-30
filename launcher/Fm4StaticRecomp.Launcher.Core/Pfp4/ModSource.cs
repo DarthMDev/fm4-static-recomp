@@ -1,0 +1,88 @@
+using System.IO.Compression;
+
+namespace Fm4StaticRecomp.Launcher.Core.Pfp4;
+
+// Project Forza Plus 4 as the player has it: the zip as downloaded (~9 GB, read entry by entry,
+// never extracted) or an extracted copy. Paths are relative to the mod's root folder, the one
+// holding `Main Game Changes\default.xex`, and `\`-separated.
+public sealed class ModSource : IDisposable
+{
+    public const string RootName = "Project Forza Plus 4";
+    private const string Marker = @"Main Game Changes\default.xex";
+    // The root itself, its parent, or a wrapper folder above that (a zip packed from one level up).
+    private const int SearchDepth = 2;
+
+    private readonly ZipArchive? _zip;
+    private readonly Dictionary<string, ZipArchiveEntry> _entries = new(StringComparer.OrdinalIgnoreCase);
+    private readonly string? _folder;
+    private readonly List<string> _files = [];
+
+    private ModSource(ZipArchive zip, string prefix)
+    {
+        _zip = zip;
+        foreach (var entry in zip.Entries)
+        {
+            var name = entry.FullName.Replace('/', '\\');
+            if (name.EndsWith('\\') || !name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) continue;
+            var relative = name[prefix.Length..];
+            _entries[relative] = entry;
+            _files.Add(relative);
+        }
+    }
+
+    private ModSource(string folder)
+    {
+        _folder = folder;
+        var options = new EnumerationOptions { RecurseSubdirectories = true, AttributesToSkip = 0 };
+        _files.AddRange(Directory.EnumerateFiles(folder, "*", options).Select(f => Path.GetRelativePath(folder, f)));
+    }
+
+    public IReadOnlyList<string> Files => _files;
+
+    public static ModSource Open(string zipOrFolder)
+    {
+        if (File.Exists(zipOrFolder))
+        {
+            var zip = ZipFile.OpenRead(zipOrFolder);
+            var markers = zip.Entries.Select(e => e.FullName.Replace('/', '\\'))
+                .Where(n => n.EndsWith(Marker, StringComparison.OrdinalIgnoreCase))
+                .Select(n => n[..^Marker.Length])
+                .Where(prefix => prefix.Count(c => c == '\\') <= SearchDepth)
+                .OrderBy(prefix => prefix.Count(c => c == '\\')).ThenBy(prefix => prefix, StringComparer.Ordinal)
+                .ToList();
+            if (markers.Count == 0)
+            {
+                zip.Dispose();
+                throw NotTheMod(zipOrFolder);
+            }
+            return new ModSource(zip, markers[0]);
+        }
+        var level = new List<string> { zipOrFolder };
+        for (var depth = 0; depth <= SearchDepth && level.Count > 0; depth++)
+        {
+            var root = level.Order(StringComparer.Ordinal).FirstOrDefault(d => File.Exists(Path.Combine(d, Marker)));
+            if (root is not null) return new ModSource(root);
+            level = level.SelectMany(Directory.EnumerateDirectories).ToList();
+        }
+        throw NotTheMod(zipOrFolder);
+    }
+
+    private static InvalidDataException NotTheMod(string path) =>
+        new($"{path} does not hold Project Forza Plus 4: expected its zip, or the folder \"{RootName}\" " +
+            $"(the one with \"{Marker}\") or the folder above it.");
+
+    public Stream OpenFile(string relativePath) => _zip is null
+        ? File.OpenRead(Path.Combine(_folder!, relativePath))
+        : Entry(relativePath).Open();
+
+    public long Size(string relativePath) => _zip is null
+        ? new FileInfo(Path.Combine(_folder!, relativePath)).Length
+        : Entry(relativePath).Length;
+
+    private ZipArchiveEntry Entry(string relativePath) =>
+        _entries.TryGetValue(relativePath, out var entry)
+            ? entry
+            : throw new FileNotFoundException($"{relativePath} is not in the mod's zip.", relativePath);
+
+    public void Dispose() => _zip?.Dispose();
+}

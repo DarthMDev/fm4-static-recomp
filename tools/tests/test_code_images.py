@@ -1,4 +1,7 @@
+import importlib.util
+import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -51,6 +54,34 @@ class ResolvedAnalysisTest(unittest.TestCase):
     def test_an_address_without_a_port_stops_it(self):
         with self.assertRaises(SystemExit):
             release_analysis.rewrite_addresses("longjmp_address = 0x82762A90\n", {})
+
+
+class ModReleaseTest(unittest.TestCase):
+    def test_the_mod_xex_is_a_1_0_code_source(self):
+        mods = [r for r in ci.releases() if r.get("mod")]
+        self.assertEqual(len(mods), 1)
+        self.assertEqual({k: v for k, v in mods[0].items() if k != "files"},
+                         {"name": "Project Forza Plus 4 1.3", "media_id": "633772A0", "code_image": "1.0", "mod": True})
+        sha = "FEA11E87FF8434E51ED8E683023EA17281DEC02A5ED8FA226B1C73726CF15128"
+        self.assertEqual(mods[0]["files"], [{"path": "default.xex", "size": 16068608, "sha256": sha}])
+        self.assertIn(sha, ci.executable_hashes("1.0"))
+
+    def test_regenerating_the_disc_manifest_carries_the_mod_release(self):
+        spec = importlib.util.spec_from_file_location("make_disc_manifest", ci.ROOT / "tools/make-disc-manifest.py")
+        tool = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(tool)
+        with tempfile.TemporaryDirectory() as temp:
+            temp = Path(temp)
+            (temp / "disc2").mkdir()
+            out = temp / "out.json"
+            argv = sys.argv
+            sys.argv = ["make-disc-manifest.py", "--base", str(ci.DISCS), str(temp / "disc2"), str(out)]
+            try:
+                tool.main()
+            finally:
+                sys.argv = argv
+            written = json.loads(out.read_text(encoding="utf-8"))["disc1"]
+        self.assertEqual(written["releases"], json.loads(ci.DISCS.read_text(encoding="utf-8"))["disc1"]["releases"])
 
 
 if __name__ == "__main__":
