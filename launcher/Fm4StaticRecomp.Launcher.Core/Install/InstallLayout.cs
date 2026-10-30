@@ -23,6 +23,8 @@ public sealed record InstallLayout(string Root)
     public string SetupState => Path.Combine(Root, "setup-state.json");
     public string ContentInstallUser => Path.Combine(Root, "content-install", "user");
     public string Reports => Path.Combine(Root, "reports");
+    public string Pfp4 => Path.Combine(Root, "pfp4");
+    public string Pfp4Modes => Path.Combine(Pfp4, "modes");
 
     public string Source(string version) => Path.Combine(Root, "source", version);
     public string Cache(string version) => Path.Combine(Root, "cache", version);

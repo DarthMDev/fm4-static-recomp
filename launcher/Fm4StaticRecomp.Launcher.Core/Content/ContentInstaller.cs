@@ -107,6 +107,6 @@ public sealed class ContentInstaller(InstallLayout layout, IPlatform platform)
     }
 
     // TOML keys allow letters, digits and underscores only.
-    private static string Key(string fileName) =>
+    internal static string Key(string fileName) =>
         "p_" + new string(fileName.Select(c => char.IsAsciiLetterOrDigit(c) ? char.ToLowerInvariant(c) : '_').ToArray());
 }

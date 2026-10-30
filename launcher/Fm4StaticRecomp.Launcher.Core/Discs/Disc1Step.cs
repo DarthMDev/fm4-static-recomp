@@ -53,7 +53,7 @@ public static class Disc1Step
 
     // Renames instead of deleting first: a file held open by a virus scanner must not leave a
     // half-deleted game that setup-state.json still counts as installed.
-    private static void Swap(string partial, string gameFolder)
+    internal static void Swap(string partial, string gameFolder)
     {
         var old = gameFolder + ".old";
         if (Directory.Exists(gameFolder))

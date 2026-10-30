@@ -92,7 +92,8 @@ public partial class MainWindow
 
         foreach (var (step, (state, detail)) in _stepOverrides) SetStep(step, state, detail);
 
-        var needed = SpaceCheck.Needed(!setup.Disc1Installed, DiscTwoPending(host), !Directory.Exists(host.Layout.Toolchain), !built);
+        var needed = SpaceCheck.Needed(!setup.Disc1Installed, DiscTwoPending(host), !Directory.Exists(host.Layout.Toolchain), !built,
+            setup.Game == "pfp4" && !setup.Pfp4Applied);
         InstallText.Text = string.Create(CultureInfo.InvariantCulture,
             $"Installs to {host.Layout.Root}. About {needed / 1e9:0} GB are needed and {FreeBytes(host.Layout.Root) / 1e9:0} GB are free.");
     }
@@ -246,7 +247,7 @@ public partial class MainWindow
             await host.PrepareSourceAsync(cancellation);
             var manifest = await Task.Run(host.Manifest, cancellation);
             var needed = SpaceCheck.Needed(!host.Setup.Disc1Installed, DiscTwoPending(host), !Directory.Exists(host.Layout.Toolchain),
-                !host.Setup.BuiltVersions.Contains(host.Payload.Version));
+                !host.Setup.BuiltVersions.Contains(host.Payload.Version), host.Setup.Game == "pfp4" && !host.Setup.Pfp4Applied);
             if (SpaceCheck.Problem(host.Layout.Root, needed, FreeBytes) is { } space)
             {
                 ProgressPanel.IsVisible = false;

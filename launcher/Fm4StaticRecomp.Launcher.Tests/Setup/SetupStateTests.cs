@@ -44,4 +44,27 @@ public class SetupStateTests
         Assert.False(state.Disc1Installed);
         Assert.Empty(state.BuiltVersions);
     }
+
+    [Fact]
+    public void A_state_without_game_is_vanilla()
+    {
+        using var temp = new TempDir();
+        var path = temp.File("setup-state.json", """{"schema_version": 1, "disc1_release": "1.0 USA"}"""u8.ToArray());
+        var state = SetupState.Load(path);
+        Assert.Null(state.Game);
+        Assert.False(state.Pfp4Applied);
+    }
+
+    [Fact]
+    public void Round_trips_a_pfp4_install()
+    {
+        using var temp = new TempDir();
+        var path = Path.Combine(temp.Path, "setup-state.json");
+        var state = SetupState.Load(path);
+        (state.Game, state.Pfp4Mode, state.Pfp4HarderAi, state.Pfp4Applied) = ("pfp4", "hard", true, true);
+        state.Save();
+        var read = SetupState.Load(path);
+        Assert.Equal(("pfp4", "hard", true, true), (read.Game, read.Pfp4Mode, read.Pfp4HarderAi, read.Pfp4Applied));
+        Assert.Contains("\"pfp4_harder_ai\"", File.ReadAllText(path));
+    }
 }

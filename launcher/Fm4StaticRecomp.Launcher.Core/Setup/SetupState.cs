@@ -22,6 +22,11 @@ public sealed class SetupState
     public bool Disc2Later { get; set; }
     public bool Disc2Installed { get; set; }
     public HashSet<string> BuiltVersions { get; set; } = [];
+    // "pfp4" for a Project Forza Plus 4 install, fixed at setup; null is vanilla.
+    public string? Game { get; set; }
+    public string? Pfp4Mode { get; set; }
+    public bool Pfp4HarderAi { get; set; }
+    public bool Pfp4Applied { get; set; }
 
     [JsonIgnore]
     public bool Disc1Installed => Disc1Release is not null;

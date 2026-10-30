@@ -34,7 +34,8 @@ public sealed class ModSource : IDisposable
     {
         _folder = folder;
         var options = new EnumerationOptions { RecurseSubdirectories = true, AttributesToSkip = 0 };
-        _files.AddRange(Directory.EnumerateFiles(folder, "*", options).Select(f => Path.GetRelativePath(folder, f)));
+        _files.AddRange(Directory.EnumerateFiles(folder, "*", options)
+            .Select(f => Path.GetRelativePath(folder, f).Replace(Path.DirectorySeparatorChar, '\\')));
     }
 
     public IReadOnlyList<string> Files => _files;
@@ -72,12 +73,14 @@ public sealed class ModSource : IDisposable
             $"(the one with \"{Marker}\") or the folder above it.");
 
     public Stream OpenFile(string relativePath) => _zip is null
-        ? File.OpenRead(Path.Combine(_folder!, relativePath))
+        ? File.OpenRead(OnDisk(relativePath))
         : Entry(relativePath).Open();
 
     public long Size(string relativePath) => _zip is null
-        ? new FileInfo(Path.Combine(_folder!, relativePath)).Length
+        ? new FileInfo(OnDisk(relativePath)).Length
         : Entry(relativePath).Length;
+
+    private string OnDisk(string relativePath) => Path.Combine(_folder!, relativePath.Replace('\\', Path.DirectorySeparatorChar));
 
     private ZipArchiveEntry Entry(string relativePath) =>
         _entries.TryGetValue(relativePath, out var entry)

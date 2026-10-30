@@ -10,10 +10,13 @@ public static class SpaceCheck
     public const long Toolchain = 2_000_000_000;
     // The source, the prebuilt SDK and the build: 0.97 GB.
     public const long Version = 1_200_000_000;
+    // Project Forza Plus 4's 20 packages (which stand in for Disc 2) and its cached modes: 9.55 GB.
+    public const long Pfp4Content = 9_700_000_000;
     public const long Margin = 2_000_000_000;
 
-    public static long Needed(bool disc1, bool disc2, bool toolchain, bool version) =>
-        (disc1 ? Disc1 : 0) + (disc2 ? Disc2 : 0) + (toolchain ? Toolchain : 0) + (version ? Version : 0) + Margin;
+    public static long Needed(bool disc1, bool disc2, bool toolchain, bool version, bool pfp4Content) =>
+        (disc1 ? Disc1 : 0) + (disc2 ? Disc2 : 0) + (toolchain ? Toolchain : 0) + (version ? Version : 0) +
+        (pfp4Content ? Pfp4Content : 0) + Margin;
 
     public static string? Problem(string root, long needed, Func<string, long> freeBytes)
     {
