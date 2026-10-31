@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 """Private copies of Microsoft's C++ runtime and Windows SDK: python -I tools\toolchain.py --help."""
 import sys
 from pathlib import Path

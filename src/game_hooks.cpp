@@ -1,3 +1,5 @@
+// Copyright (c) 2026, i2kiselev
+// BSD 3-Clause License: see LICENSE in the repository root.
 // Hooks the recompiled game calls (config/rexglue/analysis/main-xex.toml).
 
 #include <algorithm>

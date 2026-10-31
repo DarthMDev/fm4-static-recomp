@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 """Render regression tests: python -I tools\\render-test.py --tier short|long|full (see --help)."""
 import sys
 from pathlib import Path

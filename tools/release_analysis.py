@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 """Resolve the analysis for the code image of a game folder, before codegen.
 
     release_analysis.py --game-root <extracted Disc 1>

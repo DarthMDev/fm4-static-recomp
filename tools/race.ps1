@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 # Dot-source this: helpers that drive a test session (session.ps1, private state) into a
 # race, waiting on what the game logs rather than on fixed delays. About 2 minutes from
 # launch to green lights.

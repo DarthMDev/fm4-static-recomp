@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 # Draws the project's icon (a black squircle with a grey edge, "FM" in white and "4" in red, Barlow Condensed
 # Bold) into an .ico; the launcher's adds a red play badge, so the two windows differ on the taskbar.
 # Windows PowerShell 5.1 (System.Drawing).

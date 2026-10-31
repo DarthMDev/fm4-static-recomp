@@ -1,3 +1,5 @@
+// Copyright (c) 2026, i2kiselev
+// BSD 3-Clause License: see LICENSE in the repository root.
 namespace Fm4StaticRecomp.Launcher.Core.Discs;
 
 // The data space of a Games-on-Demand container: every data file's 0x1000-byte blocks in

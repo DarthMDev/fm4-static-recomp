@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 """Writes config/pfp4-1.3.json, what a Project Forza Plus 4 install takes from the mod.
 
     make-pfp4-manifest.py "D:/Project Forza Plus 4" .local/state/user/0000000000000000/4D530910/00000002 \

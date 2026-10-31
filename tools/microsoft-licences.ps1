@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 # Prints the licences of the Microsoft files the build downloads, as one JSON line, for the
 # launcher's licence step: the Build Tools licence read from Microsoft's own channel, and the
 # Windows SDK licence. Runs before anything is provisioned.

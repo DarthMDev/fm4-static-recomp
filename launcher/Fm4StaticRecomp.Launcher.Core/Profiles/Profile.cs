@@ -1,3 +1,5 @@
+// Copyright (c) 2026, i2kiselev
+// BSD 3-Clause License: see LICENSE in the repository root.
 namespace Fm4StaticRecomp.Launcher.Core.Profiles;
 
 // Game is the install's game the profile was made in ("vanilla" or "pfp4"); a Project Forza Plus 4

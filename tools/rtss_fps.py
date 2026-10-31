@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 """rtss_fps.py: RivaTuner Statistics Server's view of running 3D applications, read from its
 shared memory: the presents per second it counts for each process."""
 import mmap

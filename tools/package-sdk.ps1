@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 # Builds the prebuilt ShiftGlue SDK that payloads build against (config\release-toolchain.json's
 # sdk.bundle), published as a release asset: the SDK's own install of the pinned checkout, built
 # with the settings Fm4RexGlue.cmake gives the SDK in-tree, plus the CMake files pinning the

@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 """Check that every code image still has each canonical guest address, and that they agree.
 
     .local/venv/Scripts/python tools/release_parity.py [--if-changed]

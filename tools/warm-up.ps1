@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 # Fills the shader cache by playing a scripted route in a game nobody sees: title, menus and ten
 # Quick Races, each with another car and track, in a throwaway state with its own profile. The
 # throwaway state's shader folder is a link to the player's, so the game writes every shader it

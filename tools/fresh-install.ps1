@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 # A new player's first setup, by hand: builds this tree's release package, unpacks the download
 # players get (FM4StaticRecomp-Launcher.zip) into a new folder and starts its launcher.
 # -LocalAssets points the package's setup at the LLVM and SDK archives built here

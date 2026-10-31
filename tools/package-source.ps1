@@ -1,3 +1,5 @@
+# Portions copyright (c) 2026, Pinyon Shift contributors (BSD 3-Clause: see THIRD_PARTY_NOTICES.md).
+# Copyright (c) 2026, i2kiselev (BSD 3-Clause: see LICENSE in the repository root).
 # Packs the source payload the launcher builds from into .artifacts\fm4-static-recomp-source.zip.
 [CmdletBinding()]
 param()

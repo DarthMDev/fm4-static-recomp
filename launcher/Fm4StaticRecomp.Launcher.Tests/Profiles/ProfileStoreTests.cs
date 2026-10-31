@@ -1,3 +1,5 @@
+// Copyright (c) 2026, i2kiselev
+// BSD 3-Clause License: see LICENSE in the repository root.
 using Fm4StaticRecomp.Launcher.Core.Install;
 using Fm4StaticRecomp.Launcher.Core.Platform;
 using Fm4StaticRecomp.Launcher.Core.Profiles;

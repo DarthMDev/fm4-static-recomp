@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 [CmdletBinding()]
 param([string[]]$GameArguments = @('--audio_mute=true', '--fh1_native_gpu_profile=true'))
 

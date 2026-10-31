@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 """Map every canonical guest address into another code image and write its port table.
 
     .local/venv/Scripts/python tools/port_release.py <1.0 game root> <game root>

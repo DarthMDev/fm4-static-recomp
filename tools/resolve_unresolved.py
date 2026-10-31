@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 """Run codegen until validation passes, adding a function boundary for every
 branch target the scanner reports as "not in any function".
 

@@ -1,3 +1,5 @@
+// Copyright (c) 2026, i2kiselev
+// BSD 3-Clause License: see LICENSE in the repository root.
 using System.Diagnostics;
 
 namespace Fm4StaticRecomp.Launcher.Core.Setup;

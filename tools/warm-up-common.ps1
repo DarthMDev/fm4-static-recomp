@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 # Dot-source this: helpers for the shader warm-up (warm-up.ps1), which plays a scripted route
 # in a game nobody sees so that a new install starts with a filled shader cache.
 Set-StrictMode -Version Latest

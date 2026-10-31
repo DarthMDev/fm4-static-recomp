@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 """Packs the part of LLVM the build uses into one archive, published as a release asset.
 
 config/release-toolchain.json's llvm.package names the official Windows archive and its SHA-256,

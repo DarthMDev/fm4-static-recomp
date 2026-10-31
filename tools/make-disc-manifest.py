@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 """Writes config/supported-discs.json from known-good Disc 1 extractions and Disc 2 packages.
 
     make-disc-manifest.py --release "1.0 PAL (Europe, Australia)=1.0=D:/disc1-pal" \
