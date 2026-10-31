@@ -110,7 +110,7 @@ More than twice Xenia's frame rate at every scale on the same PC
 | Disc 1, 1.0 USA | USA, media ID `26FF1101` |
 | Disc 1, Rev 1 Europe | The 1.1 re-release, Europe, media ID `42C67824` |
 | Disc 1, Rev 1 USA | The 1.1 re-release, USA, media ID `33E7B39F` |
-| Disc 2 | Optional: the install disc's four content packages (more cars and tracks) |
+| Disc 2 | Optional: the install disc's four content packages (more cars) |
 | DLC | Optional: Marketplace packages for title `4D530910` |
 
 The two 1.0 releases carry the same code, and so do the two Rev 1 releases; only their
