@@ -44,7 +44,10 @@ is worth an issue too, so [Tested](guide/performance.md#tested) can list it.
 
 The build fetches the SDK at the revision pinned in `config/release-toolchain.json`. To work on
 the SDK, clone the fork, set `FM4_SDK_ROOT` to its folder, and the build uses it instead. An SDK
-change lands as two pull requests: one to the fork, then one here that moves the pin.
+change lands as two pull requests: one to the fork's `fm4-static-recomp` branch and one here that
+uses it. Link each from the other and say that this one needs the SDK one. Leave
+`config/release-toolchain.json` as it is: the maintainer moves the pin and publishes the matching
+prebuilt SDK when merging.
 
 Fixes that are not specific to FM4 are better sent upstream to
 [arcanite24/shiftglue-sdk](https://github.com/arcanite24/shiftglue-sdk), so Pinyon Shift gets
@@ -71,6 +74,14 @@ Run the tests for what you touched, and say in the pull request what you ran.
 | Toolchain scripts | `python -m unittest discover -s tools/toolchain/tests -t tools` |
 | Rendering | `python -I tools\render-test.py` runs against a pinned save that is not in the repository; the maintainer runs it on renderer pull requests |
 
+Renderer and SDK changes: play the change once with `--vulkan_validation_enabled=true` (needs the
+[Vulkan SDK](https://vulkan.lunarg.com/sdk/home), which provides the validation layer) and look
+for `Vulkan Error` lines in `runtime.log`. A clean run is part of the pull request; report any
+error you could not fix.
+
+Test the branch you submit. After splitting a change into several pull requests or rebasing it,
+build and play that exact branch again.
+
 Unit tests do not reach most of the game, so also play what you changed:
 
 - **Graphics:** screenshots before and after, at the scale and settings you tested, and the
@@ -82,7 +93,19 @@ Unit tests do not reach most of the game, so also play what you changed:
 
 ## Pull requests
 
+- Target the next release's branch (`release/<version>`) when one exists, `main` otherwise, and
+  start your branch from the same one.
 - One topic per pull request. Unrelated fixes go in separate ones.
+- Fill in the pull request template: what you tested, on which GPU and driver, and with what result.
+- A change to what players see by default (framing, image, a setting's default) is agreed in its
+  issue first; until then, the new behaviour is off by default and turned on by a setting.
+- Ask in an issue before adding third-party code or SDKs. Prefer fetching them at build time, as
+  the build does for the DLSS and FidelityFX runtimes, over committing them; whatever is
+  included keeps its licence and goes in `THIRD_PARTY_NOTICES.md`.
+- Every new source file (C++, C#, PowerShell, Python) starts with the copyright header the other
+  files in its folder carry.
+- A new debug or diagnostic option goes in [`DEBUG_OPTIONS.md`](DEBUG_OPTIONS.md); a new player
+  setting goes in the guides (below).
 - Commit subjects are one line, `<type>: <Sentence>`, with type `feat`, `fix`, `refactor` or
   `docs`, for example `fix: Stop Esc on the GRAPHICS page from reopening it`.
 - Update the [guides](guide/) and the README's features table when what a player sees or sets
