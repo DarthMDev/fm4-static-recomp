@@ -75,6 +75,7 @@ the command line? See the [manual install](guide/manual-install.md).
 | [Launch options](guide/launch-options.md) | Command-line options, languages, `-Compat`, frame generation, setting options, logs and crash reports |
 | [Debug options](DEBUG_OPTIONS.md) | Debug views, A/B switches of rendering fixes and diagnostics |
 | [Testing and benchmarks](guide/performance.md) | What was played, frame rates and VRAM, comparisons with Xenia and hl360-forza4 |
+| [Common problems](guide/troubleshooting.md) | Crashes from overclocks, stutter, sound on older CPUs, upscalers that stay off, and their fixes |
 | [Reporting issues](guide/reporting-issues.md) | Checklist and template for a bug report |
 
 ## Features
@@ -141,7 +142,8 @@ file with its size and hash.
 ## Known issues
 
 Known problems are tracked as
-[open issues](https://github.com/i2kiselev/fm4-static-recomp/issues). Found a new one? See
+[open issues](https://github.com/i2kiselev/fm4-static-recomp/issues); fixes for the common ones are in
+[Common problems](guide/troubleshooting.md). Found a new one? See
 [Reporting issues](guide/reporting-issues.md).
 
 ## Roadmap

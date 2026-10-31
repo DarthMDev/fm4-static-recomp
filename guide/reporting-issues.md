@@ -19,6 +19,7 @@ report form with the crash's details filled in and shows the diagnostic ZIP. Dra
 
 ## Before you open an issue
 
+- [ ] Check [Common problems](troubleshooting.md) for a fix.
 - [ ] Check the [open issues](https://github.com/i2kiselev/fm4-static-recomp/issues) and add
   to an existing one rather than opening a duplicate.
 - [ ] Check that `default.xex` has a supported hash (see
