@@ -131,7 +131,9 @@ file with its size and hash.
   Studio: setup downloads the parts of Microsoft's C++ runtime and Windows SDK the build
   needs (about 300 MB) once you accept their licences.
 - About 10 GB of disk space (Disc 1 7.7 GB, the build tools with Microsoft's files 1.4 GB, the
-  source with the prebuilt SDK and the build 1 GB), plus about 5 GB for Disc 2 and DLC.
+  source with the prebuilt SDK and the build 1 GB), plus about 5 GB for Disc 2 and DLC. The game
+  installs into a `data` folder next to the launcher, so put the launcher folder on the drive
+  that has the space before you start it; the setup page shows where it installs.
 - About 10 minutes for the first setup (under 0.5 GB to download, most of it from Microsoft);
   a rebuild after an update takes a few minutes.
 
