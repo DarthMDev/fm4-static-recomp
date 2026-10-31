@@ -143,7 +143,7 @@ public partial class MainWindow : Window
         }
         if (_skip is null) _ = StartUpdateCheckAsync();
         _ = RefreshFlagsAsync();
-        var kind = StartDecision.Decide(host.Setup, host.Profiles.List().Count, host.Payload.Version);
+        var kind = StartDecision.Decide(host.Setup, host.Profiles.List().Count, host.Payload.Version, host.SavesFolderMissing);
         string? note = null;
         if (_skip is { } skip)
         {

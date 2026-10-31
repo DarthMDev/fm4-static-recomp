@@ -23,6 +23,7 @@ public class LauncherSettingsTests
         Assert.Null(settings.AcceptedMicrosoftLicence);
         Assert.Equal("en-US", settings.Language);
         Assert.Equal("", settings.CommandLineOptions);
+        Assert.Null(settings.SavesFolder);
     }
 
     [Fact]
@@ -43,6 +44,7 @@ public class LauncherSettingsTests
         settings.UseVisualStudioInstaller = true;
         settings.Language = "ru";
         settings.CommandLineOptions = "--fm4_dlc_packages=\"D:\\My DLC\" --present_upscaler_view=motion";
+        settings.SavesFolder = @"D:\FM4 Saves";
         settings.Save();
         var read = LauncherSettings.Load(path);
         Assert.Equal("--fm4_dlc_packages=\"D:\\My DLC\" --present_upscaler_view=motion", read.CommandLineOptions);
@@ -52,6 +54,7 @@ public class LauncherSettingsTests
         Assert.Equal(6, read.BuildJobs);
         Assert.Equal("https://a https://b", read.AcceptedMicrosoftLicence);
         Assert.Equal("ru", read.Language);
+        Assert.Equal(@"D:\FM4 Saves", read.SavesFolder);
         Assert.Contains("toolchain_source = \"VisualStudio\"", File.ReadAllText(path));
         read.UseVisualStudioInstaller = false;
         read.Save();

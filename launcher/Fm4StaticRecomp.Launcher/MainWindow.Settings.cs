@@ -12,6 +12,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Fm4StaticRecomp.Launcher.Controls;
 using Fm4StaticRecomp.Launcher.Core.Pfp4;
+using Fm4StaticRecomp.Launcher.Core.Profiles;
 using Fm4StaticRecomp.Launcher.Core.Settings;
 
 namespace Fm4StaticRecomp.Launcher;
@@ -28,6 +29,7 @@ public partial class MainWindow
     private int _buildJobs;
     private string _language = GameLanguages.Default.Code;
     private string _commandLineOptions = "";
+    private string? _savesFolder, _savesNote;
     private string _pfp4Mode = DefaultMode;
     private bool _pfp4HarderAi;
     private Button? _saveSettingsButton, _restoreSettingsButton;
@@ -57,6 +59,7 @@ public partial class MainWindow
         (_skipIntro, _asyncReadbacks, _presentViaDxgi, _compat, _buildJobs, _language) =
             (settings.SkipIntro, settings.AsyncReadbacks, settings.PresentViaDxgi, settings.Compat, settings.BuildJobs, settings.Language);
         _commandLineOptions = settings.CommandLineOptions;
+        (_savesFolder, _savesNote) = (settings.SavesFolder, null);
         (_pfp4Mode, _pfp4HarderAi) = (host.Setup.Pfp4Mode ?? DefaultMode, host.Setup.Pfp4HarderAi);
         BuildSettingsPanel("");
     }
@@ -131,6 +134,7 @@ public partial class MainWindow
                || (_skipIntro, _asyncReadbacks, _presentViaDxgi, _compat, _buildJobs, _language, _commandLineOptions.Trim())
                != (settings.SkipIntro, settings.AsyncReadbacks, settings.PresentViaDxgi, settings.Compat, settings.BuildJobs,
                    settings.Language, settings.CommandLineOptions)
+               || !string.Equals(_savesFolder, settings.SavesFolder, StringComparison.OrdinalIgnoreCase)
                || (Pfp4Install && (_pfp4Mode != (host.Setup.Pfp4Mode ?? DefaultMode) || _pfp4HarderAi != host.Setup.Pfp4HarderAi));
     }
 
@@ -193,6 +197,7 @@ public partial class MainWindow
         SettingsBody.Children.Add(Labelled("COMMAND-LINE OPTIONS", commandLine,
             "Game options for debugging, passed on its command line. One replaces the value the launcher or the GRAPHICS page would use. A misspelt name is ignored without a message.",
             alwaysHelp: true));
+        SettingsBody.Children.Add(SavesFolderRow(host));
         var jobs = new NumericUpDown
         {
             Minimum = 0, Maximum = LauncherSettings.MaximumBuildJobs, Increment = 1, Value = _buildJobs, FormatString = "0",
@@ -201,6 +206,63 @@ public partial class MainWindow
         AutomationProperties.SetName(jobs, "BUILD JOBS");
         jobs.ValueChanged += (_, e) => _buildJobs = (int)(e.NewValue ?? 0);
         SettingsBody.Children.Add(Labelled("BUILD JOBS", jobs, "0 picks them from your processor and memory.", alwaysHelp: true));
+    }
+
+    // The folder is checked when chosen; SAVE moves the saves.
+    private Control SavesFolderRow(LauncherHost host)
+    {
+        var path = new TextBlock { TextWrapping = TextWrapping.Wrap, Foreground = Brush("ValueBrush"), VerticalAlignment = VerticalAlignment.Center };
+        void Show() => path.Text = _savesFolder ?? $"{host.Layout.Root} (default)";
+        Show();
+        var choose = new Button { Content = "CHOOSE…", Classes = { "quiet" } };
+        choose.Click += async (_, _) =>
+        {
+            if (_busy || await PickFolderAsync("Choose a folder for your saves") is not { } folder) return;
+            folder = Path.TrimEndingDirectorySeparator(Path.GetFullPath(folder));
+            var game = host.Setup.Game ?? "vanilla";
+            string? problem;
+            IReadOnlyList<string> others;
+            try
+            {
+                problem = SavesFolder.Problem(host.Layout, folder);
+                others = problem is null ? SavesFolder.OtherGameProfiles(folder, game) : [];
+            }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+            {
+                problem = $"{folder} cannot be used: {error.Message}";
+                others = [];
+            }
+            if (problem is not null)
+            {
+                if (_settingsStatus is not null) _settingsStatus.Text = problem;
+                return;
+            }
+            string? note = null;
+            if (others.Count > 0)
+            {
+                if (await Dialog.AskAsync(this, "SAVES OF THE OTHER GAME", SavesFolder.OtherGameWarning(game, others),
+                        "CANCEL", "USE ANYWAY") != "USE ANYWAY") return;
+                note = $"{GameName(game == ProfileStore.Pfp4 ? "vanilla" : ProfileStore.Pfp4)} saves taken over by SAVES FOLDER into this install";
+            }
+            (_savesFolder, _savesNote) = (folder.Equals(host.Layout.Root, StringComparison.OrdinalIgnoreCase) ? null : folder, note);
+            Show();
+            if (_settingsStatus is not null) _settingsStatus.Text = "";
+            RefreshUnsavedMark();
+        };
+        var reset = new Button { Content = "DEFAULT", Classes = { "link" }, VerticalAlignment = VerticalAlignment.Center };
+        reset.Click += (_, _) =>
+        {
+            if (_busy) return;
+            (_savesFolder, _savesNote) = (null, null);
+            Show();
+            RefreshUnsavedMark();
+        };
+        var row = new StackPanel { Spacing = 4, Children = { path, new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Children = { choose, reset } } } };
+        return Labelled("SAVES FOLDER", row,
+            "Where your profiles, their backups and deleted profiles are kept. SAVE moves them to the folder chosen; " +
+            "if it holds saves already (an earlier install's), both sets are kept there. " +
+            "Saves of vanilla FM4 on a Project Forza Plus 4 install (or the other way round) are not guaranteed to work: start a fresh career there.",
+            alwaysHelp: true);
     }
 
     private void UpdateSettingsActions()
@@ -340,11 +402,31 @@ public partial class MainWindow
     private static TextBlock Help(string text, Thickness? margin = null) =>
         new() { Text = text, Classes = { "help" }, TextWrapping = TextWrapping.Wrap, Margin = margin ?? default };
 
-    private void SaveSettings()
+    private async void SaveSettings()
     {
-        if (_host is not { GameRunning: false } host) return;
+        if (_host is not { GameRunning: false } host || _busy) return;
         try
         {
+            string? leftover = null;
+            if (!string.Equals(_savesFolder, host.Settings.SavesFolder, StringComparison.OrdinalIgnoreCase))
+            {
+                SetBusy(true);
+                // As _work, closing the window waits for the move instead of cutting a copy short.
+                var move = host.MoveSavesAsync(_savesFolder, _savesNote);
+                _work = move;
+                try
+                {
+                    leftover = await move;
+                }
+                finally
+                {
+                    _work = null;
+                    SetBusy(false);
+                }
+                AppendLog($"Saves moved to {host.Layout.SavesRoot}.");
+                if (leftover is not null) AppendLog(leftover);
+                ReloadProfiles();
+            }
             if (Pfp4Install && (_pfp4Mode != host.Setup.Pfp4Mode || _pfp4HarderAi != host.Setup.Pfp4HarderAi))
             {
                 Pfp4Modes.Switch(host.Layout, host.ModManifest(host.Settings.ActiveVersion ?? host.Payload.Version), host.Setup,
@@ -357,7 +439,7 @@ public partial class MainWindow
                 (_skipIntro, _asyncReadbacks, _presentViaDxgi, _compat, _buildJobs, _language);
             settings.CommandLineOptions = _commandLineOptions.Trim();
             settings.Save();
-            if (_settingsStatus is not null) _settingsStatus.Text = "Saved. Applies at the next start.";
+            if (_settingsStatus is not null) _settingsStatus.Text = leftover ?? "Saved. Applies at the next start.";
             RefreshUnsavedMark();
             UpdateSummary();
             AppendLog("Settings saved.");

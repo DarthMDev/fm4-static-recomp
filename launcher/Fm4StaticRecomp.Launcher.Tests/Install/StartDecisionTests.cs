@@ -21,6 +21,11 @@ public class StartDecisionTests
             new SetupState { Disc1Release = "1.0 USA", BuiltVersions = ["0.1.0"] }, 1, "0.2.0"));
 
     [Fact]
+    public void A_missing_saves_folder_keeps_a_built_install_out_of_setup() =>
+        Assert.Equal(StartKind.Ready, StartDecision.Decide(
+            new SetupState { Disc1Release = "1.0 USA", BuiltVersions = ["0.2.0"] }, 0, "0.2.0", savesFolderMissing: true));
+
+    [Fact]
     public void A_built_version_is_ready() =>
         Assert.Equal(StartKind.Ready, StartDecision.Decide(
             new SetupState { Disc1Release = "1.0 USA", BuiltVersions = ["0.1.0", "0.2.0"] }, 1, "0.2.0"));

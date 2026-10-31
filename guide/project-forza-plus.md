@@ -58,6 +58,9 @@ Garages survive a change; a career started in another mode loads with a warning,
 - **PROFILE → IMPORT SAVE** asks whether the saves are vanilla or Project Forza Plus 4 (a profile
   of this launcher answers by itself) and refuses the other game's. If Xenia's DLC folder beside
   the saves says otherwise, it warns first.
+- Vanilla saves are not supported on this install: IMPORT SAVE refuses them, and SETTINGS →
+  SAVES FOLDER warns before it takes over a folder that holds them. They are not guaranteed to
+  work; start a fresh career, and give the mod install a saves folder of its own.
 - Saves made on Xenia do not load yet: the game ties a save to the profile it was made with
   ([#35](https://github.com/i2kiselev/fm4-static-recomp/issues/35)).
 - **Skip Intro saves** are the mod's ready-made careers, one per starter car of the mode. The

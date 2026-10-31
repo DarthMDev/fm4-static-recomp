@@ -10,9 +10,10 @@ public static class StartDecision
 {
     // Ready whenever the payload's version is built, active or not: after "Go back" nothing
     // switches by itself.
-    public static StartKind Decide(SetupState state, int profileCount, string payloadVersion)
+    // A missing saves folder (its drive not connected) lists no profiles; setup would make a new one there.
+    public static StartKind Decide(SetupState state, int profileCount, string payloadVersion, bool savesFolderMissing = false)
     {
-        if (!state.Disc1Installed || state.BuiltVersions.Count == 0 || profileCount == 0) return StartKind.Setup;
+        if (!state.Disc1Installed || state.BuiltVersions.Count == 0 || (profileCount == 0 && !savesFolderMissing)) return StartKind.Setup;
         if (state.Game == "pfp4" && !state.Pfp4Applied) return StartKind.Setup;
         return state.BuiltVersions.Contains(payloadVersion) ? StartKind.Ready : StartKind.BuildVersion;
     }

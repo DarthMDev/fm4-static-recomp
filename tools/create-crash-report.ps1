@@ -92,13 +92,22 @@ $timestamp = [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ')
 $stagingRoot = Join-Path ([IO.Path]::GetTempPath()) "FM4StaticRecompReport-$([guid]::NewGuid().ToString('N'))"
 [void](New-Item -ItemType Directory -Path $stagingRoot)
 
+# The launcher's SETTINGS -> SAVES FOLDER (#20) may keep the profiles outside the state root.
+$savesRoot = $resolvedStateRoot
+$launcherToml = Join-Path $resolvedStateRoot 'config/launcher.toml'
+if ((Test-Path -LiteralPath $launcherToml) -and
+    ((Get-Content -LiteralPath $launcherToml -Raw -Encoding UTF8) -match '(?m)^\s*saves_folder\s*=\s*"((?:[^"\\]|\\.)*)"')) {
+    $savesRoot = [regex]::Replace($Matches[1], '\\(.)', '$1')
+}
+
 $replacements = @(
     [pscustomobject]@{ Name = '<REPOSITORY>'; Value = $repoRoot }
     [pscustomobject]@{ Name = '<STATE_ROOT>'; Value = $resolvedStateRoot }
+    [pscustomobject]@{ Name = '<SAVES_ROOT>'; Value = if ($savesRoot -ne $resolvedStateRoot) { $savesRoot } else { '' } }
     [pscustomobject]@{ Name = '<GAME_ROOT>'; Value = (Join-Path $resolvedStateRoot 'game') }
     [pscustomobject]@{ Name = '<EXECUTABLE_DIR>'; Value = (Split-Path $resolvedExecutable -Parent) }
     [pscustomobject]@{ Name = '<USER_PROFILE>'; Value = $env:USERPROFILE }
-    [pscustomobject]@{ Name = '<PROFILE>'; Value = if ($ProfileId) { Join-Path $resolvedStateRoot "profiles\$ProfileId" } else { '' } }
+    [pscustomobject]@{ Name = '<PROFILE>'; Value = if ($ProfileId) { Join-Path $savesRoot "profiles\$ProfileId" } else { '' } }
 ) | Sort-Object { ([string]$_.Value).Length } -Descending
 # Whole words only: the game logs the gamertag it was started with.
 $replacements = @($replacements) + @(

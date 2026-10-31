@@ -18,7 +18,7 @@ public sealed class ProfileStore(InstallLayout layout, IPlatform platform, strin
     public const string SaveXuid = "B13EBABEBABEBABE";
     public const string Pfp4 = "pfp4";
     private const string Vanilla = "vanilla";
-    private const string FileName = "profile.toml";
+    internal const string FileName = "profile.toml";
 
     public IReadOnlyList<Profile> List() =>
         Directory.Exists(layout.Profiles)
@@ -188,12 +188,12 @@ public sealed class ProfileStore(InstallLayout layout, IPlatform platform, strin
     }
 
     // A save is a 16-digit XUID folder with FM4's title folder in it.
-    private static bool HoldsSave(string user) =>
+    internal static bool HoldsSave(string user) =>
         Directory.Exists(user) && Directory.GetDirectories(user).Any(d =>
             Path.GetFileName(d) is { Length: 16 } xuid && xuid.All(char.IsAsciiHexDigit) &&
             !xuid.Equals(ContentFolderName, StringComparison.OrdinalIgnoreCase) && Directory.Exists(Path.Combine(d, "4D530910")));
 
-    private static bool IsUnder(string path, string folder)
+    internal static bool IsUnder(string path, string folder)
     {
         var prefix = Path.TrimEndingDirectorySeparator(Path.GetFullPath(folder)) + Path.DirectorySeparatorChar;
         return (Path.TrimEndingDirectorySeparator(Path.GetFullPath(path)) + Path.DirectorySeparatorChar)
@@ -234,7 +234,7 @@ public sealed class ProfileStore(InstallLayout layout, IPlatform platform, strin
         platform.CreateDirectoryLink(link, content);
     }
 
-    private static bool SamePath(string a, string b) =>
+    internal static bool SamePath(string a, string b) =>
         string.Equals(Path.TrimEndingDirectorySeparator(Path.GetFullPath(a)),
             Path.TrimEndingDirectorySeparator(Path.GetFullPath(b)), StringComparison.OrdinalIgnoreCase);
 
@@ -291,7 +291,7 @@ public sealed class ProfileStore(InstallLayout layout, IPlatform platform, strin
         return IsValidGamertag(tag) ? tag : "Player";
     }
 
-    private static void CopyDirectory(string source, string target)
+    internal static void CopyDirectory(string source, string target)
     {
         Directory.CreateDirectory(target);
         foreach (var file in Directory.GetFiles(source)) File.Copy(file, Path.Combine(target, Path.GetFileName(file)));

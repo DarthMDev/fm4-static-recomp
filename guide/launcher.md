@@ -39,7 +39,7 @@ instead, see the [manual install](manual-install.md).
 | **PROFILE** | Adds, renames, imports and deletes profiles (separate saves). |
 | **CONTENT** | Installs Disc 2 and DLC. Install them only here: the game's own Disc 2 install waits for a disc change that never comes. |
 | **GRAPHICS** | The [GRAPHICS page's settings](graphics.md). **SAVE** on top writes this page and SETTINGS together. |
-| **SETTINGS** | The game's language, launch options, advanced options and [command-line options](launch-options.md#with-the-launcher-command-line-options) for debugging. |
+| **SETTINGS** | The game's language, launch options, advanced options (among them the [saves folder](#the-saves-folder)) and [command-line options](launch-options.md#with-the-launcher-command-line-options) for debugging. |
 
 ## Starting from Steam, Pegasus or another frontend
 
@@ -61,7 +61,8 @@ an unknown profile name, when the game does not start, and after a crash (REPORT
 ## The `data` folder
 
 Everything lives in `data\` beside the launcher: the extracted disc, the build tools, the
-builds, your saves and settings. Move or back up the folder as a whole.
+builds, your saves and settings. Move or back up the folder as a whole, or keep the saves in a
+folder of your own (below).
 
 - A first setup with Disc 2 takes about **13 GB** there (Disc 1 7.7 GB, Disc 2 2.8 GB, the
   build tools 1.4 GB, and the game's source and build 1 GB), and setup asks for a 2 GB margin
@@ -75,6 +76,31 @@ builds, your saves and settings. Move or back up the folder as a whole.
 > non-English letters. The launcher checks this at start and names the folder if it cannot
 > use it.
 
+### The saves folder
+
+SETTINGS → ADVANCED → **SAVES FOLDER** keeps your saves outside `data\`, for example in a folder
+you back up or sync, or one that stays when you delete the launcher's folder. **CHOOSE…** a
+folder, then **SAVE**: the launcher moves its profiles, their backups and deleted profiles there
+(as `profiles\`, `backups\` and `deleted\`). **DEFAULT** moves them back into `data\`. Disc 2 and
+DLC stay in `data\`.
+
+- **After a reinstall**, choose the saves folder you used before: its profiles appear again. The
+  new install's own profiles are added beside them; one of the same name gets a number, "Main (2)",
+  and an empty one that setup just made (no save yet) goes to `deleted\` instead. If your saves
+  were in the old install's `data\` folder, that folder is refused (it belongs to the old
+  launcher): bring each profile over with **PROFILE → IMPORT SAVE**.
+- The folder must be on a drive inside this PC: a network drive or a USB stick formatted
+  FAT32 or exFAT cannot hold the saves.
+- Choose the folder that holds `profiles\`, not `profiles\` itself.
+- Moving the saves away from a folder removes them there, also from a synced folder on your other
+  PCs.
+- If the saves folder is missing when the launcher starts (its drive not connected, or the folder
+  renamed), the launcher says so and makes no new profile until it is back or you choose another.
+- **Vanilla and Project Forza Plus 4 saves don't mix.** If the folder holds saves of the other kind
+  of install, the launcher warns first: they are not guaranteed to work there
+  ([why](project-forza-plus.md#its-own-install)), and starting a fresh career is recommended. To
+  play both, give each install its own saves folder.
+
 ## Updates
 
 The launcher checks GitHub when it starts (and from CHECK FOR UPDATES).
@@ -83,5 +109,5 @@ The launcher checks GitHub when it starts (and from CHECK FOR UPDATES).
 2. The new version then builds beside the current one, which you can keep playing.
 3. **GO BACK TO** switches back.
 
-Saves, content and settings are kept; each profile's save is zipped to `data\backups\`
-before a new version first runs it.
+Saves, content and settings are kept; each profile's save is zipped to `backups\` in the saves
+folder (`data\backups\` by default) before a new version first runs it.

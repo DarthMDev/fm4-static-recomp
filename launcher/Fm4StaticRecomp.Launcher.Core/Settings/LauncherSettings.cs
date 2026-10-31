@@ -24,6 +24,7 @@ public sealed class LauncherSettings
         UseVisualStudioInstaller = _file.Get("toolchain_source") == "VisualStudio";
         Language = (GameLanguages.Find(_file.Get("language")) ?? GameLanguages.Default).Code;
         CommandLineOptions = _file.Get("command_line_options")?.Trim() ?? "";
+        SavesFolder = _file.Get("saves_folder");
     }
 
     public string? ActiveProfile { get; set; }
@@ -38,6 +39,8 @@ public sealed class LauncherSettings
     public bool UseVisualStudioInstaller { get; set; }
     public string Language { get; set; }
     public string CommandLineOptions { get; set; }
+    // Null: the default, the data folder.
+    public string? SavesFolder { get; set; }
 
     public static LauncherSettings Load(string path) => new(path);
 
@@ -61,6 +64,7 @@ public sealed class LauncherSettings
         _file.Set("toolchain_source", UseVisualStudioInstaller ? "VisualStudio" : "Feed", quoted: true);
         Text("language", Language);
         Text("command_line_options", CommandLineOptions.Length > 0 ? CommandLineOptions : null);
+        Text("saves_folder", SavesFolder);
         _file.Save(_path);
     }
 }

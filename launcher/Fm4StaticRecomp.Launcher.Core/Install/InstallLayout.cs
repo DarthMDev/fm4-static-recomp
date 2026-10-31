@@ -19,9 +19,11 @@ public sealed record InstallLayout(string Root)
     public string GraphicsToml => Path.Combine(Config, "graphics.toml");
     public string LauncherToml => Path.Combine(Config, "launcher.toml");
     public string ConfigBackups => Path.Combine(Config, "backups");
-    public string Backups => Path.Combine(Root, "backups");
-    public string Profiles => Path.Combine(Root, "profiles");
-    public string Deleted => Path.Combine(Root, "deleted");
+    // Profiles, their backups and deleted profiles: data\ unless SETTINGS → SAVES FOLDER moved them (#20).
+    public string SavesRoot { get; init; } = Root;
+    public string Backups => Path.Combine(SavesRoot, "backups");
+    public string Profiles => Path.Combine(SavesRoot, "profiles");
+    public string Deleted => Path.Combine(SavesRoot, "deleted");
     public string SetupState => Path.Combine(Root, "setup-state.json");
     public string ContentInstallUser => Path.Combine(Root, "content-install", "user");
     public string Reports => Path.Combine(Root, "reports");

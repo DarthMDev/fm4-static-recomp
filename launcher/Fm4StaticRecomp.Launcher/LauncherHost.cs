@@ -32,10 +32,11 @@ public sealed class LauncherHost
     {
         _lock = installLock;
         LauncherDirectory = launcherDirectory;
-        Layout = layout;
         Payload = payload;
         Platform = Platforms.Current;
         Settings = LauncherSettings.Load(layout.LauncherToml);
+        layout = layout with { SavesRoot = Settings.SavesFolder ?? layout.Root };
+        Layout = layout;
         Setup = SetupState.Load(layout.SetupState);
         Profiles = new ProfileStore(layout, Platform, Setup.Game ?? "vanilla");
         Versions = new VersionStore(layout, Settings);
@@ -46,7 +47,7 @@ public sealed class LauncherHost
 
     public string LauncherDirectory { get; }
     public string LauncherExecutable => Environment.ProcessPath ?? Path.Combine(LauncherDirectory, ReleaseClient.LauncherAsset);
-    public InstallLayout Layout { get; }
+    public InstallLayout Layout { get; private set; }
     public IPlatform Platform { get; }
     public PayloadInfo Payload { get; }
     public LauncherSettings Settings { get; }
@@ -117,6 +118,50 @@ public sealed class LauncherHost
     {
         Setup.Game = game;
         Profiles = new ProfileStore(Layout, Platform, game ?? "vanilla");
+    }
+
+    public bool SavesFolderMissing => Settings.SavesFolder is { } folder && !Directory.Exists(folder);
+
+    // Null folder: back to the data folder. otherGameNote: the player went past the warning on the
+    // other game's saves in the folder. Returns why the old saves could not be removed, if they could not.
+    // Called on the UI thread: only the file work runs aside, settings and layout change here, where
+    // every other settings save happens.
+    public async Task<string?> MoveSavesAsync(string? folder, string? otherGameNote)
+    {
+        var old = Layout;
+        var target = old with { SavesRoot = folder is null ? old.Root : Path.TrimEndingDirectorySeparator(Path.GetFullPath(folder)) };
+        if (target.SavesRoot.Equals(old.SavesRoot, StringComparison.OrdinalIgnoreCase)) return null;
+        var game = Setup.Game ?? "vanilla";
+        var move = await Task.Run(() =>
+        {
+            if (SavesFolder.Problem(old, target.SavesRoot) is { } problem) throw new IOException(problem);
+            return SavesFolder.Copy(old, target, Platform);
+        });
+        var (savesFolder, activeProfile) = (Settings.SavesFolder, Settings.ActiveProfile);
+        try
+        {
+            if (otherGameNote is not null) await Task.Run(() => SavesFolder.NoteOtherGame(target.SavesRoot, game, otherGameNote));
+            Settings.SavesFolder = target.SavesRoot.Equals(old.Root, StringComparison.OrdinalIgnoreCase) ? null : target.SavesRoot;
+            if (activeProfile is not null && move.Renamed.TryGetValue(activeProfile, out var renamed)) Settings.ActiveProfile = renamed;
+            Settings.Save();
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            (Settings.SavesFolder, Settings.ActiveProfile) = (savesFolder, activeProfile);
+            await Task.Run(() => SavesFolder.Undo(move));
+            throw;
+        }
+        Layout = target;
+        Profiles = new ProfileStore(Layout, Platform, game);
+        try
+        {
+            await Task.Run(() => SavesFolder.Remove(move));
+            return null;
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            return $"The saves are in {target.SavesRoot}, but the old copies in {old.SavesRoot} could not be removed: {error.Message}";
+        }
     }
 
     public GraphicsSettings? Graphics()

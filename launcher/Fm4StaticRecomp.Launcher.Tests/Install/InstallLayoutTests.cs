@@ -42,4 +42,15 @@ public class InstallLayoutTests
         Assert.Equal(@"C:\G\data\pfp4\modes\hard\skip-intro\Asia", layout.Pfp4SkipIntro("hard", "Asia"));
         Assert.Equal(@"C:\G\data\source\1.0.0\out\build\win-amd64-release\graphics-settings.json", layout.GraphicsSchema("1.0.0"));
     }
+
+    [Fact]
+    public void Saves_follow_the_saves_folder_and_nothing_else_does()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var layout = new InstallLayout(@"C:\G\data") { SavesRoot = @"D:\FM4 Saves" };
+        Assert.Equal([@"D:\FM4 Saves\profiles", @"D:\FM4 Saves\backups", @"D:\FM4 Saves\deleted"],
+            [layout.Profiles, layout.Backups, layout.Deleted]);
+        Assert.Equal([@"C:\G\data\content", @"C:\G\data\config\backups"], [layout.Content, layout.ConfigBackups]);
+        Assert.Equal(@"C:\G\data", new InstallLayout(@"C:\G\data").SavesRoot);
+    }
 }

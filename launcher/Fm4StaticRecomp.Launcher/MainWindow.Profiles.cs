@@ -24,6 +24,8 @@ public partial class MainWindow
         var active = profiles.FirstOrDefault(p => p.Id == host.Settings.ActiveProfile) ?? profiles.FirstOrDefault();
         ProfileCombo.SelectedIndex = active is null ? -1 : profiles.ToList().IndexOf(active);
         _loadingProfiles = false;
+        // A saves folder on a drive that is not connected, or renamed in Explorer, lists no profiles.
+        if (host.SavesFolderMissing) StatusText.Text = SavesFolderMissingText(host);
         if (active is not null && host.Settings.ActiveProfile != active.Id) SaveActiveProfile(active);
     }
 
@@ -40,9 +42,18 @@ public partial class MainWindow
         UpdateActions();
     }
 
+    private static string SavesFolderMissingText(LauncherHost host) =>
+        $"The saves folder {host.Settings.SavesFolder} cannot be found. Connect its drive, or choose another in SETTINGS → SAVES FOLDER.";
+
     private async Task ProfileActionAsync(Func<LauncherHost, Task> action)
     {
         if (_host is not { } host || host.GameRunning || _busy) return;
+        // A profile made now would start an empty saves folder where the player's own one belongs.
+        if (host.SavesFolderMissing)
+        {
+            await Dialog.AskAsync(this, "PROFILE", SavesFolderMissingText(host), "OK");
+            return;
+        }
         try
         {
             await action(host);
@@ -148,7 +159,7 @@ public partial class MainWindow
     {
         if (SelectedProfile is not { } profile) return;
         var (answer, values) = await Dialog.PromptAsync(this, "DELETE PROFILE",
-            $"Moves {profile.Name} to data\\deleted; it can be restored from there by hand. Type its name to confirm.",
+            $"Moves {profile.Name} to {host.Layout.Deleted}; it can be restored from there by hand. Type its name to confirm.",
             [("Name", "")], "DELETE", "CANCEL");
         if (answer != "DELETE" || values[0] != profile.Name) return;
         host.Profiles.Delete(profile.Id);

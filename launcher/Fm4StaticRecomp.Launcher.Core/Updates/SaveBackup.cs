@@ -22,13 +22,15 @@ public static class SaveBackup
 
     public static void Prune(string backupsFolder, string profileId, int keep = 3)
     {
-        // Exact names, so profile "main" never prunes the backups of a profile "main-2".
-        var pattern = new Regex($@"^{Regex.Escape(profileId)}-\d+\.\d+\.\d+-\d{{8}}-\d{{6}}\.zip$");
         var mine = Directory.GetFiles(backupsFolder, "*.zip")
-            .Where(f => pattern.IsMatch(Path.GetFileName(f)))
+            .Where(f => IsBackupOf(Path.GetFileName(f), profileId))
             .OrderByDescending(File.GetLastWriteTimeUtc).ToList();
         foreach (var old in mine.Skip(keep)) File.Delete(old);
     }
+
+    // Exact names, so profile "main" never claims the backups of a profile "main-2".
+    public static bool IsBackupOf(string fileName, string profileId) =>
+        Regex.IsMatch(fileName, $@"^{Regex.Escape(profileId)}-\d+\.\d+\.\d+-\d{{8}}-\d{{6}}\.zip$");
 
     private static void Add(ZipArchive archive, string folder, string prefix, IPlatform platform)
     {
