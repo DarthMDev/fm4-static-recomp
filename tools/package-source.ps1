@@ -1,3 +1,5 @@
+# Portions copyright (c) 2026, Pinyon Shift contributors (BSD 3-Clause: see THIRD_PARTY_NOTICES.md).
+# Copyright (c) 2026, i2kiselev (BSD 3-Clause: see LICENSE in the repository root).
 # Packs the source payload the launcher builds from into .artifacts\fm4-static-recomp-source.zip.
 [CmdletBinding()]
 param()
@@ -56,7 +58,7 @@ if (Test-Path -LiteralPath $payloadRoot) { Remove-Item -LiteralPath $payloadRoot
 $include = @(
     'CMakeLists.txt', 'CMakePresets.json', 'LICENSE', 'README.md', 'THIRD_PARTY_NOTICES.md', 'DEBUG_OPTIONS.md', 'guide', 'cmake', 'src',
     'config/rexglue', 'config/release.json', 'config/release-toolchain.json',
-    'config/supported-discs.json', 'config/shaders', 'config/warm-up',
+    'config/supported-discs.json', 'config/pfp4-1.3.json', 'config/shaders', 'config/warm-up',
     'tools/release-common.ps1', 'tools/provision-toolchain.ps1', 'tools/install-build-tools.ps1',
     'tools/prepare-sdk.ps1', 'tools/codegen.ps1', 'tools/build.ps1', 'tools/setup.ps1',
     'tools/release_analysis.py', 'tools/code_images.py',

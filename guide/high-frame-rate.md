@@ -9,7 +9,7 @@ says how to pick a rate, and what the port changes in the game to get there.
 
 ## Picking a rate
 
-**FRAME RATE** on the GRAPHICS page (**BACK + START** or **F6**) or in the launcher's SETTINGS;
+**FRAME RATE** on the GRAPHICS page (**BACK + START** or **F6**) or in the launcher's GRAPHICS;
 `--fm4_frame_rate=60..240` as a launch option. 120 by default, lowered to the refresh rate on a
 slower display. It applies as soon as you SAVE & APPLY, mid-race too.
 

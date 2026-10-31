@@ -1,3 +1,5 @@
+// Copyright (c) 2026, i2kiselev
+// BSD 3-Clause License: see LICENSE in the repository root.
 using Fm4StaticRecomp.Launcher.Core.Discs;
 using Fm4StaticRecomp.Launcher.Core.Updates;
 using Fm4StaticRecomp.Launcher.Tests.Discs;
@@ -54,10 +56,45 @@ public class GameFolderCheckTests
         var xex = TestDiscs.Pal()["default.xex"];
         var game = Path.Combine(temp.Path, "game");
         temp.File("game/default.xex", xex);
-        Assert.True(GameFolderCheck.ExecutableMatches(game, manifest, TestDiscs.PalName));
+        Assert.True(GameFolderCheck.ExecutableMatches(game, manifest, TestDiscs.PalName, false));
         xex[^1] ^= 1;
         File.WriteAllBytes(Path.Combine(game, "default.xex"), xex);
-        Assert.False(GameFolderCheck.ExecutableMatches(game, manifest, TestDiscs.PalName));
-        Assert.False(GameFolderCheck.ExecutableMatches(Path.Combine(temp.Path, "none"), manifest, TestDiscs.PalName));
+        Assert.False(GameFolderCheck.ExecutableMatches(game, manifest, TestDiscs.PalName, false));
+        Assert.False(GameFolderCheck.ExecutableMatches(Path.Combine(temp.Path, "none"), manifest, TestDiscs.PalName, false));
+    }
+
+    private static readonly byte[] ModXex = "mod xex"u8.ToArray();
+
+    private static DiscManifest WithMod(DiscManifest manifest) => manifest with
+    {
+        Disc1 = manifest.Disc1 with
+        {
+            Releases =
+            [
+                .. manifest.Disc1.Releases,
+                new Disc1Release("Project Forza Plus 4 1.3", "633772A0",
+                    [new ManifestFile("default.xex", ModXex.Length, TestDiscs.Sha(ModXex))], Mod: true),
+            ],
+        },
+    };
+
+    [Fact]
+    public void A_pfp4_game_folder_matches_the_mod_executable()
+    {
+        using var temp = new TempDir();
+        var manifest = WithMod(Manifest(temp, TestDiscs.Pal()));
+        temp.File("game/default.xex", ModXex);
+        var game = Path.Combine(temp.Path, "game");
+        Assert.True(GameFolderCheck.ExecutableMatches(game, manifest, TestDiscs.PalName, true));
+        Assert.False(GameFolderCheck.ExecutableMatches(game, manifest, TestDiscs.PalName, false));
+    }
+
+    [Fact]
+    public void A_pfp4_game_folder_with_the_disc_executable_does_not_match()
+    {
+        using var temp = new TempDir();
+        var manifest = WithMod(Manifest(temp, TestDiscs.Pal()));
+        temp.File("game/default.xex", TestDiscs.Pal()["default.xex"]);
+        Assert.False(GameFolderCheck.ExecutableMatches(Path.Combine(temp.Path, "game"), manifest, TestDiscs.PalName, true));
     }
 }

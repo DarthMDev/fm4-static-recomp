@@ -1,3 +1,5 @@
+// Copyright (c) 2026, i2kiselev
+// BSD 3-Clause License: see LICENSE in the repository root.
 using Fm4StaticRecomp.Launcher.Core.Settings;
 
 namespace Fm4StaticRecomp.Launcher.Tests.Settings;
@@ -42,6 +44,22 @@ public class GraphicsSettingsTests
         Assert.Equal("fm4_frame_rate = 144\nunknown = 1\nresolution_scale = 2\nswap_post_effect = \"fxaa\"\n",
             File.ReadAllText(toml));
         Assert.Single(Directory.GetFiles(Path.Combine(temp.Path, "backups")));
+    }
+
+    [Fact]
+    public void Is_changed_only_while_a_value_differs_from_the_saved_one()
+    {
+        using var temp = new TempDir();
+        var toml = temp.File("graphics.toml", "fm4_frame_rate = 120\n"u8.ToArray());
+        var settings = new GraphicsSettings(Schema(), toml, Path.Combine(temp.Path, "backups"));
+        Assert.False(settings.Changed);
+        settings.Set("fm4_frame_rate", "144");
+        Assert.True(settings.Changed);
+        settings.Set("fm4_frame_rate", "120");
+        Assert.False(settings.Changed);
+        settings.Set("swap_post_effect", "fxaa");
+        settings.Save();
+        Assert.False(settings.Changed);
     }
 
     [Fact]

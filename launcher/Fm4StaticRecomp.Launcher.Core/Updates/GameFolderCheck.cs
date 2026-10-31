@@ -1,3 +1,5 @@
+// Copyright (c) 2026, i2kiselev
+// BSD 3-Clause License: see LICENSE in the repository root.
 using System.Security.Cryptography;
 using Fm4StaticRecomp.Launcher.Core.Discs;
 
@@ -15,9 +17,10 @@ public static class GameFolderCheck
         return next.Disc1Files(nextRelease).Any(f => !f.Optional && !known.Contains(f.Path));
     }
 
-    public static bool ExecutableMatches(string gameFolder, DiscManifest manifest, string releaseName)
+    // A Project Forza Plus 4 install runs the mod's own default.xex, whatever disc it came from.
+    public static bool ExecutableMatches(string gameFolder, DiscManifest manifest, string releaseName, bool pfp4)
     {
-        var expected = Release(manifest, releaseName)?.Files
+        var expected = (pfp4 ? manifest.ModRelease : Release(manifest, releaseName))?.Files
             .FirstOrDefault(f => string.Equals(f.Path, Disc1Installer.Executable, StringComparison.OrdinalIgnoreCase));
         var path = Path.Combine(gameFolder, Disc1Installer.Executable);
         if (expected is null || !File.Exists(path) || new FileInfo(path).Length != expected.Size) return false;

@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 """showroom_cuts.py <seconds>: sample the test session's picture and report camera cuts (fades to
 black). Run it with a session.ps1 game sitting in the showroom.
 

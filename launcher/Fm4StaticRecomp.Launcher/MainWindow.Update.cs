@@ -1,9 +1,12 @@
+// Portions copyright (c) 2026, Pinyon Shift contributors (BSD 3-Clause: see THIRD_PARTY_NOTICES.md).
+// Copyright (c) 2026, i2kiselev (BSD 3-Clause: see LICENSE in the repository root).
 // Adapted from Pinyon Shift's launcher (launcher/PinyonShift.Launcher.Desktop, BSD-3-Clause; see THIRD_PARTY_NOTICES.md).
 using System.Diagnostics;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Interactivity;
 using Fm4StaticRecomp.Launcher.Controls;
 using Fm4StaticRecomp.Launcher.Core.Discs;
+using Fm4StaticRecomp.Launcher.Core.Profiles;
 using Fm4StaticRecomp.Launcher.Core.Setup;
 using Fm4StaticRecomp.Launcher.Core.Updates;
 
@@ -176,7 +179,8 @@ public partial class MainWindow
             var next = await Task.Run(host.Manifest, cancellation);
             var installed = await Task.Run(() => DiscManifest.Load(host.Layout.DiscManifestOf(active)), cancellation);
             var needsDisc = await Task.Run(() => GameFolderCheck.NeedsExtraction(installed, next, release) ||
-                                                 !GameFolderCheck.ExecutableMatches(host.Layout.Game, next, release), cancellation);
+                                                 !GameFolderCheck.ExecutableMatches(host.Layout.Game, next, release,
+                                                     host.Setup.Game == ProfileStore.Pfp4), cancellation);
             if (needsDisc)
             {
                 // Spec 13: the active version stays playable until the player chooses the disc.
@@ -245,6 +249,8 @@ public partial class MainWindow
         if (_host is not { GameRunning: false } host) return Task.CompletedTask;
         _versionOffer = null;
         host.Setup.Disc1Release = null;
+        // A new Disc 1 extraction replaces the mod's files: setup puts the mod back after it.
+        host.Setup.Pfp4Applied = false;
         ShowMode(Mode.Setup);
         Headline.Text = "CHOOSE DISC 1 AGAIN";
         Subhead.Text = "This version needs files your installed Disc 1 lacks.";

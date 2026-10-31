@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 """The last dumped frame of a runtime log (race-trace.ps1, run.ps1 -Dumps): clears, resolves and
 target changes in order, with the surface transfers and texture loads each one caused.
 

@@ -1,3 +1,5 @@
+// Copyright (c) 2026, i2kiselev
+// BSD 3-Clause License: see LICENSE in the repository root.
 namespace Fm4StaticRecomp.Launcher.Core.Discs;
 
 internal sealed class SubStream(Stream inner, long start, long length) : Stream

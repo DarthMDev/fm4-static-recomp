@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 # Builds the release assets into .artifacts\release: the launcher, the source payload, their
 # checksums, and FM4StaticRecomp-Launcher.zip, the one file players download.
 [CmdletBinding()]

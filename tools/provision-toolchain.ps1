@@ -1,3 +1,5 @@
+# Portions copyright (c) 2026, Pinyon Shift contributors (BSD 3-Clause: see THIRD_PARTY_NOTICES.md).
+# Copyright (c) 2026, i2kiselev (BSD 3-Clause: see LICENSE in the repository root).
 # Adapted from Pinyon Shift's tools/provision-toolchain.ps1 (BSD-3, see THIRD_PARTY_NOTICES.md).
 [CmdletBinding()]
 param(

@@ -1,3 +1,5 @@
+// Copyright (c) 2026, i2kiselev
+// BSD 3-Clause License: see LICENSE in the repository root.
 using Fm4StaticRecomp.Launcher.Core.Install;
 
 namespace Fm4StaticRecomp.Launcher.Tests.Install;
@@ -36,6 +38,8 @@ public class InstallLayoutTests
         Assert.Equal(@"C:\G\data\source\1.0.0\tools\create-crash-report.ps1", layout.CrashReportScript("1.0.0"));
         Assert.Equal(@"C:\G\data\source\1.0.0\.local\logs", layout.SetupLogs("1.0.0"));
         Assert.Equal(@"C:\G\data\source\1.0.0\config\supported-discs.json", layout.DiscManifestOf("1.0.0"));
+        Assert.Equal(@"C:\G\data\source\1.0.0\config\pfp4-1.3.json", layout.Pfp4ManifestOf("1.0.0"));
+        Assert.Equal(@"C:\G\data\pfp4\modes\hard\skip-intro\Asia", layout.Pfp4SkipIntro("hard", "Asia"));
         Assert.Equal(@"C:\G\data\source\1.0.0\out\build\win-amd64-release\graphics-settings.json", layout.GraphicsSchema("1.0.0"));
     }
 }

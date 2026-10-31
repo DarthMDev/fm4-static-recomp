@@ -1,3 +1,5 @@
+// Copyright (c) 2026, i2kiselev
+// BSD 3-Clause License: see LICENSE in the repository root.
 namespace Fm4StaticRecomp.Launcher.Core.Setup;
 
 public sealed record SetupRequest(string Version, int BuildJobs, bool AcceptMicrosoftLicence, bool UseVisualStudioInstaller);

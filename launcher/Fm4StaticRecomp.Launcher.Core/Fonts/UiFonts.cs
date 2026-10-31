@@ -1,3 +1,5 @@
+// Copyright (c) 2026, i2kiselev
+// BSD 3-Clause License: see LICENSE in the repository root.
 namespace Fm4StaticRecomp.Launcher.Core.Fonts;
 
 // The disc's heading fonts as the built game exports them (--fm4_export_ui_fonts):

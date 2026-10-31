@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 """Greyscale films of a scripted session (src/scripted_input.cpp, a ".gray" film request).
 
     film.py info  <film> [anchor_time]

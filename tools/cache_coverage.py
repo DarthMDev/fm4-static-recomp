@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 """How much of a reference shader cache another one covers, for tuning the shader warm-up.
 
 Usage: python -I tools/cache_coverage.py <reference .fbo.vk.xpso> <result .fbo.vk.xpso>

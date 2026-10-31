@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 """Reproducible .tar.xz release assets: the same input files give the same bytes on every run.
 
 As a script: python -I tools/tar_xz.py <folder> <archive.tar.xz> packs a folder's files under its

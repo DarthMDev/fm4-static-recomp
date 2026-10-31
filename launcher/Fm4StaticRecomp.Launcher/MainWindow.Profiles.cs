@@ -1,3 +1,5 @@
+// Copyright (c) 2026, i2kiselev
+// BSD 3-Clause License: see LICENSE in the repository root.
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Fm4StaticRecomp.Launcher.Core.Profiles;
@@ -45,8 +47,9 @@ public partial class MainWindow
         {
             await action(host);
         }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidDataException)
         {
+            AppendLog($"Profile: {error.Message}");
             await Dialog.AskAsync(this, "PROFILE", error.Message, "OK");
         }
         ReloadProfiles();
@@ -58,7 +61,14 @@ public partial class MainWindow
             "A separate save: its own career, garage and gamertag. Disc 2, DLC and graphics settings are shared.",
             [("Name", "")], "CREATE", "CANCEL");
         if (answer != "CREATE" || values[0].Trim().Length == 0) return;
-        var profile = host.Profiles.Create(values[0]);
+        string? save = null;
+        if (host.Setup.Game == ProfileStore.Pfp4)
+        {
+            var (chosen, folder) = await AskStartAsync(host, host.Settings.ActiveVersion ?? host.Payload.Version, offerNewCareer: true);
+            if (!chosen) return;
+            save = folder;
+        }
+        var profile = save is null ? host.Profiles.Create(values[0]) : host.Profiles.CreateFromSkipIntro(values[0], save);
         SaveActiveProfile(profile);
     });
 
@@ -89,6 +99,8 @@ public partial class MainWindow
     private async void ImportSave_Click(object? sender, RoutedEventArgs e) => await ProfileActionAsync(async host =>
     {
         if (await PickFolderAsync("Choose a state folder or its user folder to import") is not { } folder) return;
+        if (await AskSaveGameAsync(folder) is not var (game, how, warning)) return;
+        if (host.Profiles.Refusal(game) is { } refusal) throw new IOException(refusal);
         var (answer, values) = await Dialog.PromptAsync(this, "IMPORT SAVE",
             $"Copies the saves in {folder} into a new profile. The folder is not changed.",
             [("Name", Path.GetFileName(Path.TrimEndingDirectorySeparator(folder)))], "IMPORT", "CANCEL");
@@ -96,7 +108,9 @@ public partial class MainWindow
         SetBusy(true);
         try
         {
-            var profile = await Task.Run(() => host.Profiles.Import(folder, values[0]));
+            var profile = await Task.Run(() => host.Profiles.Import(folder, values[0], game, warning));
+            AppendLog($"Profile {profile.Name} imported from {folder} as {GameName(game)} saves ({how})." +
+                      (warning is null ? "" : $" Imported past a warning: {warning}."));
             SaveActiveProfile(profile);
         }
         finally
@@ -104,6 +118,31 @@ public partial class MainWindow
             SetBusy(false);
         }
     });
+
+    // Which game a save is from: our profile's stamp says it; for any other folder the player
+    // does, with no answer preselected, and a DLC folder beside the saves that says otherwise warns.
+    // How it was decided and the warning the player went past are returned for the log.
+    private async Task<(string Game, string How, string? Warning)?> AskSaveGameAsync(string folder)
+    {
+        if (ProfileStore.StampedGame(folder) is { } stamped) return (stamped, "its profile's stamp", null);
+        var answer = await Dialog.AskAsync(this, "WHICH GAME ARE THESE SAVES FROM?",
+            "Saves of vanilla Forza Motorsport 4 and of Project Forza Plus 4 cannot be used in each other's installs: " +
+            "a vanilla career on the mod hangs on parts the mod removed.",
+            "CANCEL", "VANILLA SAVE", "PFP4 SAVE");
+        if (answer is not ("VANILLA SAVE" or "PFP4 SAVE")) return null;
+        var declared = answer == "PFP4 SAVE" ? ProfileStore.Pfp4 : "vanilla";
+        var guess = await Task.Run(() => SaveOrigin.Guess(folder));
+        if (guess is null || guess == declared) return (declared, guess is null ? "the player's answer" : "the player's answer, the DLC folder agrees", null);
+        var anyway = $"IMPORT AS {GameName(declared).ToUpperInvariant()}";
+        var sure = await Dialog.AskAsync(this, "ARE YOU SURE?",
+            $"The DLC folder beside these saves is {GameName(guess)}'s, not {GameName(declared)}'s. " +
+            $"Import them as {GameName(declared)} saves anyway?", "CANCEL", anyway);
+        return sure == anyway
+            ? (declared, "the player's answer", $"the DLC folder beside the saves is {GameName(guess)}'s")
+            : null;
+    }
+
+    private static string GameName(string game) => game == ProfileStore.Pfp4 ? "Project Forza Plus 4" : "vanilla FM4";
 
     private async void DeleteProfile_Click(object? sender, RoutedEventArgs e) => await ProfileActionAsync(async host =>
     {

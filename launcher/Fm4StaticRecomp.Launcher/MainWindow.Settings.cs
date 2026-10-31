@@ -1,17 +1,23 @@
+// Portions copyright (c) 2026, Pinyon Shift contributors (BSD 3-Clause: see THIRD_PARTY_NOTICES.md).
+// Copyright (c) 2026, i2kiselev (BSD 3-Clause: see LICENSE in the repository root).
 // Adapted from Pinyon Shift's launcher (launcher/PinyonShift.Launcher.Desktop, BSD-3-Clause; see THIRD_PARTY_NOTICES.md).
 using System.Globalization;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Fm4StaticRecomp.Launcher.Controls;
+using Fm4StaticRecomp.Launcher.Core.Pfp4;
 using Fm4StaticRecomp.Launcher.Core.Settings;
 
 namespace Fm4StaticRecomp.Launcher;
 
-// The Settings panel (spec 8): the GRAPHICS page's rows from the schema the build wrote,
-// the launch options and the advanced options. Nothing is written until SAVE.
+// The GRAPHICS and SETTINGS panels (spec 8): the game's GRAPHICS page's rows from the schema the
+// build wrote, and the launch and advanced options. Nothing is written until SAVE, which writes both.
 public partial class MainWindow
 {
     private const string Custom = "CUSTOM";
@@ -22,8 +28,10 @@ public partial class MainWindow
     private int _buildJobs;
     private string _language = GameLanguages.Default.Code;
     private string _commandLineOptions = "";
+    private string _pfp4Mode = DefaultMode;
+    private bool _pfp4HarderAi;
     private Button? _saveSettingsButton, _restoreSettingsButton;
-    private TextBlock? _settingsStatus;
+    private TextBlock? _settingsStatus, _unsavedMark;
     private int? _refreshHz;
     private (int Width, int Height)? _displaySize;
     private string? _upscalerNote;
@@ -49,6 +57,7 @@ public partial class MainWindow
         (_skipIntro, _asyncReadbacks, _presentViaDxgi, _compat, _buildJobs, _language) =
             (settings.SkipIntro, settings.AsyncReadbacks, settings.PresentViaDxgi, settings.Compat, settings.BuildJobs, settings.Language);
         _commandLineOptions = settings.CommandLineOptions;
+        (_pfp4Mode, _pfp4HarderAi) = (host.Setup.Pfp4Mode ?? DefaultMode, host.Setup.Pfp4HarderAi);
         BuildSettingsPanel("");
     }
 
@@ -57,21 +66,104 @@ public partial class MainWindow
         if (_host is not { } host) return;
         SettingsBody.Children.Clear();
         _presetCombo = null;
-        SettingsBody.Children.Add(new VectorHeading { Text = "SETTINGS", FontSize = 24, Foreground = Brush("LabelBrush") });
+        var graphicsPage = _panel == Panel.Graphics;
+        SettingsBody.Children.Add(new VectorHeading
+            { Text = graphicsPage ? "GRAPHICS" : "SETTINGS", FontSize = 24, Foreground = Brush("LabelBrush") });
 
-        SettingsBody.Children.Add(Header("GRAPHICS"));
-        if (_graphics is not { } graphics)
-            SettingsBody.Children.Add(Help(_graphicsProblem ?? "Build the game first."));
-        else
+        // On top: below a long page a player stopped short of SAVE and took it for missing.
+        _unsavedMark = new TextBlock { Text = "*", Foreground = Brush("AccentBrush"), FontWeight = FontWeight.Bold };
+        _saveSettingsButton = new Button
         {
-            if (graphics.FileIsMalformed)
-                SettingsBody.Children.Add(Help("The settings file could not be read; the defaults are shown. Saving backs the file up first."));
-            foreach (var block in graphics.Schema.Blocks)
+            Content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, Children = { new TextBlock { Text = "SAVE" }, _unsavedMark } },
+            MinWidth = 120, HorizontalContentAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 10, 0), Classes = { "quiet" },
+        };
+        AutomationProperties.SetName(_saveSettingsButton, "SAVE");
+        _saveSettingsButton.Click += (_, _) => SaveSettings();
+        var actions = new WrapPanel { Children = { _saveSettingsButton } };
+        _restoreSettingsButton = null;
+        if (graphicsPage)
+        {
+            var reset = new Button { Content = "RESET TO DEFAULTS", Margin = new Thickness(0, 0, 10, 0), Classes = { "quiet" } };
+            reset.Click += (_, _) =>
             {
-                var rows = new StackPanel { Spacing = 6, Margin = new Thickness(0, 4, 0, 10) };
-                foreach (var row in block.Rows.Where(graphics.Shows)) rows.Children.Add(GraphicsRow(graphics, row));
-                SettingsBody.Children.Add(rows);
-            }
+                _graphics?.ResetToDefaults();
+                BuildSettingsPanel("Defaults shown; SAVE writes them.");
+            };
+            _restoreSettingsButton = new Button { Content = "RESTORE BACKUP", Classes = { "link" }, VerticalAlignment = VerticalAlignment.Center };
+            _restoreSettingsButton.Click += (_, _) => RestoreSettingsBackup();
+            actions.Children.Add(reset);
+            actions.Children.Add(_restoreSettingsButton);
+        }
+        SettingsBody.Children.Add(actions);
+        _settingsStatus = Help(status);
+        SettingsBody.Children.Add(_settingsStatus);
+
+        if (graphicsPage) AddGraphicsRows();
+        else AddOtherRows(host);
+        RefreshUnsavedMark();
+        UpdateActions();
+    }
+
+    // Every row's change bubbles up here; the mark is set after the row's own handler has stored it.
+    private void WatchSettingsEdits()
+    {
+        foreach (var edit in new RoutedEvent[]
+                 {
+                     SelectingItemsControl.SelectionChangedEvent, RangeBase.ValueChangedEvent, TextBox.TextChangedEvent,
+                     ToggleButton.IsCheckedChangedEvent, NumericUpDown.ValueChangedEvent,
+                 })
+            SettingsBody.AddHandler(edit, new EventHandler<RoutedEventArgs>((_, _) => Dispatcher.UIThread.Post(RefreshUnsavedMark)),
+                handledEventsToo: true);
+    }
+
+    private void RefreshUnsavedMark()
+    {
+        if (_unsavedMark is null || _saveSettingsButton is null) return;
+        _unsavedMark.IsVisible = SettingsUnsaved();
+        ToolTip.SetTip(_saveSettingsButton, _unsavedMark.IsVisible ? "Changed, not saved yet." : null);
+    }
+
+    private bool SettingsUnsaved()
+    {
+        if (_host is not { } host) return false;
+        var settings = host.Settings;
+        return _graphics?.Changed == true
+               || (_skipIntro, _asyncReadbacks, _presentViaDxgi, _compat, _buildJobs, _language, _commandLineOptions.Trim())
+               != (settings.SkipIntro, settings.AsyncReadbacks, settings.PresentViaDxgi, settings.Compat, settings.BuildJobs,
+                   settings.Language, settings.CommandLineOptions)
+               || (Pfp4Install && (_pfp4Mode != (host.Setup.Pfp4Mode ?? DefaultMode) || _pfp4HarderAi != host.Setup.Pfp4HarderAi));
+    }
+
+    private void AddGraphicsRows()
+    {
+        if (_graphics is not { } graphics)
+        {
+            SettingsBody.Children.Add(Help(_graphicsProblem ?? "Build the game first."));
+            return;
+        }
+        if (graphics.FileIsMalformed)
+            SettingsBody.Children.Add(Help("The settings file could not be read; the defaults are shown. Saving backs the file up first."));
+        foreach (var block in graphics.Schema.Blocks)
+        {
+            var rows = new StackPanel { Spacing = 6, Margin = new Thickness(0, 4, 0, 10) };
+            foreach (var row in block.Rows.Where(graphics.Shows)) rows.Children.Add(GraphicsRow(graphics, row));
+            SettingsBody.Children.Add(rows);
+        }
+    }
+
+    private void AddOtherRows(LauncherHost host)
+    {
+        if (Pfp4Install)
+        {
+            SettingsBody.Children.Add(Header("PROJECT FORZA PLUS 4"));
+            var mode = Combo(Pfp4ModeNames.Select(m => m.ToUpperInvariant()).ToList(), Array.IndexOf(Pfp4ModeNames, _pfp4Mode));
+            mode.SelectionChanged += (_, _) =>
+            {
+                if (mode.SelectedIndex >= 0) _pfp4Mode = Pfp4ModeNames[mode.SelectedIndex];
+            };
+            SettingsBody.Children.Add(Labelled("CAREER MODE", mode,
+                ModeHelp + " A career started in another mode loads with a warning, once.", alwaysHelp: true));
+            SettingsBody.Children.Add(Option("HARDER AI", HarderAiHelp, _pfp4HarderAi, v => _pfp4HarderAi = v));
         }
 
         SettingsBody.Children.Add(Header("LAUNCH OPTIONS"));
@@ -109,23 +201,6 @@ public partial class MainWindow
         AutomationProperties.SetName(jobs, "BUILD JOBS");
         jobs.ValueChanged += (_, e) => _buildJobs = (int)(e.NewValue ?? 0);
         SettingsBody.Children.Add(Labelled("BUILD JOBS", jobs, "0 picks them from your processor and memory.", alwaysHelp: true));
-
-        _saveSettingsButton = new Button { Content = "SAVE", MinWidth = 120, Margin = new Thickness(0, 0, 10, 8), Classes = { "quiet" } };
-        _saveSettingsButton.Click += (_, _) => SaveSettings();
-        var reset = new Button { Content = "RESET TO DEFAULTS", Margin = new Thickness(0, 0, 10, 8), Classes = { "quiet" } };
-        reset.Click += (_, _) =>
-        {
-            _graphics?.ResetToDefaults();
-            BuildSettingsPanel("Defaults shown; SAVE writes them.");
-        };
-        _restoreSettingsButton = new Button { Content = "RESTORE BACKUP", Margin = new Thickness(0, 0, 0, 8), Classes = { "link" },
-            VerticalAlignment = VerticalAlignment.Center };
-        _restoreSettingsButton.Click += (_, _) => RestoreSettingsBackup();
-        SettingsBody.Children.Add(new WrapPanel
-            { Margin = new Thickness(0, 10, 0, 0), Children = { _saveSettingsButton, reset, _restoreSettingsButton } });
-        _settingsStatus = Help(status);
-        SettingsBody.Children.Add(_settingsStatus);
-        UpdateActions();
     }
 
     private void UpdateSettingsActions()
@@ -270,6 +345,12 @@ public partial class MainWindow
         if (_host is not { GameRunning: false } host) return;
         try
         {
+            if (Pfp4Install && (_pfp4Mode != host.Setup.Pfp4Mode || _pfp4HarderAi != host.Setup.Pfp4HarderAi))
+            {
+                Pfp4Modes.Switch(host.Layout, host.ModManifest(host.Settings.ActiveVersion ?? host.Payload.Version), host.Setup,
+                    _pfp4Mode, _pfp4HarderAi);
+                AppendLog($"Project Forza Plus 4: {ModeText(_pfp4Mode, _pfp4HarderAi)}.");
+            }
             _graphics?.Save();
             var settings = host.Settings;
             (settings.SkipIntro, settings.AsyncReadbacks, settings.PresentViaDxgi, settings.Compat, settings.BuildJobs, settings.Language) =
@@ -277,10 +358,11 @@ public partial class MainWindow
             settings.CommandLineOptions = _commandLineOptions.Trim();
             settings.Save();
             if (_settingsStatus is not null) _settingsStatus.Text = "Saved. Applies at the next start.";
+            RefreshUnsavedMark();
             UpdateSummary();
             AppendLog("Settings saved.");
         }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidDataException)
         {
             if (_settingsStatus is not null) _settingsStatus.Text = $"Not saved: {error.Message}";
         }

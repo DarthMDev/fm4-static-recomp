@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 """Inspect a retail XEX2: unpack its image and disassemble PowerPC code.
 
     xex_tool.py info  <xex>

@@ -1,3 +1,5 @@
+// Copyright (c) 2026, i2kiselev
+// BSD 3-Clause License: see LICENSE in the repository root.
 using Fm4StaticRecomp.Launcher.Core.Setup;
 
 namespace Fm4StaticRecomp.Launcher.Core.Install;
@@ -11,6 +13,7 @@ public static class StartDecision
     public static StartKind Decide(SetupState state, int profileCount, string payloadVersion)
     {
         if (!state.Disc1Installed || state.BuiltVersions.Count == 0 || profileCount == 0) return StartKind.Setup;
+        if (state.Game == "pfp4" && !state.Pfp4Applied) return StartKind.Setup;
         return state.BuiltVersions.Contains(payloadVersion) ? StartKind.Ready : StartKind.BuildVersion;
     }
 }

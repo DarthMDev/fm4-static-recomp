@@ -108,8 +108,11 @@ def back_to_main_menu(session):
 
 def _abarth_500(session, step):
     """From a manufacturer select: Abarth, then its 500 esseesse."""
-    since = len(session.lines)
     _moves(session, ["LEFT"] * 6)
+    # After the moves: the screen logs Abarth's text as it opens, which a mark taken before
+    # that line was polled would count as Abarth focused at the left edge.
+    session.poll()
+    since = len(session.lines)
     focus(session, "RIGHT", ABARTH, 4, since, f"{step}: Abarth")
     session.poll()
     since = len(session.lines)

@@ -1,3 +1,5 @@
+# Portions copyright (c) 2026, Pinyon Shift contributors (BSD 3-Clause: see THIRD_PARTY_NOTICES.md).
+# Copyright (c) 2026, i2kiselev (BSD 3-Clause: see LICENSE in the repository root).
 # Adapted from Pinyon Shift's tools/create-crash-report.ps1 (BSD-3, see THIRD_PARTY_NOTICES.md).
 # Bundles a crash for an issue report: a sanitized ZIP in <state>\reports and a prefilled GitHub
 # issue link. The launcher runs it from the payload's tools\ with -StateRoot = its data folder and

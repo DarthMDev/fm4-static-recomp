@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 """Writes config/supported-discs.json from known-good Disc 1 extractions and Disc 2 packages.
 
     make-disc-manifest.py --release "1.0 PAL (Europe, Australia)=1.0=D:/disc1-pal" \
@@ -5,7 +7,8 @@
 
 Each release is NAME=CODE_IMAGE=DIR; the code image names the default.xex the game is
 recompiled from (releases sharing one have byte-identical decrypted code). --base carries the
-releases of an existing manifest without their extractions. Files identical on every release go
+releases of an existing manifest without their extractions, and its mod releases (a mod's own
+default.xex, `"mod": true`) unchanged. Files identical on every release go
 to disc1.files; the rest go to each release's own list. Paths compare case-insensitively (later
 pressings rename some folders and files by case only); a shared file keeps the first spelling.
 """
@@ -60,9 +63,12 @@ def main() -> None:
     parser.add_argument("disc2", type=pathlib.Path)
     parser.add_argument("output", type=pathlib.Path)
     args = parser.parse_args()
-    releases = []
+    releases, mods = [], []
     if args.base:
-        for entry, files in carried(json.loads(args.base.read_text(encoding="utf-8"))):
+        base = json.loads(args.base.read_text(encoding="utf-8"))
+        mods = [r for r in base["disc1"]["releases"] if r.get("mod")]
+        base["disc1"]["releases"] = [r for r in base["disc1"]["releases"] if not r.get("mod")]
+        for entry, files in carried(base):
             if "code_image" not in entry:
                 raise SystemExit(f"{entry['name']} in {args.base} has no code_image")
             releases.append((entry["name"], entry["media_id"], entry["code_image"], files))
@@ -102,7 +108,7 @@ def main() -> None:
         "title_id": "4D530910",
         "disc1": {
             "releases": [{"name": name, "media_id": media, "code_image": image, "files": own[name]}
-                         for name, media, image, _ in releases],
+                         for name, media, image, _ in releases] + mods,
             "files": shared,
         },
         "disc2": {"packages": [{"name": p.name, "size": p.stat().st_size, "sha256": digest(p)} for p in packages]},

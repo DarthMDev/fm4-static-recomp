@@ -7,8 +7,14 @@
         WindowStartupLocation="CenterScreen"
         DragDrop.AllowDrop="True">
     <Grid RowDefinitions="64,*,48">
-        <TextBlock Grid.Row="0" x:Name="ProductText" Classes="header" Text="FM4 STATIC RECOMP"
-                   HorizontalAlignment="Left" VerticalAlignment="Center" Margin="64,0,0,0"/>
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="14" Margin="64,0,0,0" VerticalAlignment="Center">
+            <TextBlock x:Name="ProductText" Classes="header" Text="FM4 STATIC RECOMP" VerticalAlignment="Center"/>
+            <Border x:Name="GameBadge" IsVisible="False" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1"
+                    Padding="10,3" VerticalAlignment="Center">
+                <TextBlock Text="PROJECT FORZA PLUS 4 1.3" FontSize="13" FontWeight="Bold"
+                           Foreground="{StaticResource LabelBrush}"/>
+            </Border>
+        </StackPanel>
 
         <ScrollViewer Grid.Row="1" x:Name="BodyScroll" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="64,16,64,40" MaxWidth="900" HorizontalAlignment="Left" Spacing="0">
@@ -22,6 +28,19 @@
                 <Border x:Name="SetupPanel" Classes="strip" Margin="0,28,0,0">
                     <StackPanel Spacing="18">
                         <Grid ColumnDefinitions="34,*">
+                            <TextBlock x:Name="GameMark" Classes="mark" Text="○"/>
+                            <StackPanel Grid.Column="1" Spacing="6">
+                                <TextBlock x:Name="GameTitle" Classes="stepTitle" Text="GAME"/>
+                                <TextBlock x:Name="GameDetail" Classes="help" TextWrapping="Wrap"/>
+                                <WrapPanel x:Name="GameChoices">
+                                    <RadioButton x:Name="VanillaChoice" GroupName="Game" Content="VANILLA" IsChecked="True"
+                                                 IsCheckedChanged="Game_Changed" Margin="0,0,18,0"/>
+                                    <RadioButton x:Name="Pfp4Choice" GroupName="Game" Content="PROJECT FORZA PLUS 4"
+                                                 IsCheckedChanged="Game_Changed"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Grid>
+                        <Grid ColumnDefinitions="34,*">
                             <TextBlock x:Name="Disc1Mark" Classes="mark" Text="○"/>
                             <StackPanel Grid.Column="1" Spacing="6">
                                 <TextBlock x:Name="Disc1Title" Classes="stepTitle" Text="DISC 1"/>
@@ -34,7 +53,29 @@
                                 </WrapPanel>
                             </StackPanel>
                         </Grid>
-                        <Grid ColumnDefinitions="34,*">
+                        <Grid x:Name="ModRow" ColumnDefinitions="34,*" IsVisible="False">
+                            <TextBlock x:Name="ModMark" Classes="mark" Text="○"/>
+                            <StackPanel Grid.Column="1" Spacing="6">
+                                <TextBlock x:Name="ModTitle" Classes="stepTitle" Text="PROJECT FORZA PLUS 4 1.3"/>
+                                <TextBlock x:Name="ModDetail" Classes="help" TextWrapping="Wrap"/>
+                                <WrapPanel x:Name="ModButtons">
+                                    <Button x:Name="BrowseModButton" Classes="quiet" Content="CHOOSE ZIP"
+                                            Click="BrowseMod_Click" Margin="0,0,10,0"
+                                            ToolTip.Tip="The mod's zip as downloaded."/>
+                                    <Button x:Name="BrowseModFolderButton" Classes="quiet" Content="CHOOSE FOLDER"
+                                            Click="BrowseModFolder_Click"
+                                            ToolTip.Tip="The extracted Project Forza Plus 4 folder."/>
+                                </WrapPanel>
+                                <WrapPanel x:Name="ModOptions">
+                                    <ComboBox x:Name="ModeCombo" Width="220" Margin="0,0,18,0" VerticalAlignment="Center"
+                                              AutomationProperties.Name="Career mode"/>
+                                    <CheckBox x:Name="HarderAiCheck" AutomationProperties.Name="Harder AI">
+                                        <TextBlock Text="HARDER AI"/>
+                                    </CheckBox>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Grid>
+                        <Grid x:Name="Disc2Row" ColumnDefinitions="34,*">
                             <TextBlock x:Name="Disc2Mark" Classes="mark" Text="○"/>
                             <StackPanel Grid.Column="1" Spacing="6">
                                 <TextBlock x:Name="Disc2Title" Classes="stepTitle" Text="DISC 2 (OPTIONAL)"/>
@@ -72,6 +113,11 @@
                                 <TextBlock x:Name="ProfileDetail" Classes="help" TextWrapping="Wrap"/>
                                 <TextBox x:Name="ProfileNameBox" MaxLength="32" Width="360" HorizontalAlignment="Left" AutomationProperties.Name="Profile name"
                                          Watermark="Profile name" TextChanged="ProfileName_Changed"/>
+                                <ComboBox x:Name="StartCombo" Width="360" IsVisible="False" SelectedIndex="0"
+                                          AutomationProperties.Name="How the career starts">
+                                    <ComboBoxItem Content="NEW CAREER"/>
+                                    <ComboBoxItem Content="SKIP INTRO SAVE"/>
+                                </ComboBox>
                             </StackPanel>
                         </Grid>
                         <Border Height="1" Background="{StaticResource LineBrush}"/>
@@ -109,8 +155,10 @@
                 <WrapPanel x:Name="NavPanel" IsVisible="False" Margin="0,4,0,0">
                     <Button x:Name="ContentButton" Classes="quiet nav" Content="CONTENT" Click="ContentButton_Click"
                             ToolTip.Tip="Disc 2 and your downloadable content."/>
+                    <Button x:Name="GraphicsButton" Classes="quiet nav" Content="GRAPHICS" Click="GraphicsButton_Click"
+                            ToolTip.Tip="The game's graphics settings."/>
                     <Button x:Name="SettingsButton" Classes="quiet nav" Content="SETTINGS" Click="SettingsButton_Click"
-                            ToolTip.Tip="The game's graphics settings, launch options and advanced options."/>
+                            ToolTip.Tip="Language, launch options and advanced options."/>
                 </WrapPanel>
 
                 <TextBlock x:Name="StatusText" Margin="0,12,0,0" FontSize="15" TextWrapping="Wrap"
@@ -145,6 +193,9 @@
                             <Button Classes="quiet" Content="ADD DISC 2 FOLDER…" Click="AddDisc2Folder_Click" Margin="0,0,10,8"
                                     ToolTip.Tip="A GOD folder or a folder holding the four Disc 2 packages."/>
                         </WrapPanel>
+                        <Button x:Name="ChooseModAgainButton" Classes="quiet" Content="CHOOSE THE MOD AGAIN…" Click="ChooseModAgain_Click"
+                                Margin="0,0,10,8" IsEnabled="False"
+                                ToolTip.Tip="Copies Project Forza Plus 4 over the game again and saves every career mode's files again. Needs the mod's zip or folder."/>
                         <TextBlock Classes="header" Text="DOWNLOADABLE CONTENT" Margin="0,8,0,0"/>
                         <ScrollViewer MaxHeight="260" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                             <StackPanel x:Name="DlcList" Spacing="4"/>
@@ -154,7 +205,7 @@
                             <Button Classes="quiet" Content="ADD DLC FOLDER…" Click="AddDlcFolder_Click" Margin="0,0,10,8"
                                     ToolTip.Tip="Every FM4 package in the folder and its subfolders."/>
                         </WrapPanel>
-                        <TextBlock Classes="help" TextWrapping="Wrap"
+                        <TextBlock x:Name="ContentDropHelp" Classes="help" TextWrapping="Wrap"
                                    Text="Or drop packages or a folder on this window. Content is installed once and every profile sees it."/>
                         <StackPanel x:Name="ContentLines" Spacing="2"/>
                     </StackPanel>

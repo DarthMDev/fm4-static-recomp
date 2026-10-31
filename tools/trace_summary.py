@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 """trace_summary.py <runtime.log> [seconds]: rates and spacing of the SDK's critical path events
 (guest vblank, guest swap, consumed swap, present) over the log's last seconds, and how presents
 map to guest frames. Run the game with --perf_critical_path_trace=true; the log rotates fast."""

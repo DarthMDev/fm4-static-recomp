@@ -1,3 +1,5 @@
+// Copyright (c) 2026, i2kiselev
+// BSD 3-Clause License: see LICENSE in the repository root.
 namespace Fm4StaticRecomp.Launcher.Core.Install;
 
 public sealed record InstallLayout(string Root)
@@ -23,6 +25,9 @@ public sealed record InstallLayout(string Root)
     public string SetupState => Path.Combine(Root, "setup-state.json");
     public string ContentInstallUser => Path.Combine(Root, "content-install", "user");
     public string Reports => Path.Combine(Root, "reports");
+    public string Pfp4 => Path.Combine(Root, "pfp4");
+    public string Pfp4Modes => Path.Combine(Pfp4, "modes");
+    public string Pfp4SkipIntro(string mode, string save) => Path.Combine(Pfp4Modes, mode, "skip-intro", save);
 
     public string Source(string version) => Path.Combine(Root, "source", version);
     public string Cache(string version) => Path.Combine(Root, "cache", version);
@@ -37,4 +42,5 @@ public sealed record InstallLayout(string Root)
     public string SetupLogs(string version) => Path.Combine(Source(version), ".local", "logs");
     public string SetupFailureRecord(string version) => Path.Combine(SetupLogs(version), "setup-error.json");
     public string DiscManifestOf(string version) => Path.Combine(Source(version), "config", "supported-discs.json");
+    public string Pfp4ManifestOf(string version) => Path.Combine(Source(version), "config", "pfp4-1.3.json");
 }

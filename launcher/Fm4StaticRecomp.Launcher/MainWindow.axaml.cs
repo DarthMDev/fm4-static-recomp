@@ -1,3 +1,5 @@
+// Portions copyright (c) 2026, Pinyon Shift contributors (BSD 3-Clause: see THIRD_PARTY_NOTICES.md).
+// Copyright (c) 2026, i2kiselev (BSD 3-Clause: see LICENSE in the repository root).
 // Adapted from Pinyon Shift's launcher (launcher/PinyonShift.Launcher.Desktop, BSD-3-Clause; see THIRD_PARTY_NOTICES.md).
 using System.Collections.Concurrent;
 using Avalonia;
@@ -51,6 +53,8 @@ public partial class MainWindow : Window
         Title = Branding.ProductName;
         ProductText.Text = Branding.ProductName.ToUpperInvariant();
         VersionText.Text = $"{Branding.ProductName} {Version} · {Branding.Disclaimer}";
+        FitToScreen();
+        WatchSettingsEdits();
         AddHandler(DragDrop.DropEvent, OnDrop);
         AddHandler(DragDrop.DragOverEvent, OnDragOver);
         AddHandler(DragDrop.DragLeaveEvent, (_, _) => DropOverlay.IsVisible = false);
@@ -63,6 +67,19 @@ public partial class MainWindow : Window
             AppendLog($"UNEXPECTED ERROR in background work: {e.Exception}");
             e.SetObserved();
         };
+    }
+
+    // A window taller than the screen hid the bottom bar's buttons below the taskbar (a 1366x768
+    // laptop at 125 % has about 1090x580 to show); the title bar and frame sit outside Height.
+    private void FitToScreen()
+    {
+        const double frame = 40;
+        if (Screens.Primary is not { } screen) return;
+        var area = screen.WorkingArea.Size.ToSize(screen.Scaling);
+        Width = Math.Min(Width, area.Width);
+        Height = Math.Min(Height, area.Height - frame);
+        MinWidth = Math.Min(MinWidth, Width);
+        MinHeight = Math.Min(MinHeight, Height);
     }
 
     // The last chance: an error no handler expected is logged and shown instead of closing the
@@ -237,6 +254,7 @@ public partial class MainWindow : Window
     private void UpdateActions()
     {
         var running = _host?.GameRunning == true;
+        GameBadge.IsVisible = Pfp4Install;
         PrimaryButton.IsEnabled = !_busy && _mode switch
         {
             Mode.Setup => SetupCanStart(),
@@ -249,7 +267,7 @@ public partial class MainWindow : Window
         ProfileCombo.IsEnabled = ProfileButton.IsEnabled = !_busy && !running;
         UpdateSettingsActions();
         UpdateUpdateActions();
-        Disc2AddButtons.IsEnabled = DlcAddButtons.IsEnabled = ContentOpen;
+        Disc2AddButtons.IsEnabled = DlcAddButtons.IsEnabled = ChooseModAgainButton.IsEnabled = ContentOpen;
         UpdateSetupActions();
     }
 
@@ -265,14 +283,16 @@ public partial class MainWindow : Window
         return paths is { Count: 1 } && (File.Exists(paths[0]) || Directory.Exists(paths[0])) ? paths[0] : null;
     }
 
-    private bool AcceptsDrop => !_busy && (_mode == Mode.Setup || (_mode == Mode.Ready && _panel == Panel.Content && ContentOpen));
+    private bool AcceptsDrop => !_busy && (_mode == Mode.Setup || (_mode == Mode.Ready && _panel == Panel.Content && ContentOpen && !Pfp4Install));
+
+    private bool Pfp4Install => _host?.Setup.Game == Core.Profiles.ProfileStore.Pfp4;
 
     private void OnDragOver(object? sender, DragEventArgs e)
     {
         var accepted = AcceptsDrop && DroppedPath(e) is not null;
         e.DragEffects = accepted ? DragDropEffects.Copy : DragDropEffects.None;
         DropOverlayText.Text = _mode != Mode.Setup ? "DROP TO ADD THIS DLC"
-            : DropsGoToDisc1 ? "DROP TO USE THIS DISC 1" : "DROP TO USE THIS DISC 2";
+            : DropsGoToDisc1 ? "DROP TO USE THIS DISC 1" : Pfp4Chosen ? "DROP TO USE THIS MOD" : "DROP TO USE THIS DISC 2";
         DropOverlay.IsVisible = accepted;
     }
 
@@ -282,6 +302,7 @@ public partial class MainWindow : Window
         if (!AcceptsDrop || DroppedPath(e) is not { } path) return;
         if (_mode == Mode.Ready) await RunWorkAsync(t => AddDlcAsync([path], t));
         else if (DropsGoToDisc1) await ChooseDisc1Async(path);
+        else if (Pfp4Chosen) await ChooseModAsync(path);
         else await ChooseDisc2Async(path);
     }
 

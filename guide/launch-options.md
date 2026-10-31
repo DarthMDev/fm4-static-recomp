@@ -128,7 +128,7 @@ the command line. Two exceptions:
 - **GRAPHICS page settings** (`present_effect`, `resolution_scale`, `fm4_race_msaa` and the
   other rows) are saved to `graphics.toml`, which is applied after all three and beats the
   file and environment variables; only the command line beats it. Change those on the
-  GRAPHICS page or in the launcher's SETTINGS. `graphics.toml` (`data\config\graphics.toml`
+  GRAPHICS page or in the launcher's GRAPHICS. `graphics.toml` (`data\config\graphics.toml`
   under the launcher, `.local\state\config\graphics.toml` in a manual install) belongs to that
   page, not to the options above: do not add other options to it.
 - **The launcher's own options** are passed on its command line and beat environment

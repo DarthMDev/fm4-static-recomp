@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 """xex_refs.py <xex> <addr-lo-hex> <addr-hi-hex>: code that forms an address in [lo, hi) with lis +
 a 16-bit displacement (addi, load or store), found by tracking lis per register inside a function.
 Finds the data and string references that "xex_tool.py xrefs" misses."""

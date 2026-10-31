@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 """Makes the shipped shader list and vertex shader table from shader caches and a disc shader dump.
 
 Usage: python -E -P tools/shader_list.py

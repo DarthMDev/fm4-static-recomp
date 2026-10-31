@@ -67,6 +67,7 @@ the command line? See the [manual install](guide/manual-install.md).
 |---|---|
 | [Launcher](guide/launcher.md) | First setup, profiles, content, the `data` folder, updates |
 | [Manual install](guide/manual-install.md) | Command-line setup, Disc 2 and DLC, updating |
+| [Project Forza Plus 4](guide/project-forza-plus.md) | Setting up the mod: its own install, career modes, saves, what is left out |
 | [Graphics settings](guide/graphics.md) | The in-game GRAPHICS page, presets, what each setting does |
 | [Upscalers](guide/upscalers.md) | DLSS, FSR 2, FSR 3 and FSR 1: what to pick, how the port feeds them, known limits |
 | [High frame rates](guide/high-frame-rate.md) | Picking a frame rate, how the game runs at up to 240 fps at real speed, limits |
@@ -109,7 +110,7 @@ More than twice Xenia's frame rate at every scale on the same PC
 | Disc 1, 1.0 USA | USA, media ID `26FF1101` |
 | Disc 1, Rev 1 Europe | The 1.1 re-release, Europe, media ID `42C67824` |
 | Disc 1, Rev 1 USA | The 1.1 re-release, USA, media ID `33E7B39F` |
-| Disc 2 | Optional: the install disc's four content packages (more cars and tracks) |
+| Disc 2 | Optional: the install disc's four content packages (more cars) |
 | DLC | Optional: Marketplace packages for title `4D530910` |
 
 The two 1.0 releases carry the same code, and so do the two Rev 1 releases; only their

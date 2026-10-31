@@ -1,3 +1,5 @@
+// Copyright (c) 2026, i2kiselev
+// BSD 3-Clause License: see LICENSE in the repository root.
 #include "shader_cache/cache_writer.h"
 
 #include <charconv>

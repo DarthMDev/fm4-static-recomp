@@ -1,3 +1,5 @@
+// Portions copyright (c) 2026, Pinyon Shift contributors (BSD 3-Clause: see THIRD_PARTY_NOTICES.md).
+// Copyright (c) 2026, i2kiselev (BSD 3-Clause: see LICENSE in the repository root).
 // Adapted from Pinyon Shift's launcher (launcher/PinyonShift.Launcher.Desktop, BSD-3-Clause; see THIRD_PARTY_NOTICES.md).
 using Avalonia.Controls;
 using Avalonia.Interactivity;
@@ -16,8 +18,12 @@ public partial class MainWindow
     private void LoadContentPanel()
     {
         if (_host is not { } host) return;
-        Disc2StatusText.Text = host.Setup.Disc2Installed ? "INSTALLED" : "Not installed.";
-        Disc2AddButtons.IsVisible = !host.Setup.Disc2Installed;
+        // A Project Forza Plus 4 install has every package from the mod; nothing is added here.
+        var pfp4 = Pfp4Install;
+        Disc2StatusText.Text = pfp4 ? "From Project Forza Plus 4." : host.Setup.Disc2Installed ? "INSTALLED" : "Not installed.";
+        Disc2AddButtons.IsVisible = !pfp4 && !host.Setup.Disc2Installed;
+        DlcAddButtons.IsVisible = ContentDropHelp.IsVisible = !pfp4;
+        ChooseModAgainButton.IsVisible = pfp4;
         var disc2Packages = Disc2PackageNames(host);
         var dlc = host.Content.Installed().Where(p => !disc2Packages.Contains(p.FileName)).ToList();
         DlcList.Children.Clear();
@@ -46,6 +52,24 @@ public partial class MainWindow
     private async void AddDisc2_Click(object? sender, RoutedEventArgs e)
     {
         if (ContentOpen && await PickFileAsync("Choose your FM4 Disc 2 image") is { } path) await RunWorkAsync(t => AddDisc2Async(path, t));
+    }
+
+    // The only way back to the mod's files once its saved modes or Skip Intro saves are missing
+    // or damaged: setup then runs the mod step alone, since Disc 1 and the build are done.
+    private async void ChooseModAgain_Click(object? sender, RoutedEventArgs e)
+    {
+        if (!ContentOpen || _host is not { } host) return;
+        var answer = await Dialog.AskAsync(this, "CHOOSE THE MOD AGAIN",
+            "Setup asks for Project Forza Plus 4 1.3's zip or folder and copies it over the game again. " +
+            "The game does not start until that is done; profiles and settings stay.", "CHOOSE THE MOD", "CANCEL");
+        if (answer != "CHOOSE THE MOD" || !ContentOpen) return;
+        host.Setup.Pfp4Applied = false;
+        host.Setup.Save();
+        AppendLog("Project Forza Plus 4: the mod is to be chosen again.");
+        ShowMode(Mode.Setup);
+        Headline.Text = "CHOOSE THE MOD AGAIN";
+        Subhead.Text = "Choose Project Forza Plus 4 1.3's zip or folder, then start setup.";
+        StatusText.Text = "";
     }
 
     private async void AddDisc2Folder_Click(object? sender, RoutedEventArgs e)

@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 """Code images of FM4's Disc 1 and the guest addresses the build uses in each.
 
 Releases with byte-identical decrypted code share a code image (supported-discs.json,

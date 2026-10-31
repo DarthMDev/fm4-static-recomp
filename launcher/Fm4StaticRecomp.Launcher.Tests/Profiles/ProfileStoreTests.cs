@@ -1,17 +1,20 @@
+// Copyright (c) 2026, i2kiselev
+// BSD 3-Clause License: see LICENSE in the repository root.
 using Fm4StaticRecomp.Launcher.Core.Install;
 using Fm4StaticRecomp.Launcher.Core.Platform;
 using Fm4StaticRecomp.Launcher.Core.Profiles;
+using Fm4StaticRecomp.Launcher.Core.Setup;
 
 namespace Fm4StaticRecomp.Launcher.Tests.Profiles;
 
 public class ProfileStoreTests
 {
-    private static (TempDir Temp, ProfileStore Store, InstallLayout Layout) Make()
+    private static (TempDir Temp, ProfileStore Store, InstallLayout Layout) Make(string installGame = "vanilla")
     {
         var temp = new TempDir();
         var layout = new InstallLayout(temp.Path);
         Directory.CreateDirectory(layout.Content);
-        return (temp, new ProfileStore(layout, Platforms.Current), layout);
+        return (temp, new ProfileStore(layout, Platforms.Current, installGame), layout);
     }
 
     [Fact]
@@ -32,7 +35,7 @@ public class ProfileStoreTests
     {
         using var temp = new TempDir();
         var layout = new InstallLayout(temp.Path);
-        var store = new ProfileStore(layout, new NoLinks());
+        var store = new ProfileStore(layout, new NoLinks(), "vanilla");
         Assert.Throws<IOException>(() => store.Create("Main"));
         Assert.Empty(store.List());
         Assert.Empty(Directory.GetDirectories(layout.Profiles));
@@ -43,11 +46,11 @@ public class ProfileStoreTests
     {
         using var temp = new TempDir();
         var old = new InstallLayout(Path.Combine(temp.Path, "old", "data"));
-        new ProfileStore(old, Platforms.Current).Create("Main");
+        new ProfileStore(old, Platforms.Current, "vanilla").Create("Main");
         Directory.Move(Path.Combine(temp.Path, "old"), Path.Combine(temp.Path, "new"));
         var layout = new InstallLayout(Path.Combine(temp.Path, "new", "data"));
         File.WriteAllText(Path.Combine(layout.Content, "probe"), "x");
-        var store = new ProfileStore(layout, Platforms.Current);
+        var store = new ProfileStore(layout, Platforms.Current, "vanilla");
         var profile = store.List().Single();
         Assert.False(File.Exists(Path.Combine(profile.User, ProfileStore.ContentFolderName, "probe")));
         store.EnsureContentLink(profile);
@@ -126,7 +129,7 @@ public class ProfileStoreTests
         using var _t = temp;
         temp.File("old/user/B13EBABEBABEBABE/4D530910/00000001/ForzaProfile/ForzaProfile", [1]);
         temp.File("old/user/0000000000000000/4D530910/00000002/pack/big.bin", [2]);
-        var profile = store.Import(Path.Combine(temp.Path, "old"), "Imported");
+        var profile = store.Import(Path.Combine(temp.Path, "old"), "Imported", "vanilla");
         Assert.True(File.Exists(Path.Combine(profile.User, "B13EBABEBABEBABE", "4D530910", "00000001", "ForzaProfile", "ForzaProfile")));
         Assert.False(File.Exists(Path.Combine(profile.User, ProfileStore.ContentFolderName, "4D530910", "00000002", "pack", "big.bin")));
     }
@@ -138,7 +141,7 @@ public class ProfileStoreTests
         using var _t = temp;
         temp.File("old/user/0000000000000000/4D530910/00000002/pack/big.bin", [2]);
         temp.File("old/notes.txt", [3]);
-        Assert.Throws<IOException>(() => store.Import(Path.Combine(temp.Path, "old"), "Imported"));
+        Assert.Throws<IOException>(() => store.Import(Path.Combine(temp.Path, "old"), "Imported", "vanilla"));
         Assert.Empty(store.List());
         Assert.False(Directory.Exists(layout.Profiles));
     }
@@ -149,7 +152,7 @@ public class ProfileStoreTests
         var (temp, store, layout) = Make();
         using var _t = temp;
         temp.File("B13EBABEBABEBABE/4D530910/00000001/ForzaProfile/ForzaProfile", [1]);
-        Assert.Throws<IOException>(() => store.Import(temp.Path, "Imported"));
+        Assert.Throws<IOException>(() => store.Import(temp.Path, "Imported", "vanilla"));
         Assert.Empty(store.List());
         Assert.False(Directory.Exists(layout.Profiles));
     }
@@ -163,7 +166,7 @@ public class ProfileStoreTests
         temp.File("old/user/B13EBABEBABEBABE/4D530910/00000001/ForzaProfile/ForzaProfile", [1]);
         var locked = temp.File("old/user/B13EBABEBABEBABE/4D530910/00000001/ForzaProfile/Locked", [2]);
         using (new FileStream(locked, FileMode.Open, FileAccess.Read, FileShare.None))
-            Assert.ThrowsAny<IOException>(() => store.Import(Path.Combine(temp.Path, "old"), "Imported"));
+            Assert.ThrowsAny<IOException>(() => store.Import(Path.Combine(temp.Path, "old"), "Imported", "vanilla"));
         Assert.Empty(store.List());
         Assert.Empty(Directory.GetDirectories(layout.Profiles));
         Assert.True(File.Exists(Path.Combine(layout.Content, "probe")));
@@ -198,5 +201,171 @@ public class ProfileStoreTests
         var profile = store.Create("Илья");
         Assert.Equal(("Илья", "profile", "Player"), (profile.Name, profile.Id, profile.Gamertag));
         Assert.Equal("Илья", store.List().Single().Name);
+    }
+
+    private static ProfileStore Pfp4Store(InstallLayout layout, string mode = "normal", bool harderAi = false)
+    {
+        var state = SetupState.Load(layout.SetupState);
+        (state.Game, state.Pfp4Mode, state.Pfp4HarderAi, state.Pfp4Applied) = ("pfp4", mode, harderAi, true);
+        state.Save();
+        return new ProfileStore(layout, Platforms.Current, "pfp4");
+    }
+
+    private static void Save(TempDir temp, string user) =>
+        temp.File(Path.Combine(user, "B13EBABEBABEBABE", "4D530910", "00000001", "ForzaProfile", "ForzaProfile"), [1]);
+
+    [Fact]
+    public void A_profile_without_game_is_vanilla()
+    {
+        var (temp, store, layout) = Make();
+        using var _t = temp;
+        temp.File(Path.Combine(layout.Profiles, "old", "profile.toml"), "name = \"Old\"\ngamertag = \"Old\"\n"u8.ToArray());
+        var old = store.Get("old");
+        Assert.Equal(("vanilla", (string?)null, (bool?)null), (old.Game, old.Pfp4Mode, old.Pfp4HarderAi));
+    }
+
+    [Fact]
+    public void Create_stamps_the_install_game_and_mode()
+    {
+        var (temp, store, layout) = Make();
+        using var _t = temp;
+        var plain = store.Create("Plain");
+        Assert.Equal(("vanilla", (string?)null), (plain.Game, plain.Pfp4Mode));
+        var created = Pfp4Store(layout, "hard", true).Create("Modded");
+        Assert.Equal(("pfp4", "hard", (bool?)true), (created.Game, created.Pfp4Mode, created.Pfp4HarderAi));
+        var text = File.ReadAllText(Path.Combine(created.Folder, "profile.toml"));
+        Assert.Contains("game = \"pfp4\"", text);
+        Assert.Contains("pfp4_mode = \"hard\"", text);
+    }
+
+    [Fact]
+    public void Import_refuses_a_vanilla_save_in_a_pfp4_install()
+    {
+        var (temp, _, layout) = Make();
+        using var _t = temp;
+        var store = Pfp4Store(layout);
+        Save(temp, Path.Combine("old", "user"));
+        var error = Assert.Throws<IOException>(() => store.Import(Path.Combine(temp.Path, "old"), "Imported", "vanilla"));
+        Assert.Contains("Project Forza Plus 4", error.Message);
+        Assert.Empty(store.List());
+    }
+
+    [Fact]
+    public void Import_refuses_a_stamped_profile_of_the_other_game_whatever_was_declared()
+    {
+        var (temp, _, layout) = Make();
+        using var _t = temp;
+        var other = new InstallLayout(Path.Combine(temp.Path, "other"));
+        var source = new ProfileStore(other, Platforms.Current, "vanilla").Create("Vanilla career");
+        Save(temp, source.User);
+        var pfp4 = Pfp4Store(layout);
+        Assert.Contains("vanilla saves", Assert.Throws<IOException>(() => pfp4.Import(source.Folder, "Imported", "pfp4")).Message);
+        Assert.Contains("vanilla saves", Assert.Throws<IOException>(() => pfp4.Import(source.User, "Imported", "pfp4")).Message);
+        Assert.Empty(pfp4.List());
+    }
+
+    [Fact]
+    public void Import_carries_the_stamped_mode()
+    {
+        var (temp, _, layout) = Make();
+        using var _t = temp;
+        var source = Pfp4Store(new InstallLayout(Path.Combine(temp.Path, "other")), "sandbox").Create("Sandbox career");
+        Save(temp, source.User);
+        var imported = Pfp4Store(layout, "normal").Import(source.Folder, "Copy", "vanilla");
+        Assert.Equal(("pfp4", "sandbox", (bool?)false), (imported.Game, imported.Pfp4Mode, imported.Pfp4HarderAi));
+    }
+
+    [Fact]
+    public void Import_without_stamp_leaves_the_mode_unknown()
+    {
+        var (temp, _, layout) = Make();
+        using var _t = temp;
+        var store = Pfp4Store(layout, "hard");
+        temp.File(@"xenia\E03000004331734B\4D530910\00000001\ForzaProfile\ForzaProfile", [1]);
+        var imported = store.Import(Path.Combine(temp.Path, "xenia"), "Xenia", "pfp4");
+        Assert.Equal(("pfp4", (string?)null, (bool?)null), (imported.Game, imported.Pfp4Mode, imported.Pfp4HarderAi));
+        Assert.Null(imported.ImportWarning);
+    }
+
+    [Fact]
+    public void An_import_past_a_warning_keeps_the_warning()
+    {
+        var (temp, _, layout) = Make();
+        using var _t = temp;
+        var store = Pfp4Store(layout, "normal");
+        temp.File(@"xenia\E03000004331734B\4D530910\00000001\ForzaProfile\ForzaProfile", [1]);
+        var imported = store.Import(Path.Combine(temp.Path, "xenia"), "Xenia", "pfp4", "the DLC folder beside the saves is vanilla FM4's");
+        Assert.Equal("the DLC folder beside the saves is vanilla FM4's", store.Get(imported.Id).ImportWarning);
+        store.Rename(imported.Id, "Renamed", "Racer");
+        Assert.Equal("the DLC folder beside the saves is vanilla FM4's", store.Get(imported.Id).ImportWarning);
+    }
+
+    [Fact]
+    public void A_skip_intro_profile_holds_the_save_and_its_mode()
+    {
+        var (temp, _, layout) = Make();
+        using var _t = temp;
+        var store = Pfp4Store(layout, "vanilla");
+        var save = Path.Combine(layout.Pfp4Modes, "vanilla", "skip-intro", "Fox");
+        temp.File(Path.Combine(save, "ForzaProfile", "ForzaProfile"), [7]);
+        temp.File(Path.Combine(save, "ForzaProfile", "Liveries", "6.liv"), [8]);
+        var profile = store.CreateFromSkipIntro("Fox start", save);
+        var title = Path.Combine(profile.User, "B13EBABEBABEBABE", "4D530910");
+        Assert.Equal([7], File.ReadAllBytes(Path.Combine(title, "00000001", "ForzaProfile", "ForzaProfile")));
+        Assert.Equal([8], File.ReadAllBytes(Path.Combine(title, "00000001", "ForzaProfile", "Liveries", "6.liv")));
+        var header = File.ReadAllBytes(Path.Combine(title, "Headers", "00000001", "ForzaProfile.header"));
+        Assert.Equal(0x148, header.Length);
+        Assert.Equal(1u, System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(header.AsSpan(4)));
+        Assert.Equal("User", System.Text.Encoding.BigEndianUnicode.GetString(header, 8, 0x100).TrimEnd('\0'));
+        Assert.Equal("ForzaProfile", System.Text.Encoding.ASCII.GetString(header, 0x108, 42).TrimEnd('\0'));
+        Assert.Equal(("pfp4", "vanilla", (bool?)false), (profile.Game, profile.Pfp4Mode, profile.Pfp4HarderAi));
+        Assert.True(Directory.Exists(Path.Combine(profile.User, ProfileStore.ContentFolderName)));
+    }
+
+    [Fact]
+    public void A_skip_intro_save_missing_from_the_cache_asks_for_the_mod_and_creates_nothing()
+    {
+        var (temp, _, layout) = Make();
+        using var _t = temp;
+        var store = Pfp4Store(layout, "vanilla");
+        var error = Assert.Throws<InvalidDataException>(() =>
+            store.CreateFromSkipIntro("Fox start", Path.Combine(layout.Pfp4Modes, "vanilla", "skip-intro", "Fox")));
+        Assert.Contains("CHOOSE THE MOD AGAIN", error.Message);
+        Assert.Empty(store.List());
+    }
+
+    [Fact]
+    public void Mode_warning_names_the_profiles_mode()
+    {
+        var profile = new Profile("a", "a", "A", "A", null, "pfp4", "hard", false);
+        Assert.Contains("Hard", ProfileStore.ModeWarning(profile, "normal")!);
+        Assert.Null(ProfileStore.ModeWarning(profile, "hard"));
+    }
+
+    [Fact]
+    public void Harder_ai_alone_warns_of_nothing()
+    {
+        Assert.Null(ProfileStore.ModeWarning(new Profile("a", "a", "A", "A", null, "pfp4", "hard", true), "hard"));
+    }
+
+    [Fact]
+    public void No_warning_for_an_unknown_mode()
+    {
+        Assert.Null(ProfileStore.ModeWarning(new Profile("a", "a", "A", "A", null, "pfp4", null, null), "normal"));
+    }
+
+    [Fact]
+    public void Recording_the_mode_ends_the_warning()
+    {
+        var (temp, _, layout) = Make();
+        using var _t = temp;
+        var store = Pfp4Store(layout, "hard");
+        var profile = store.Create("Career");
+        store.RecordMode(profile.Id, "normal", true);
+        var read = store.Get(profile.Id);
+        Assert.Equal(("normal", (bool?)true), (read.Pfp4Mode, read.Pfp4HarderAi));
+        Assert.Null(ProfileStore.ModeWarning(read, "normal"));
+        store.Rename(profile.Id, "Renamed", "Racer");
+        Assert.Equal(("pfp4", "normal"), (store.Get(profile.Id).Game, store.Get(profile.Id).Pfp4Mode));
     }
 }

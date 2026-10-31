@@ -1,3 +1,5 @@
+// Portions copyright (c) 2026, Pinyon Shift contributors (BSD 3-Clause: see THIRD_PARTY_NOTICES.md).
+// Copyright (c) 2026, i2kiselev (BSD 3-Clause: see LICENSE in the repository root).
 // Adapted from Pinyon Shift's launcher (launcher/PinyonShift.Launcher.Desktop, BSD-3-Clause; see THIRD_PARTY_NOTICES.md).
 using Avalonia.Controls;
 using Avalonia.Interactivity;
@@ -9,16 +11,19 @@ namespace Fm4StaticRecomp.Launcher;
 // closes it.
 public partial class MainWindow
 {
-    private enum Panel { None, Content, Settings }
+    private enum Panel { None, Content, Graphics, Settings }
 
     private Panel _panel = Panel.None;
+
+    private static bool IsSettings(Panel panel) => panel is Panel.Graphics or Panel.Settings;
 
     private void ShowPanel(Panel panel)
     {
         _panel = panel;
         ContentPanel.IsVisible = panel == Panel.Content;
-        SettingsPanel.IsVisible = panel == Panel.Settings;
-        foreach (var (button, owner) in new (Button, Panel)[] { (ContentButton, Panel.Content), (SettingsButton, Panel.Settings) })
+        SettingsPanel.IsVisible = IsSettings(panel);
+        foreach (var (button, owner) in new (Button, Panel)[]
+                     { (ContentButton, Panel.Content), (GraphicsButton, Panel.Graphics), (SettingsButton, Panel.Settings) })
             button.Classes.Set("selected", owner == panel);
     }
 
@@ -30,6 +35,9 @@ public partial class MainWindow
             ShowPanel(Panel.None);
             return;
         }
+        // GRAPHICS and SETTINGS are two pages of one unsaved state: going from one to the other
+        // keeps the edits for the one SAVE.
+        var fromSettings = IsSettings(_panel);
         ShowPanel(panel);
         StatusText.Text = "";
         Dispatcher.UIThread.Post(() => PanelControl(panel)?.BringIntoView(), DispatcherPriority.Background);
@@ -38,21 +46,23 @@ public partial class MainWindow
             ContentLines.Children.Clear();
             LoadContentPanel();
         }
-        else if (panel == Panel.Settings) LoadSettingsPanel();
+        else if (fromSettings) BuildSettingsPanel(_settingsStatus?.Text ?? "");
+        else LoadSettingsPanel();
     }
 
     private Control? PanelControl(Panel panel) => panel switch
     {
         Panel.Content => ContentPanel,
-        Panel.Settings => SettingsPanel,
+        Panel.Graphics or Panel.Settings => SettingsPanel,
         _ => null,
     };
 
     private void ContentButton_Click(object? sender, RoutedEventArgs e) => OpenPanel(Panel.Content);
+    private void GraphicsButton_Click(object? sender, RoutedEventArgs e) => OpenPanel(Panel.Graphics);
     private void SettingsButton_Click(object? sender, RoutedEventArgs e) => OpenPanel(Panel.Settings);
 
     /// <summary>--snapshot FILE [STATE] [WIDTHxHEIGHT]: render the window to a PNG and exit, to
-    /// check a layout without clicking. STATE is setup, building, ready, content, settings,
+    /// check a layout without clicking. STATE is setup, building, ready, content, graphics, settings,
     /// crash, failure or playing; each fills its panel with sample data where the backend has
     /// none.</summary>
     public void Snapshot(string path, string? state, string? size)
@@ -93,7 +103,7 @@ public partial class MainWindow
             case "playing":
                 ShowMode(Mode.Playing);
                 break;
-            case "content" or "settings":
+            case "content" or "graphics" or "settings":
                 ShowMode(Mode.Ready);
                 var panel = Enum.Parse<Panel>(state, ignoreCase: true);
                 OpenPanel(panel);

@@ -1,3 +1,5 @@
+// Portions copyright (c) 2026, Pinyon Shift contributors (BSD 3-Clause: see THIRD_PARTY_NOTICES.md).
+// Copyright (c) 2026, i2kiselev (BSD 3-Clause: see LICENSE in the repository root).
 // Adapted from Pinyon Shift's launcher (launcher/PinyonShift.Launcher.Desktop, BSD-3-Clause; see THIRD_PARTY_NOTICES.md).
 using System.ComponentModel;
 using Fm4StaticRecomp.Launcher.Core.Profiles;
@@ -25,6 +27,7 @@ public partial class MainWindow
     private async Task PlayAsync(Profile? chosen = null)
     {
         if (_host is not { } host || (chosen ?? SelectedProfile) is not { } profile) return;
+        if (!await AcceptModeAsync(host, profile)) return;
         StatusText.Text = "";
         ShowMode(Mode.Playing);
         var session = new GameSession(host);
@@ -33,6 +36,7 @@ public partial class MainWindow
         {
             AppendLog($"Starting version {host.Settings.ActiveVersion} on profile {profile.Name}.");
             if (host.Settings.CommandLineOptions.Length > 0) AppendLog($"Command-line options: {host.Settings.CommandLineOptions}");
+            if (profile.ImportWarning is { } warning) AppendLog($"Profile {profile.Name} was imported past a warning: {warning}.");
             exitCode = await session.RunAsync(profile);
         }
         catch (Exception error) when (error is Win32Exception or IOException or UnauthorizedAccessException or InvalidOperationException)
@@ -55,5 +59,30 @@ public partial class MainWindow
         }
         OpenSkippedWindow();
         await OfferCrashReportAsync(session, exitCode);
+    }
+
+    // A Project Forza Plus 4 career started under another mode: warned once per change. A profile
+    // of unknown mode (an imported save) takes the current one silently, as does a Harder AI change.
+    private async Task<bool> AcceptModeAsync(LauncherHost host, Profile profile)
+    {
+        if (host.Setup.Game != ProfileStore.Pfp4 || host.Setup.Pfp4Mode is not { } mode) return true;
+        var harderAi = host.Setup.Pfp4HarderAi;
+        if (profile.Pfp4Mode == mode && profile.Pfp4HarderAi == harderAi) return true;
+        if (ProfileStore.ModeWarning(profile, mode) is { } warning)
+        {
+            OpenSkippedWindow();
+            if (await Dialog.AskAsync(this, "ANOTHER CAREER MODE", warning, "CONTINUE", "CANCEL") != "CONTINUE") return false;
+        }
+        try
+        {
+            host.Profiles.RecordMode(profile.Id, mode, harderAi);
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            OpenSkippedWindow();
+            await Dialog.AskAsync(this, "PROFILE", error.Message, "OK");
+            return false;
+        }
+        return true;
     }
 }

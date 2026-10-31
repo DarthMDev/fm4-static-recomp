@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 """Summarises one race-perf.ps1 capture: frame rate and the executor's per-frame counters over
 the sampled window, its GPU time per phase (with --fh1_native_gpu_profile=true), GPU
 utilisation and power, and the busiest threads.
