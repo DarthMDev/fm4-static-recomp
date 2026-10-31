@@ -154,7 +154,7 @@
                 <!-- One panel at a time below Play. -->
                 <WrapPanel x:Name="NavPanel" IsVisible="False" Margin="0,4,0,0">
                     <Button x:Name="ContentButton" Classes="quiet nav" Content="CONTENT" Click="ContentButton_Click"
-                            ToolTip.Tip="Disc 2 and your downloadable content."/>
+                            ToolTip.Tip="Disc 2, your downloadable content and the unicorn cars."/>
                     <Button x:Name="GraphicsButton" Classes="quiet nav" Content="GRAPHICS" Click="GraphicsButton_Click"
                             ToolTip.Tip="The game's graphics settings."/>
                     <Button x:Name="SettingsButton" Classes="quiet nav" Content="SETTINGS" Click="SettingsButton_Click"
@@ -207,6 +207,11 @@
                         </WrapPanel>
                         <TextBlock x:Name="ContentDropHelp" Classes="help" TextWrapping="Wrap"
                                    Text="Or drop packages or a folder on this window. Content is installed once and every profile sees it."/>
+                        <TextBlock Classes="header" Text="UNICORN CARS" Margin="0,8,0,0"/>
+                        <TextBlock x:Name="UnicornStatusText" TextWrapping="Wrap"/>
+                        <Button x:Name="UnlockUnicornsButton" Classes="quiet" Content="UNLOCK UNICORN CARS…" Click="UnlockUnicorns_Click"
+                                Margin="0,0,10,8" IsEnabled="False" HorizontalAlignment="Left"
+                                ToolTip.Tip="Makes the unicorn cars buyable in the Autoshow for every profile of this install."/>
                         <StackPanel x:Name="ContentLines" Spacing="2"/>
                     </StackPanel>
                 </Border>

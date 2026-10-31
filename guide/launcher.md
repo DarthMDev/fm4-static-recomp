@@ -37,7 +37,7 @@ instead, see the [manual install](manual-install.md).
 |---|---|
 | **PLAY** | Starts the game. |
 | **PROFILE** | Adds, renames, imports and deletes profiles (separate saves). |
-| **CONTENT** | Installs Disc 2 and DLC. Install them only here: the game's own Disc 2 install waits for a disc change that never comes. |
+| **CONTENT** | Installs Disc 2 and DLC. Install them only here: the game's own Disc 2 install waits for a disc change that never comes. Also [unlocks the unicorn cars](#unicorn-cars). |
 | **GRAPHICS** | The [GRAPHICS page's settings](graphics.md). **SAVE** on top writes this page and SETTINGS together. |
 | **SETTINGS** | The game's language, launch options, advanced options (among them the [saves folder](#the-saves-folder)) and [command-line options](launch-options.md#with-the-launcher-command-line-options) for debugging. |
 
@@ -58,6 +58,16 @@ Only Xenia Canary saves are supported.
 The car pictures in the garage come with the save: the game draws each one once, when the car
 arrives, and keeps it. A picture Xenia drew wrong (noise, no shadow under the car) stays wrong
 here too. Repaint that car once and the game draws its picture again.
+
+## Unicorn cars
+
+Unicorn cars were rare gifts on Xbox Live; the game keeps them out of the Autoshow. With the game
+closed, CONTENT → **UNLOCK UNICORN CARS** makes the 17 of the original disc buyable for every
+profile of the install (some are on Disc 2, so install that too). It changes the game's database
+and keeps the original as `data\game\Media\db\gamedb.before-unicorns.slt`. Rev 1 discs and
+Project Forza Plus 4 have them unlocked already; their Warthog and Bentley 8 Litre stay locked,
+since the game has only their Autovista model. An update that extracts Disc 1 again locks the
+cars again: unlock them once more.
 
 ## Starting from Steam, Pegasus or another frontend
 

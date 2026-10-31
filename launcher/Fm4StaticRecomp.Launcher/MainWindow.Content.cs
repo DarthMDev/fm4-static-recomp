@@ -10,7 +10,7 @@ using Fm4StaticRecomp.Launcher.Core.Discs;
 namespace Fm4StaticRecomp.Launcher;
 
 // The Content panel (spec 6): Disc 2 and DLC, installed through the built game into the
-// content folder every profile links to.
+// content folder every profile links to, and the unicorn cars.
 public partial class MainWindow
 {
     private const int MaximumContentLines = 40;
@@ -29,6 +29,59 @@ public partial class MainWindow
         DlcList.Children.Clear();
         if (dlc.Count == 0) DlcList.Children.Add(new TextBlock { Text = "None installed.", Classes = { "help" } });
         foreach (var package in dlc) DlcList.Children.Add(new TextBlock { Text = package.DisplayName });
+        LoadUnicornStatus(host);
+    }
+
+    private void LoadUnicornStatus(LauncherHost host)
+    {
+        UnlockUnicornsButton.IsVisible = false;
+        try
+        {
+            var report = UnicornCars.Read(host.Layout.Game);
+            UnlockUnicornsButton.IsVisible = report.Locked.Count > 0;
+            UnicornStatusText.Text = report.Locked.Count > 0
+                ? $"{report.Locked.Count} of {UnicornCars.Known.Count} locked: the game keeps them out of the Autoshow."
+                : $"Unlocked: {report.Unlocked.Count} can be bought in the Autoshow.";
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidDataException)
+        {
+            UnicornStatusText.Text = error.Message;
+        }
+    }
+
+    private async void UnlockUnicorns_Click(object? sender, RoutedEventArgs e)
+    {
+        if (!ContentOpen || _host is not { } host) return;
+        var answer = await Dialog.AskAsync(this, "UNLOCK UNICORN CARS",
+            "Makes the unicorn cars buyable in the Autoshow for every profile of this install. " +
+            @"The game's database is changed; its original is kept as data\game\Media\db\gamedb.before-unicorns.slt.",
+            "UNLOCK", "CANCEL");
+        if (answer != "UNLOCK" || !ContentOpen) return;
+        await RunWorkAsync(_ => UnlockUnicornsAsync(host));
+    }
+
+    private async Task UnlockUnicornsAsync(LauncherHost host)
+    {
+        ContentLines.Children.Clear();
+        try
+        {
+            var report = await Task.Run(() => UnicornCars.Unlock(host.Layout.Game));
+            if (report.Locked.Count > 0) ContentLine($"Unlocked: {string.Join(", ", report.Locked.Select(c => c.Name))}.");
+            if (report.Unlocked.Count > 0) ContentLine($"Already unlocked: {string.Join(", ", report.Unlocked.Select(c => c.Name))}.");
+            var autovista = report.KeptLocked.Where(UnicornCars.HasOnlyAutovistaModel).ToList();
+            if (autovista.Count > 0)
+                ContentLine($"Left locked, the game has only their Autovista model: {string.Join(", ", autovista.Select(c => c.Name))}.");
+            var others = report.KeptLocked.Except(autovista).ToList();
+            if (others.Count > 0) ContentLine($"Left locked, not known unicorns: {string.Join(", ", others.Select(c => c.Name))}.");
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidDataException)
+        {
+            ContentLine(error.Message);
+        }
+        finally
+        {
+            LoadContentPanel();
+        }
     }
 
     private static HashSet<string> Disc2PackageNames(LauncherHost host)

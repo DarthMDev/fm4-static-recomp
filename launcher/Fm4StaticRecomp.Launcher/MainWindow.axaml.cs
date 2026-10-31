@@ -267,7 +267,7 @@ public partial class MainWindow : Window
         ProfileCombo.IsEnabled = ProfileButton.IsEnabled = !_busy && !running;
         UpdateSettingsActions();
         UpdateUpdateActions();
-        Disc2AddButtons.IsEnabled = DlcAddButtons.IsEnabled = ChooseModAgainButton.IsEnabled = ContentOpen;
+        Disc2AddButtons.IsEnabled = DlcAddButtons.IsEnabled = ChooseModAgainButton.IsEnabled = UnlockUnicornsButton.IsEnabled = ContentOpen;
         UpdateSetupActions();
     }
 
