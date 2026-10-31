@@ -53,6 +53,8 @@ public partial class MainWindow : Window
         Title = Branding.ProductName;
         ProductText.Text = Branding.ProductName.ToUpperInvariant();
         VersionText.Text = $"{Branding.ProductName} {Version} · {Branding.Disclaimer}";
+        FitToScreen();
+        WatchSettingsEdits();
         AddHandler(DragDrop.DropEvent, OnDrop);
         AddHandler(DragDrop.DragOverEvent, OnDragOver);
         AddHandler(DragDrop.DragLeaveEvent, (_, _) => DropOverlay.IsVisible = false);
@@ -65,6 +67,19 @@ public partial class MainWindow : Window
             AppendLog($"UNEXPECTED ERROR in background work: {e.Exception}");
             e.SetObserved();
         };
+    }
+
+    // A window taller than the screen hid the bottom bar's buttons below the taskbar (a 1366x768
+    // laptop at 125 % has about 1090x580 to show); the title bar and frame sit outside Height.
+    private void FitToScreen()
+    {
+        const double frame = 40;
+        if (Screens.Primary is not { } screen) return;
+        var area = screen.WorkingArea.Size.ToSize(screen.Scaling);
+        Width = Math.Min(Width, area.Width);
+        Height = Math.Min(Height, area.Height - frame);
+        MinWidth = Math.Min(MinWidth, Width);
+        MinHeight = Math.Min(MinHeight, Height);
     }
 
     // The last chance: an error no handler expected is logged and shown instead of closing the

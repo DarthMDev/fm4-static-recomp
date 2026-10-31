@@ -47,6 +47,22 @@ public class GraphicsSettingsTests
     }
 
     [Fact]
+    public void Is_changed_only_while_a_value_differs_from_the_saved_one()
+    {
+        using var temp = new TempDir();
+        var toml = temp.File("graphics.toml", "fm4_frame_rate = 120\n"u8.ToArray());
+        var settings = new GraphicsSettings(Schema(), toml, Path.Combine(temp.Path, "backups"));
+        Assert.False(settings.Changed);
+        settings.Set("fm4_frame_rate", "144");
+        Assert.True(settings.Changed);
+        settings.Set("fm4_frame_rate", "120");
+        Assert.False(settings.Changed);
+        settings.Set("swap_post_effect", "fxaa");
+        settings.Save();
+        Assert.False(settings.Changed);
+    }
+
+    [Fact]
     public void Frame_rate_ceiling_follows_the_display()
     {
         using var temp = new TempDir();

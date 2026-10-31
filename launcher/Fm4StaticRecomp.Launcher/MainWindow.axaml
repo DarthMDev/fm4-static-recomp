@@ -155,8 +155,10 @@
                 <WrapPanel x:Name="NavPanel" IsVisible="False" Margin="0,4,0,0">
                     <Button x:Name="ContentButton" Classes="quiet nav" Content="CONTENT" Click="ContentButton_Click"
                             ToolTip.Tip="Disc 2 and your downloadable content."/>
+                    <Button x:Name="GraphicsButton" Classes="quiet nav" Content="GRAPHICS" Click="GraphicsButton_Click"
+                            ToolTip.Tip="The game's graphics settings."/>
                     <Button x:Name="SettingsButton" Classes="quiet nav" Content="SETTINGS" Click="SettingsButton_Click"
-                            ToolTip.Tip="The game's graphics settings, launch options and advanced options."/>
+                            ToolTip.Tip="Language, launch options and advanced options."/>
                 </WrapPanel>
 
                 <TextBlock x:Name="StatusText" Margin="0,12,0,0" FontSize="15" TextWrapping="Wrap"

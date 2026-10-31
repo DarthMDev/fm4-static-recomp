@@ -13,9 +13,12 @@ public sealed class GraphicsSettings(GraphicsSchema schema, string tomlPath, str
     public GraphicsSchema Schema => schema;
     public bool FileIsMalformed => _file.IsMalformed;
 
-    public string Value(string key)
+    public string Value(string key) => _changed.TryGetValue(key, out var changed) ? changed : Saved(key);
+
+    public bool Changed => _changed.Any(c => c.Value != Saved(c.Key));
+
+    private string Saved(string key)
     {
-        if (_changed.TryGetValue(key, out var changed)) return changed;
         var row = Row(key);
         var stored = _file.Get(key);
         return stored is not null && row.Accepts(stored) ? stored : row.Default ?? "";
