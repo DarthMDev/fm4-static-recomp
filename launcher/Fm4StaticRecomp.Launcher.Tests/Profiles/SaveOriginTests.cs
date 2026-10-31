@@ -25,6 +25,15 @@ public class SaveOriginTests
     }
 
     [Fact]
+    public void SaveOrigin_reads_the_dlc_beside_one_xenia_profile_s_folder()
+    {
+        using var temp = new TempDir();
+        Xenia(temp);
+        temp.File($@"xenia\{Dlc}\0015_pri_65.zip", [2]);
+        Assert.Equal("vanilla", SaveOrigin.Guess(Path.Combine(temp.Path, "xenia", "E03000004331734B")));
+    }
+
+    [Fact]
     public void SaveOrigin_reads_a_xenia_folder_with_vanilla_zips()
     {
         using var temp = new TempDir();

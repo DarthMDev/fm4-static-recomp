@@ -11,6 +11,8 @@ public static class SaveOrigin
     public static string? Guess(string sourceStateOrUser)
     {
         var user = Directory.Exists(Path.Combine(sourceStateOrUser, "user")) ? Path.Combine(sourceStateOrUser, "user") : sourceStateOrUser;
+        // One Xenia profile's folder: Xenia keeps the DLC beside it, in content\0000000000000000.
+        if (ProfileStore.IsSave(user)) user = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(user))!;
         if (!Directory.Exists(user)) return null;
         var archives = Directory.GetDirectories(user)
             .Select(xuid => Path.Combine(xuid, "4D530910", "00000002"))

@@ -1,5 +1,6 @@
 // Copyright (c) 2026, i2kiselev
 // BSD 3-Clause License: see LICENSE in the repository root.
+using Fm4StaticRecomp.Launcher.Core.Content;
 using Fm4StaticRecomp.Launcher.Core.Install;
 using Fm4StaticRecomp.Launcher.Core.Platform;
 using Fm4StaticRecomp.Launcher.Core.Profiles;
@@ -132,6 +133,106 @@ public class ProfileStoreTests
         var profile = store.Import(Path.Combine(temp.Path, "old"), "Imported", "vanilla");
         Assert.True(File.Exists(Path.Combine(profile.User, "B13EBABEBABEBABE", "4D530910", "00000001", "ForzaProfile", "ForzaProfile")));
         Assert.False(File.Exists(Path.Combine(profile.User, ProfileStore.ContentFolderName, "4D530910", "00000002", "pack", "big.bin")));
+        Assert.Null(profile.Xuid);
+    }
+
+    // Xenia Canary's header of a save: the package's container header, its display name at 0x411.
+    private static byte[] CanaryHeader(string displayName)
+    {
+        var header = new byte[40960];
+        System.Text.Encoding.ASCII.GetBytes("CON ", header);
+        System.Text.Encoding.BigEndianUnicode.GetBytes(displayName, header.AsSpan(0x411));
+        return header;
+    }
+
+    [Fact]
+    public void Import_of_xenia_s_content_folder_keeps_the_save_s_xuid_and_rewrites_its_headers()
+    {
+        var (temp, store, _) = Make();
+        using var _t = temp;
+        temp.File(@"content\E030000047B76145\4D530910\00000001\ForzaProfile\ForzaProfile", [1]);
+        temp.File(@"content\E030000047B76145\4D530910\Headers\00000001\ForzaProfile.header", CanaryHeader("Wesx1"));
+        temp.File(@"content\E030000047B76145\FFFE07D1\00010000\E030000047B76145\Account", [2]);
+        temp.File(@"content\0000000000000000\4D530910\00000002\pack\big.bin", [3]);
+        temp.File(@"content\E0300000AAAAAAAA\535107DB\00000001\Other\save", [4]);
+        var profile = store.Import(Path.Combine(temp.Path, "content"), "Xenia", "vanilla");
+        Assert.Equal("E030000047B76145", profile.Xuid);
+        store.Rename(profile.Id, "Renamed", "Racer");
+        Assert.Equal("E030000047B76145", store.Get(profile.Id).Xuid);
+        var title = Path.Combine(profile.User, "E030000047B76145", "4D530910");
+        Assert.True(File.Exists(Path.Combine(title, "00000001", "ForzaProfile", "ForzaProfile")));
+        Assert.Equal(ContentHeader.Build(ContentHeader.SaveGame, "Wesx1", "ForzaProfile", null),
+            File.ReadAllBytes(Path.Combine(title, "Headers", "00000001", "ForzaProfile.header")));
+        Assert.False(File.Exists(Path.Combine(profile.User, ProfileStore.ContentFolderName, "4D530910", "00000002", "pack", "big.bin")));
+        Assert.False(Directory.Exists(Path.Combine(profile.User, "E0300000AAAAAAAA")));
+    }
+
+    [Fact]
+    public void Import_of_one_xenia_profile_s_folder_takes_that_profile()
+    {
+        var (temp, store, _) = Make();
+        using var _t = temp;
+        temp.File(@"content\E030000047B76145\4D530910\00000001\ForzaProfile\ForzaProfile", [1]);
+        temp.File(@"content\E030000047B76145\4D530910\Headers\00000001\ForzaProfile.header", CanaryHeader("Wesx1"));
+        var profile = store.Import(Path.Combine(temp.Path, "content", "E030000047B76145") + Path.DirectorySeparatorChar, "Xenia", "vanilla");
+        Assert.Equal("E030000047B76145", profile.Xuid);
+        var title = Path.Combine(profile.User, "E030000047B76145", "4D530910");
+        Assert.True(File.Exists(Path.Combine(title, "00000001", "ForzaProfile", "ForzaProfile")));
+        Assert.Equal(ContentHeader.Build(ContentHeader.SaveGame, "Wesx1", "ForzaProfile", null),
+            File.ReadAllBytes(Path.Combine(title, "Headers", "00000001", "ForzaProfile.header")));
+    }
+
+    // A profile imported from Xenia before 0.3.1 holds the Xenia save the game never read beside the
+    // career the game made under the runtime's XUID: it moves whole, signing in as its stamp says.
+    [Theory]
+    [InlineData(null)]
+    [InlineData("E030000047B76145")]
+    public void Import_of_our_profile_holding_two_xuids_takes_both_and_the_stamp_s_xuid(string? stampedXuid)
+    {
+        var (temp, store, _) = Make();
+        using var _t = temp;
+        temp.File(@"old\profile.toml", System.Text.Encoding.UTF8.GetBytes(
+            "name = \"Old\"\ngamertag = \"Old\"\ngame = \"vanilla\"\n" + (stampedXuid is null ? "" : $"xuid = \"{stampedXuid}\"\n")));
+        temp.File(@"old\user\B13EBABEBABEBABE\4D530910\00000001\ForzaProfile\ForzaProfile", [1]);
+        temp.File(@"old\user\E030000047B76145\4D530910\00000001\ForzaProfile\ForzaProfile", [2]);
+        var profile = store.Import(Path.Combine(temp.Path, "old"), "Moved", "pfp4");
+        Assert.Equal(stampedXuid, profile.Xuid);
+        Assert.True(File.Exists(Path.Combine(profile.User, "B13EBABEBABEBABE", "4D530910", "00000001", "ForzaProfile", "ForzaProfile")));
+        Assert.True(File.Exists(Path.Combine(profile.User, "E030000047B76145", "4D530910", "00000001", "ForzaProfile", "ForzaProfile")));
+    }
+
+    [Fact]
+    public void Only_a_save_s_container_header_is_rewritten()
+    {
+        var live = CanaryHeader("Pack");
+        System.Text.Encoding.ASCII.GetBytes("LIVE", live);
+        Assert.Null(ContentHeader.FromContainer(live, ContentHeader.Marketplace, "pack"));
+        Assert.Null(ContentHeader.FromContainer([0x43, 0x4F, 0x4E, 0x20], ContentHeader.SaveGame, "ForzaProfile"));
+        Assert.NotNull(ContentHeader.FromContainer(CanaryHeader("Wesx1"), ContentHeader.SaveGame, "ForzaProfile"));
+    }
+
+    [Fact]
+    public void Import_refuses_a_folder_with_saves_of_several_profiles()
+    {
+        var (temp, store, layout) = Make();
+        using var _t = temp;
+        temp.File(@"content\E030000047B76145\4D530910\00000001\ForzaProfile\ForzaProfile", [1]);
+        temp.File(@"content\E03000004331734B\4D530910\00000001\ForzaProfile\ForzaProfile", [1]);
+        var error = Assert.Throws<IOException>(() => store.Import(Path.Combine(temp.Path, "content"), "Xenia", "vanilla"));
+        Assert.Contains("E03000004331734B", error.Message);
+        Assert.False(Directory.Exists(layout.Profiles));
+    }
+
+    [Fact]
+    public void Import_keeps_a_header_already_in_the_runtime_s_layout()
+    {
+        var (temp, store, _) = Make();
+        using var _t = temp;
+        var own = ContentHeader.Build(ContentHeader.SaveGame, "User", "ForzaProfile", null);
+        temp.File(@"content\E030000047B76145\4D530910\00000001\ForzaProfile\ForzaProfile", [1]);
+        temp.File(@"content\E030000047B76145\4D530910\Headers\00000001\ForzaProfile.header", own);
+        var profile = store.Import(Path.Combine(temp.Path, "content"), "Xenia", "vanilla");
+        Assert.Equal(own, File.ReadAllBytes(Path.Combine(profile.User, "E030000047B76145", "4D530910", "Headers", "00000001", "ForzaProfile.header")));
     }
 
     [Fact]

@@ -33,4 +33,18 @@ public static class ContentHeader
         if (licenseMask is { } mask) BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(Size), mask);
         return header;
     }
+
+    // Xenia Canary keeps a save's whole container header (CON) in place of this one, and the SDK
+    // reads only this layout: the game then lists the save with no file name. Null for any other
+    // header (the SDK's own, Xenia Edge's, which is the same, or a DLC's, whose licence it would lose).
+    public static byte[]? FromContainer(byte[] container, uint contentType, string fileName)
+    {
+        const int containerDisplayNameOffset = 0x411;
+        const int containerDisplayNameBytes = 0x80;
+        if (container.Length < containerDisplayNameOffset + containerDisplayNameBytes ||
+            Encoding.ASCII.GetString(container, 0, 4) != "CON ") return null;
+        var displayName = Encoding.BigEndianUnicode.GetString(container, containerDisplayNameOffset, containerDisplayNameBytes)
+            .Split('\0')[0];
+        return Build(contentType, displayName, fileName, null);
+    }
 }

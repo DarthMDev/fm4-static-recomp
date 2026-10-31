@@ -109,7 +109,7 @@ public partial class MainWindow
 
     private async void ImportSave_Click(object? sender, RoutedEventArgs e) => await ProfileActionAsync(async host =>
     {
-        if (await PickFolderAsync("Choose a state folder or its user folder to import") is not { } folder) return;
+        if (await PickFolderAsync("Choose a profile's folder, a state folder or Xenia Canary's content folder to import") is not { } folder) return;
         if (await AskSaveGameAsync(folder) is not var (game, how, warning)) return;
         if (host.Profiles.Refusal(game) is { } refusal) throw new IOException(refusal);
         var (answer, values) = await Dialog.PromptAsync(this, "IMPORT SAVE",

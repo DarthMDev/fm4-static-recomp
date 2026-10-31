@@ -41,6 +41,24 @@ instead, see the [manual install](manual-install.md).
 | **GRAPHICS** | The [GRAPHICS page's settings](graphics.md). **SAVE** on top writes this page and SETTINGS together. |
 | **SETTINGS** | The game's language, launch options, advanced options (among them the [saves folder](#the-saves-folder)) and [command-line options](launch-options.md#with-the-launcher-command-line-options) for debugging. |
 
+## A career from Xenia Canary
+
+1. Close Xenia.
+2. **PROFILE → IMPORT SAVE**, and choose Xenia's `content` folder: the one beside
+   `xenia_canary.exe`, or `Documents\xenia\content`. If several Xenia profiles have FM4 saves,
+   open `content` and choose the folder of yours instead (16 letters and digits, such as
+   `E030000047B76145`).
+3. Answer **VANILLA SAVE** (or **PFP4 SAVE** for a Project Forza Plus 4 career) and name the
+   profile.
+
+The game accepts a save only from the Xbox profile it was made with, so the new profile plays as
+that Xenia profile. Xenia's copy is not changed. Install your Disc 2 and DLC in **CONTENT**.
+Only Xenia Canary saves are supported.
+
+The car pictures in the garage come with the save: the game draws each one once, when the car
+arrives, and keeps it. A picture Xenia drew wrong (noise, no shadow under the car) stays wrong
+here too. Repaint that car once and the game draws its picture again.
+
 ## Starting from Steam, Pegasus or another frontend
 
 `FM4StaticRecompLauncher.exe --skip-launcher` starts the game without showing the launcher, on

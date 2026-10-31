@@ -60,6 +60,13 @@ On a display without G-Sync or FreeSync, turn **VSYNC** on in the GRAPHICS page.
 They do not see the game's frames by default. Add `--vulkan_present_via_dxgi=true` in the
 launcher's SETTINGS → ADVANCED → COMMAND-LINE OPTIONS (see [Frame generation](launch-options.md#frame-generation)).
 
+## A car's picture in the garage is broken (noise, no shadow under the car)
+
+The game draws a car's picture once, when the car arrives in the garage, and keeps it in the
+save, so a broken one stays broken. Saves imported from Xenia bring Xenia's pictures with them.
+Choose that car, then **PAINT → PAINT CAR**, repaint the body once and save: the game draws the
+picture again.
+
 ## Linux, Steam Deck or Proton
 
 Not supported yet: the setup fails there (for example "licences could not be read"). A native

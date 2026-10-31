@@ -34,6 +34,16 @@ public class LaunchArgumentsTests
         Assert.Contains("--fm4_skip_intro=true", args);
         Assert.Contains("--fm4_language=en-US", args);
         Assert.DoesNotContain(args, a => a.StartsWith("--fh1_async_readbacks"));
+        Assert.DoesNotContain(args, a => a.StartsWith("--user_xuid"));
+    }
+
+    [Fact]
+    public void Play_signs_in_with_the_xuid_of_an_imported_xenia_save()
+    {
+        var (layout, profile, settings, temp) = Setup();
+        using var _ = temp;
+        var args = LaunchArguments.ForPlay(layout, "0.1.0", profile with { Xuid = "E030000047B76145" }, settings, new WindowsPlatform());
+        Assert.Contains("--user_xuid=E030000047B76145", args);
     }
 
     [Fact]

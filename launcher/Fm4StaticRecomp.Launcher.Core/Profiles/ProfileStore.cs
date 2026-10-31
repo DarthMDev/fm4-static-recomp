@@ -125,39 +125,52 @@ public sealed class ProfileStore(InstallLayout layout, IPlatform platform, strin
         return Path.GetFileName(folder).Equals("user", StringComparison.OrdinalIgnoreCase) && File.Exists(parent) ? parent : null;
     }
 
-    // Copies a state's (or a user folder's) saves into a new profile. Installed content is
-    // left behind: the profile links to the shared content instead. A source that is one of our
-    // profiles is judged by its stamp; any other by the game the player declared. A warning the
-    // player went past stays with the profile, for whoever reads its log after a problem.
+    // Copies a state's (or a user folder's, or Xenia's content folder's) saves into a new profile.
+    // Installed content is left behind: the profile links to the shared content instead. A source
+    // that is one of our profiles is judged by its stamp; any other by the game the player declared.
+    // A warning the player went past stays with the profile, for whoever reads its log after a problem.
+    // A save made with another XUID than the runtime's (Xenia's) keeps it: the profile records it
+    // for the game to sign in with, and Xenia Canary's headers are rewritten for the runtime.
     public Profile Import(string sourceStateOrUser, string name, string declaredGame, string? overriddenWarning = null)
     {
-        var user = Directory.Exists(Path.Combine(sourceStateOrUser, "user"))
+        var user = Path.TrimEndingDirectorySeparator(Directory.Exists(Path.Combine(sourceStateOrUser, "user"))
             ? Path.Combine(sourceStateOrUser, "user")
-            : sourceStateOrUser;
+            : sourceStateOrUser);
         // The copy would run into the profile it creates.
         if (IsUnder(layout.Profiles, user))
             throw new IOException($"{sourceStateOrUser} holds this launcher's own profiles. Choose another profile's folder or an older state folder.");
-        if (!HoldsSave(user))
-            throw new IOException($"{sourceStateOrUser} holds no FM4 save. Choose a state folder or its user folder.");
+        // One Xenia profile's folder (content\<xuid>) chosen by itself.
+        var single = IsSave(user);
+        var saves = single ? [user] : Saves(user);
+        if (saves.Count == 0)
+            throw new IOException($"{sourceStateOrUser} holds no FM4 save. Choose a profile's folder, a state folder or Xenia Canary's content folder.");
         var stamp = StampFile(sourceStateOrUser) is { } stampFile ? Read(Path.GetDirectoryName(stampFile)!) : null;
+        // One of our profiles moves whole: one imported from Xenia before 0.3.1 also holds the Xenia save
+        // the game never read, beside the career it made under the runtime's XUID.
+        if (stamp is null && saves.Count > 1)
+            throw new IOException($"{sourceStateOrUser} holds the saves of {saves.Count} profiles " +
+                                  $"({string.Join(", ", saves.Select(Path.GetFileName))}). Choose the folder of the one to import, inside it.");
+        var xuid = stamp is null ? Path.GetFileName(saves[0]) : stamp.Xuid ?? SaveXuid;
         if (Refusal(stamp?.Game ?? declaredGame) is { } refusal) throw new IOException(refusal);
         var profile = Create(name, stamp?.Pfp4Mode, stamp?.Pfp4HarderAi);
         try
         {
-            foreach (var directory in Directory.GetDirectories(user))
+            foreach (var directory in single ? [user] : Directory.GetDirectories(user))
             {
                 var folderName = Path.GetFileName(directory);
                 if (folderName.Equals(ContentFolderName, StringComparison.OrdinalIgnoreCase)) continue;
+                // Xenia's other profiles (other games' saves, their accounts) stay behind.
+                if (stamp is null && IsXuid(folderName) && !folderName.Equals(xuid, StringComparison.OrdinalIgnoreCase)) continue;
                 CopyDirectory(directory, Path.Combine(profile.User, folderName));
             }
-            foreach (var file in Directory.GetFiles(user)) File.Copy(file, Path.Combine(profile.User, Path.GetFileName(file)));
-            if (overriddenWarning is not null)
-            {
-                var path = Path.Combine(profile.Folder, FileName);
-                var toml = TomlFile.Load(path);
-                toml.Set("import_warning", overriddenWarning, quoted: true);
-                toml.Save(path);
-            }
+            if (!single)
+                foreach (var file in Directory.GetFiles(user)) File.Copy(file, Path.Combine(profile.User, Path.GetFileName(file)));
+            RewriteContainerHeaders(Path.Combine(profile.User, xuid, "4D530910", "Headers"));
+            var path = Path.Combine(profile.Folder, FileName);
+            var toml = TomlFile.Load(path);
+            if (overriddenWarning is not null) toml.Set("import_warning", overriddenWarning, quoted: true);
+            if (!xuid.Equals(SaveXuid, StringComparison.OrdinalIgnoreCase)) toml.Set("xuid", xuid, quoted: true);
+            toml.Save(path);
         }
         catch
         {
@@ -187,11 +200,30 @@ public sealed class ProfileStore(InstallLayout layout, IPlatform platform, strin
         return (state.Pfp4Mode, state.Pfp4HarderAi);
     }
 
+    internal static bool HoldsSave(string user) => Saves(user).Count > 0;
+
+    private static List<string> Saves(string user) =>
+        Directory.Exists(user) ? Directory.GetDirectories(user).Where(IsSave).ToList() : [];
+
     // A save is a 16-digit XUID folder with FM4's title folder in it.
-    internal static bool HoldsSave(string user) =>
-        Directory.Exists(user) && Directory.GetDirectories(user).Any(d =>
-            Path.GetFileName(d) is { Length: 16 } xuid && xuid.All(char.IsAsciiHexDigit) &&
-            !xuid.Equals(ContentFolderName, StringComparison.OrdinalIgnoreCase) && Directory.Exists(Path.Combine(d, "4D530910")));
+    internal static bool IsSave(string folder) =>
+        Path.GetFileName(Path.TrimEndingDirectorySeparator(folder)) is var xuid && IsXuid(xuid) &&
+        !xuid.Equals(ContentFolderName, StringComparison.OrdinalIgnoreCase) && Directory.Exists(Path.Combine(folder, "4D530910"));
+
+    private static bool IsXuid(string name) => name.Length == 16 && name.All(char.IsAsciiHexDigit);
+
+    // Headers\<content type>\<file name>.header, as Xenia Canary left them.
+    private static void RewriteContainerHeaders(string headers)
+    {
+        if (!Directory.Exists(headers)) return;
+        foreach (var typeFolder in Directory.GetDirectories(headers))
+        {
+            if (!uint.TryParse(Path.GetFileName(typeFolder), System.Globalization.NumberStyles.HexNumber, null, out var type)) continue;
+            foreach (var header in Directory.GetFiles(typeFolder, "*.header"))
+                if (ContentHeader.FromContainer(File.ReadAllBytes(header), type, Path.GetFileNameWithoutExtension(header)) is { } own)
+                    File.WriteAllBytes(header, own);
+        }
+    }
 
     internal static bool IsUnder(string path, string folder)
     {
@@ -244,7 +276,8 @@ public sealed class ProfileStore(InstallLayout layout, IPlatform platform, strin
         var id = Path.GetFileName(folder);
         return new Profile(id, folder, file.Get("name") ?? id, file.Get("gamertag") ?? "Player",
             file.Get("last_backed_up_version"), file.Get("game") ?? Vanilla, file.Get("pfp4_mode"),
-            bool.TryParse(file.Get("pfp4_harder_ai"), out var harderAi) ? harderAi : null, file.Get("import_warning"));
+            bool.TryParse(file.Get("pfp4_harder_ai"), out var harderAi) ? harderAi : null, file.Get("import_warning"),
+            file.Get("xuid"));
     }
 
     private void Stamp(string folder, string? mode, bool? harderAi)
