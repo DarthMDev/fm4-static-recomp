@@ -62,6 +62,9 @@ constexpr std::array kAfterGpuPlugin = {
     Default{"rtl_critical_section_pcr_thread", "false"},
     Default{"xma_direct_decode", "false"},
     Default{"xma_lazy_decoder_state", "false"},
+    // Decoding on the XMA decoder thread lets the game's mixer now and then read a block before
+    // it is decoded: one voice drops out for 5 ms, heard as crackle (#37).
+    Default{"xma_decode_kicks_inline", "true"},
     Default{"pad_chord_debug_overlay", ""},
     // The keyboard plays beside the pad, Left Shift as the clutch while driving keys are
     // held; no mouse input (the game's menus have no pointer).
