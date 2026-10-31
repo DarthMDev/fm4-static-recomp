@@ -15,10 +15,11 @@ instead, see the [manual install](manual-install.md).
    > Not into `Program Files`, and not by starting the launcher from inside the zip's window:
    > Windows runs it from a temporary folder then.
 
-2. Start `FM4StaticRecompLauncher.exe`. Its first screen has five steps:
+2. Start `FM4StaticRecompLauncher.exe`. Its first screen has these steps:
 
    | Step | What happens |
    |---|---|
+   | **Game** | Vanilla, or [Project Forza Plus 4](project-forza-plus.md) 1.3 over it. Fixed for the install. |
    | **Disc 1** | Drop or choose your ISO, GOD folder or extracted folder. It is verified and extracted. |
    | **Disc 2** (optional) | An ISO, a GOD folder or the folder with its four packages, or **Later** (CONTENT installs it any time). It is verified now and installed after the build, so keep it where it is until then. |
    | **Microsoft licence** | The build downloads Microsoft's C++ runtime and Windows SDK files from Microsoft. Read and accept their licences, or decline and use Microsoft's installer instead, which asks for administrator permission once. |

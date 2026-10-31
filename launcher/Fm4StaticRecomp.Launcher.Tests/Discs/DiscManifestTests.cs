@@ -58,4 +58,20 @@ public class DiscManifestTests
         Assert.DoesNotContain(manifest.DiscReleases, r => r.Mod);
         Assert.Null(manifest.Release("633772A0"));
     }
+
+    [Fact]
+    public void A_disc_1_with_the_mod_over_it_is_refused_as_such()
+    {
+        var real = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"..\..\..\..\..\config\supported-discs.json"));
+        var manifest = DiscManifest.Load(real);
+        var modXex = manifest.ModRelease.Files.Single(f => f.Path == "default.xex").Sha256;
+        var pal = manifest.Release("61D62D9F")!;
+        foreach (var check in new[]
+                 {
+                     new RequiredCheck(null, "633772A0", modXex, null),
+                     new RequiredCheck(pal, "61D62D9F", modXex, pal.Files.Single(f => f.Path == "default.xex").Sha256),
+                 })
+            Assert.Contains("Project Forza Plus 4", Disc1Step.RefusalText(check, manifest));
+        Assert.Contains("supports", Disc1Step.RefusalText(new RequiredCheck(null, "", "", null), manifest));
+    }
 }

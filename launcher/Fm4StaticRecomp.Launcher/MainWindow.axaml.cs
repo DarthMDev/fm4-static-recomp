@@ -237,6 +237,7 @@ public partial class MainWindow : Window
     private void UpdateActions()
     {
         var running = _host?.GameRunning == true;
+        GameBadge.IsVisible = Pfp4Install;
         PrimaryButton.IsEnabled = !_busy && _mode switch
         {
             Mode.Setup => SetupCanStart(),
@@ -249,7 +250,7 @@ public partial class MainWindow : Window
         ProfileCombo.IsEnabled = ProfileButton.IsEnabled = !_busy && !running;
         UpdateSettingsActions();
         UpdateUpdateActions();
-        Disc2AddButtons.IsEnabled = DlcAddButtons.IsEnabled = ContentOpen;
+        Disc2AddButtons.IsEnabled = DlcAddButtons.IsEnabled = ChooseModAgainButton.IsEnabled = ContentOpen;
         UpdateSetupActions();
     }
 
@@ -265,14 +266,16 @@ public partial class MainWindow : Window
         return paths is { Count: 1 } && (File.Exists(paths[0]) || Directory.Exists(paths[0])) ? paths[0] : null;
     }
 
-    private bool AcceptsDrop => !_busy && (_mode == Mode.Setup || (_mode == Mode.Ready && _panel == Panel.Content && ContentOpen));
+    private bool AcceptsDrop => !_busy && (_mode == Mode.Setup || (_mode == Mode.Ready && _panel == Panel.Content && ContentOpen && !Pfp4Install));
+
+    private bool Pfp4Install => _host?.Setup.Game == Core.Profiles.ProfileStore.Pfp4;
 
     private void OnDragOver(object? sender, DragEventArgs e)
     {
         var accepted = AcceptsDrop && DroppedPath(e) is not null;
         e.DragEffects = accepted ? DragDropEffects.Copy : DragDropEffects.None;
         DropOverlayText.Text = _mode != Mode.Setup ? "DROP TO ADD THIS DLC"
-            : DropsGoToDisc1 ? "DROP TO USE THIS DISC 1" : "DROP TO USE THIS DISC 2";
+            : DropsGoToDisc1 ? "DROP TO USE THIS DISC 1" : Pfp4Chosen ? "DROP TO USE THIS MOD" : "DROP TO USE THIS DISC 2";
         DropOverlay.IsVisible = accepted;
     }
 
@@ -282,6 +285,7 @@ public partial class MainWindow : Window
         if (!AcceptsDrop || DroppedPath(e) is not { } path) return;
         if (_mode == Mode.Ready) await RunWorkAsync(t => AddDlcAsync([path], t));
         else if (DropsGoToDisc1) await ChooseDisc1Async(path);
+        else if (Pfp4Chosen) await ChooseModAsync(path);
         else await ChooseDisc2Async(path);
     }
 

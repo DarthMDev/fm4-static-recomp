@@ -4,6 +4,7 @@ using Fm4StaticRecomp.Launcher.Core.Content;
 using Fm4StaticRecomp.Launcher.Core.Discs;
 using Fm4StaticRecomp.Launcher.Core.Fonts;
 using Fm4StaticRecomp.Launcher.Core.Install;
+using Fm4StaticRecomp.Launcher.Core.Pfp4;
 using Fm4StaticRecomp.Launcher.Core.Platform;
 using Fm4StaticRecomp.Launcher.Core.Profiles;
 using Fm4StaticRecomp.Launcher.Core.Settings;
@@ -48,7 +49,7 @@ public sealed class LauncherHost
     public PayloadInfo Payload { get; }
     public LauncherSettings Settings { get; }
     public SetupState Setup { get; }
-    public ProfileStore Profiles { get; }
+    public ProfileStore Profiles { get; private set; }
     public VersionStore Versions { get; }
     public ContentInstaller Content { get; }
     public SetupRunner Runner { get; }
@@ -106,6 +107,15 @@ public sealed class LauncherHost
         Versions.ExtractPayloadAsync(Payload.ZipPath, Payload.Version, cancellation);
 
     public DiscManifest Manifest() => DiscManifest.Load(Layout.DiscManifestOf(Payload.Version));
+
+    public Pfp4Manifest ModManifest(string version) => Pfp4Manifest.Load(Layout.Pfp4ManifestOf(version));
+
+    // Fixed at setup's Disc 1 step; the store stamps every new profile with the install's game.
+    public void RecordGame(string? game)
+    {
+        Setup.Game = game;
+        Profiles = new ProfileStore(Layout, Platform, game ?? "vanilla");
+    }
 
     public GraphicsSettings? Graphics()
     {

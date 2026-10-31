@@ -235,6 +235,20 @@ public class ProfileStoreTests
         temp.File(@"xenia\E03000004331734B\4D530910\00000001\ForzaProfile\ForzaProfile", [1]);
         var imported = store.Import(Path.Combine(temp.Path, "xenia"), "Xenia", "pfp4");
         Assert.Equal(("pfp4", (string?)null, (bool?)null), (imported.Game, imported.Pfp4Mode, imported.Pfp4HarderAi));
+        Assert.Null(imported.ImportWarning);
+    }
+
+    [Fact]
+    public void An_import_past_a_warning_keeps_the_warning()
+    {
+        var (temp, _, layout) = Make();
+        using var _t = temp;
+        var store = Pfp4Store(layout, "normal");
+        temp.File(@"xenia\E03000004331734B\4D530910\00000001\ForzaProfile\ForzaProfile", [1]);
+        var imported = store.Import(Path.Combine(temp.Path, "xenia"), "Xenia", "pfp4", "the DLC folder beside the saves is vanilla FM4's");
+        Assert.Equal("the DLC folder beside the saves is vanilla FM4's", store.Get(imported.Id).ImportWarning);
+        store.Rename(imported.Id, "Renamed", "Racer");
+        Assert.Equal("the DLC folder beside the saves is vanilla FM4's", store.Get(imported.Id).ImportWarning);
     }
 
     [Fact]
@@ -260,18 +274,35 @@ public class ProfileStoreTests
     }
 
     [Fact]
+    public void A_skip_intro_save_missing_from_the_cache_asks_for_the_mod_and_creates_nothing()
+    {
+        var (temp, _, layout) = Make();
+        using var _t = temp;
+        var store = Pfp4Store(layout, "vanilla");
+        var error = Assert.Throws<InvalidDataException>(() =>
+            store.CreateFromSkipIntro("Fox start", Path.Combine(layout.Pfp4Modes, "vanilla", "skip-intro", "Fox")));
+        Assert.Contains("CHOOSE THE MOD AGAIN", error.Message);
+        Assert.Empty(store.List());
+    }
+
+    [Fact]
     public void Mode_warning_names_the_profiles_mode()
     {
         var profile = new Profile("a", "a", "A", "A", null, "pfp4", "hard", false);
-        Assert.Contains("Hard", ProfileStore.ModeWarning(profile, "normal", false)!);
-        Assert.Contains("Harder AI", ProfileStore.ModeWarning(profile, "hard", true)!);
-        Assert.Null(ProfileStore.ModeWarning(profile, "hard", false));
+        Assert.Contains("Hard", ProfileStore.ModeWarning(profile, "normal")!);
+        Assert.Null(ProfileStore.ModeWarning(profile, "hard"));
+    }
+
+    [Fact]
+    public void Harder_ai_alone_warns_of_nothing()
+    {
+        Assert.Null(ProfileStore.ModeWarning(new Profile("a", "a", "A", "A", null, "pfp4", "hard", true), "hard"));
     }
 
     [Fact]
     public void No_warning_for_an_unknown_mode()
     {
-        Assert.Null(ProfileStore.ModeWarning(new Profile("a", "a", "A", "A", null, "pfp4", null, null), "normal", false));
+        Assert.Null(ProfileStore.ModeWarning(new Profile("a", "a", "A", "A", null, "pfp4", null, null), "normal"));
     }
 
     [Fact]
@@ -284,7 +315,7 @@ public class ProfileStoreTests
         store.RecordMode(profile.Id, "normal", true);
         var read = store.Get(profile.Id);
         Assert.Equal(("normal", (bool?)true), (read.Pfp4Mode, read.Pfp4HarderAi));
-        Assert.Null(ProfileStore.ModeWarning(read, "normal", true));
+        Assert.Null(ProfileStore.ModeWarning(read, "normal"));
         store.Rename(profile.Id, "Renamed", "Racer");
         Assert.Equal(("pfp4", "normal"), (store.Get(profile.Id).Game, store.Get(profile.Id).Pfp4Mode));
     }

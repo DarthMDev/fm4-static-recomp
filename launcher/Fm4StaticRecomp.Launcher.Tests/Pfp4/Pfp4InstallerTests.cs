@@ -140,6 +140,21 @@ public class Pfp4InstallerTests
         Assert.Equal(Tree(once.Root), Tree(twice.Root));
     }
 
+    [Fact]
+    public async Task The_mod_chosen_again_over_an_applied_install_restores_its_cache()
+    {
+        using var temp = new TempDir();
+        var fake = new FakeMod(temp);
+        var once = Layout(temp, Path.Combine(temp.Path, "once"));
+        Assert.Empty(await Install(fake, once, "hard"));
+
+        var again = Layout(temp, Path.Combine(temp.Path, "again"));
+        Assert.Empty(await Install(fake, again, "hard"));
+        Directory.Delete(again.Pfp4Modes, recursive: true);
+        Assert.Empty(await Install(fake, again, "hard"));
+        Assert.Equal(Tree(once.Root), Tree(again.Root));
+    }
+
     private static List<(string, string)> Tree(string root) =>
         Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
             .Select(f => (Path.GetRelativePath(root, f), TestDiscs.Sha(File.ReadAllBytes(f))))

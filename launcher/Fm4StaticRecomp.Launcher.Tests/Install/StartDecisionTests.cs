@@ -27,4 +27,15 @@ public class StartDecisionTests
     public void After_going_back_the_built_payload_stays_ready() =>
         Assert.Equal(StartKind.Ready, StartDecision.Decide(
             new SetupState { Disc1Release = "1.0 USA", BuiltVersions = ["0.1.0", "0.2.0"] }, 2, "0.2.0"));
+
+    // An update's Disc 1 extraction replaced the mod's files: setup puts them back before a start.
+    [Fact]
+    public void A_project_forza_plus_install_without_the_mod_resumes_setup() =>
+        Assert.Equal(StartKind.Setup, StartDecision.Decide(
+            new SetupState { Disc1Release = "1.0 PAL", BuiltVersions = ["0.2.0"], Game = "pfp4" }, 1, "0.2.0"));
+
+    [Fact]
+    public void A_project_forza_plus_install_with_the_mod_is_ready() =>
+        Assert.Equal(StartKind.Ready, StartDecision.Decide(
+            new SetupState { Disc1Release = "1.0 PAL", BuiltVersions = ["0.2.0"], Game = "pfp4", Pfp4Applied = true }, 1, "0.2.0"));
 }

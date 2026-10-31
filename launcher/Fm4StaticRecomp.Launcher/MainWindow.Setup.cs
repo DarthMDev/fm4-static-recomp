@@ -7,26 +7,30 @@ using Fm4StaticRecomp.Launcher.Controls;
 using Fm4StaticRecomp.Launcher.Core.Content;
 using Fm4StaticRecomp.Launcher.Core.Discs;
 using Fm4StaticRecomp.Launcher.Core.Install;
+using Fm4StaticRecomp.Launcher.Core.Pfp4;
+using Fm4StaticRecomp.Launcher.Core.Profiles;
 using Fm4StaticRecomp.Launcher.Core.Setup;
 using Fm4StaticRecomp.Launcher.Core.Updates;
 
 namespace Fm4StaticRecomp.Launcher;
 
-// First-run setup (spec 5): five steps, each resumed from setup-state.json when it is done.
+// First-run setup (spec 5): the steps, each resumed from setup-state.json when it is done.
 public partial class MainWindow
 {
-    private enum Step { Disc1, Disc2, Licence, Build, Profile }
+    private enum Step { Disc1, Mod, Disc2, Licence, Build, Profile }
     private enum StepState { Waiting, Active, Done, Failed }
 
     private DiscInput? _disc1Input;
     private DiscInput? _disc2Input;
     private bool _disc2Later;
+    private string? _modPath;
     private int _profileCount;
     private readonly Dictionary<Step, (StepState State, string Detail)> _stepOverrides = [];
 
     private (TextBlock Mark, TextBlock Title, TextBlock Detail) Row(Step step) => step switch
     {
         Step.Disc1 => (Disc1Mark, Disc1Title, Disc1Detail),
+        Step.Mod => (ModMark, ModTitle, ModDetail),
         Step.Disc2 => (Disc2Mark, Disc2Title, Disc2Detail),
         Step.Licence => (LicenceMark, LicenceTitle, LicenceDetail),
         Step.Build => (BuildMark, BuildTitle, BuildDetail),
@@ -58,12 +62,39 @@ public partial class MainWindow
         var setup = host.Setup;
         var version = host.Payload.Version;
         _profileCount = host.Profiles.List().Count;
+        var pfp4 = Pfp4Chosen;
+
+        var gameFixed = GameFixed(setup);
+        GameMark.Text = gameFixed ? "✓" : "○";
+        GameMark.Classes.Set("done", gameFixed);
+        GameDetail.Text = !gameFixed
+            ? "Vanilla Forza Motorsport 4, or Project Forza Plus 4 1.3 over it. Fixed for this install; saves of one cannot be used in the other."
+            : pfp4 ? "Project Forza Plus 4 1.3. Fixed for this install." : "Vanilla. Fixed for this install.";
+        GameChoices.IsVisible = !gameFixed;
+        ModRow.IsVisible = pfp4;
+        Disc2Row.IsVisible = !pfp4;
 
         SetStep(Step.Disc1, setup.Disc1Installed ? StepState.Done : StepState.Waiting,
             setup.Disc1Installed ? $"{setup.Disc1Release} installed."
             : _disc1Input is { } disc1 ? $"Chosen: {DisplayName(disc1.Path)} ({KindText(disc1.Kind)}). Verified and extracted when setup starts."
             : "An ISO image, a GOD folder or an extracted folder of your FM4 Disc 1.");
         Disc1Buttons.IsVisible = !setup.Disc1Installed;
+
+        SetStep(Step.Mod, setup.Pfp4Applied ? StepState.Done : StepState.Waiting,
+            setup.Pfp4Applied ? $"Applied: {ModeText(setup.Pfp4Mode ?? DefaultMode, setup.Pfp4HarderAi)}. SETTINGS changes the career mode."
+            : _modPath is { } mod ? $"Chosen: {DisplayName(mod)}. Verified and applied after Disc 1; career mode and Harder AI can change later."
+            : setup.Disc1Installed && setup.BuiltVersions.Count > 0 ? "Choose the mod again: setup copies it over the game and saves every career mode's files again."
+            : setup.BuiltVersions.Count > 0 ? "Choose the mod again: setup puts it back over the new Disc 1 extraction. Keep the zip for updates."
+            : "The mod's zip as downloaded, or its extracted folder. Only version 1.3; Disc 2 and the DLC come from the mod.");
+        ModButtons.IsVisible = ModOptions.IsVisible = !setup.Pfp4Applied;
+        if (ModeCombo.ItemCount == 0)
+        {
+            ModeCombo.ItemsSource = Pfp4ModeNames.Select(m => m.ToUpperInvariant()).ToList();
+            ModeCombo.SelectedIndex = Math.Max(0, Array.IndexOf(Pfp4ModeNames, setup.Pfp4Mode ?? DefaultMode));
+            ToolTip.SetTip(ModeCombo, ModeHelp);
+            HarderAiCheck.IsChecked = setup.Pfp4HarderAi;
+            ToolTip.SetTip(HarderAiCheck, HarderAiHelp);
+        }
 
         var (disc2State, disc2Text) =
             setup.Disc2Installed ? (StepState.Done, "Installed.")
@@ -89,17 +120,43 @@ public partial class MainWindow
         SetStep(Step.Profile, profiles.Count > 0 ? StepState.Done : StepState.Waiting,
             profiles.Count > 0 ? string.Join(", ", profiles.Select(p => p.Name)) : "The gamertag starts as this name.");
         ProfileNameBox.IsVisible = profiles.Count == 0;
+        StartCombo.IsVisible = pfp4 && profiles.Count == 0;
 
         foreach (var (step, (state, detail)) in _stepOverrides) SetStep(step, state, detail);
 
         var needed = SpaceCheck.Needed(!setup.Disc1Installed, DiscTwoPending(host), !Directory.Exists(host.Layout.Toolchain), !built,
-            setup.Game == "pfp4" && !setup.Pfp4Applied);
+            pfp4 && !setup.Pfp4Applied);
         InstallText.Text = string.Create(CultureInfo.InvariantCulture,
             $"Installs to {host.Layout.Root}. About {needed / 1e9:0} GB are needed and {FreeBytes(host.Layout.Root) / 1e9:0} GB are free.");
     }
 
     private bool DiscTwoPending(LauncherHost host) =>
-        !host.Setup.Disc2Installed && (_disc2Input is not null || (!_disc2Later && host.Setup.Disc2Source is not null));
+        !Pfp4Chosen && !host.Setup.Disc2Installed && (_disc2Input is not null || (!_disc2Later && host.Setup.Disc2Source is not null));
+
+    // An update's new Disc 1 extraction clears Disc1Release but never the game: it stays fixed.
+    private static bool GameFixed(SetupState setup) => setup.Disc1Installed || setup.Game is not null || setup.BuiltVersions.Count > 0;
+
+    private bool Pfp4Chosen => _host is { } host &&
+                               (GameFixed(host.Setup) ? host.Setup.Game == ProfileStore.Pfp4 : Pfp4Choice.IsChecked == true);
+
+    private const string DefaultMode = "normal";
+    private static readonly string[] Pfp4ModeNames = ["normal", "hard", "sandbox", "vanilla"];
+    private const string ModeHelp =
+        "NORMAL: the mod's default career. HARD: start in F class, longer races, half the earnings. " +
+        "SANDBOX: every car and upgrade costs 1 credit. VANILLA: the original career with the mod's cars.";
+    private const string HarderAiHelp = "Stronger AI drivers and AI upgrades, the mod's optional variant of each mode.";
+
+    private static string ModeText(string mode, bool harderAi) =>
+        $"{char.ToUpperInvariant(mode[0])}{mode[1..]} mode{(harderAi ? " with Harder AI" : "")}";
+
+    private string SelectedMode => Pfp4ModeNames[Math.Max(0, ModeCombo.SelectedIndex)];
+
+    private void Game_Changed(object? sender, RoutedEventArgs e)
+    {
+        if (_host is null) return;
+        UpdateSetupRows();
+        UpdateActions();
+    }
 
     private static long FreeBytes(string root) =>
         new DriveInfo(Path.GetPathRoot(Path.GetFullPath(root))!).AvailableFreeSpace;
@@ -121,9 +178,11 @@ public partial class MainWindow
         if (_host is not { } host) return false;
         var setup = host.Setup;
         var disc1 = setup.Disc1Installed || _disc1Input is not null;
-        var disc2 = setup.Disc2Installed || setup.Disc2Source is not null || setup.Disc2Later || _disc2Input is not null || _disc2Later;
+        var pfp4 = Pfp4Chosen;
+        var disc2 = pfp4 || setup.Disc2Installed || setup.Disc2Source is not null || setup.Disc2Later || _disc2Input is not null || _disc2Later;
+        var mod = !pfp4 || setup.Pfp4Applied || _modPath is not null;
         var profile = _profileCount > 0 || !string.IsNullOrWhiteSpace(ProfileNameBox.Text);
-        return disc1 && disc2 && profile && OwnershipCheck.IsChecked == true;
+        return disc1 && mod && disc2 && profile && OwnershipCheck.IsChecked == true;
     }
 
     private void UpdateSetupActions()
@@ -131,7 +190,9 @@ public partial class MainWindow
         var open = !_busy && _mode == Mode.Setup;
         BrowseButton.IsEnabled = BrowseFolderButton.IsEnabled = open;
         BrowseDisc2Button.IsEnabled = BrowseDisc2FolderButton.IsEnabled = Disc2LaterButton.IsEnabled = open;
-        ProfileNameBox.IsEnabled = OwnershipCheck.IsEnabled = open;
+        VanillaChoice.IsEnabled = Pfp4Choice.IsEnabled = open;
+        BrowseModButton.IsEnabled = BrowseModFolderButton.IsEnabled = ModeCombo.IsEnabled = HarderAiCheck.IsEnabled = open;
+        ProfileNameBox.IsEnabled = StartCombo.IsEnabled = OwnershipCheck.IsEnabled = open;
     }
 
     private void Ownership_Changed(object? sender, RoutedEventArgs e) => UpdateActions();
@@ -157,6 +218,44 @@ public partial class MainWindow
     {
         if (await PickFolderAsync("Choose your FM4 Disc 2 GOD folder or the folder with its packages") is { } path)
             await ChooseDisc2Async(path);
+    }
+
+    private async void BrowseMod_Click(object? sender, RoutedEventArgs e)
+    {
+        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Choose the Project Forza Plus 4 1.3 zip",
+            AllowMultiple = false,
+            FileTypeFilter = [new FilePickerFileType("Zip") { Patterns = ["*.zip", "*.ZIP"] }, FilePickerFileTypes.All],
+        });
+        if (files.Count > 0 && files[0].TryGetLocalPath() is { } path) await ChooseModAsync(path);
+    }
+
+    private async void BrowseModFolder_Click(object? sender, RoutedEventArgs e)
+    {
+        if (await PickFolderAsync("Choose the extracted Project Forza Plus 4 folder") is { } path) await ChooseModAsync(path);
+    }
+
+    // Only finds the mod's root here; its files are checked against version 1.3 while setup copies them.
+    private async Task ChooseModAsync(string path)
+    {
+        SetBusy(true);
+        string? problem = null;
+        try
+        {
+            await Task.Run(() => ModSource.Open(path).Dispose());
+        }
+        catch (Exception error) when (error is IOException or InvalidDataException or UnauthorizedAccessException)
+        {
+            problem = error.Message;
+        }
+        SetBusy(false);
+        _stepOverrides.Remove(Step.Mod);
+        _modPath = problem is null ? path : null;
+        UpdateSetupRows();
+        if (problem is null) AppendLog($"Project Forza Plus 4: {path}.");
+        else MarkStep(Step.Mod, StepState.Failed, problem);
+        UpdateActions();
     }
 
     private void Disc2Later_Click(object? sender, RoutedEventArgs e)
@@ -247,7 +346,7 @@ public partial class MainWindow
             await host.PrepareSourceAsync(cancellation);
             var manifest = await Task.Run(host.Manifest, cancellation);
             var needed = SpaceCheck.Needed(!host.Setup.Disc1Installed, DiscTwoPending(host), !Directory.Exists(host.Layout.Toolchain),
-                !host.Setup.BuiltVersions.Contains(host.Payload.Version), host.Setup.Game == "pfp4" && !host.Setup.Pfp4Applied);
+                !host.Setup.BuiltVersions.Contains(host.Payload.Version), Pfp4Chosen && !host.Setup.Pfp4Applied);
             if (SpaceCheck.Problem(host.Layout.Root, needed, FreeBytes) is { } space)
             {
                 ProgressPanel.IsVisible = false;
@@ -255,6 +354,7 @@ public partial class MainWindow
                 return;
             }
             if (!await InstallDisc1Async(host, manifest, cancellation)) return;
+            if (!await ApplyModAsync(host, cancellation)) return;
             if (!await VerifyDisc2Async(host, manifest, cancellation)) return;
             if (!host.Setup.BuiltVersions.Contains(host.Payload.Version))
             {
@@ -297,12 +397,7 @@ public partial class MainWindow
         switch (outcome)
         {
             case Disc1Outcome.Refused refused:
-                var check = refused.Check;
-                var found = check.FoundSha256.Length > 0 ? check.FoundSha256 : "no default.xex";
-                var text = check.Release is null
-                    ? $"This disc's media ID is {(check.MediaId.Length > 0 ? check.MediaId : "unknown")} and its default.xex has SHA-256 {found}; " +
-                      $"the launcher supports {string.Join(", ", manifest.DiscReleases.Select(r => r.Name))}."
-                    : $"{check.Release.Name}'s default.xex should have SHA-256 {check.ExpectedSha256}; this one has {found}.";
+                var text = Disc1Step.RefusalText(refused.Check, manifest);
                 AppendLog($"Disc 1 refused: {text}");
                 ProgressPanel.IsVisible = false;
                 _disc1Input = null;
@@ -310,6 +405,7 @@ public partial class MainWindow
                 await Dialog.AskAsync(this, "NOT A SUPPORTED DISC 1", text, "OK");
                 return false;
             case Disc1Outcome.Installed installed:
+                if (!GameFixed(host.Setup)) host.RecordGame(Pfp4Choice.IsChecked == true ? ProfileStore.Pfp4 : null);
                 host.Setup.Disc1Release = installed.ReleaseName;
                 host.Setup.Disc1ProblemsAccepted = installed.ProblemsAccepted;
                 host.Setup.Save();
@@ -323,6 +419,45 @@ public partial class MainWindow
                 MarkStep(Step.Disc1, StepState.Waiting, "Cancelled: nothing was installed.");
                 return false;
         }
+    }
+
+    // Project Forza Plus 4 over the extracted Disc 1, at the first setup and after an update's
+    // new Disc 1 extraction; marked applied only once every file matched version 1.3.
+    private async Task<bool> ApplyModAsync(LauncherHost host, CancellationToken cancellation)
+    {
+        var setup = host.Setup;
+        if (setup.Game != ProfileStore.Pfp4 || setup.Pfp4Applied) return true;
+        var path = _modPath!;
+        var (mode, harderAi) = (SelectedMode, HarderAiCheck.IsChecked == true);
+        setup.Pfp4Mode = mode;
+        setup.Pfp4HarderAi = harderAi;
+        setup.Save();
+        MarkStep(Step.Mod, StepState.Active, $"Verifying and copying {DisplayName(path)}.");
+        SetProgress(0, "Project Forza Plus 4: reading the mod.");
+        var progress = new Progress<double>(p => SetProgress(p * 100, $"Project Forza Plus 4: verifying and copying ({p:P0})."));
+        var manifest = await Task.Run(() => host.ModManifest(host.Payload.Version), cancellation);
+        var problems = await Task.Run(async () =>
+        {
+            using var mod = ModSource.Open(path);
+            return await Pfp4Installer.InstallAsync(mod, manifest, host.Layout, mode, harderAi, progress, cancellation);
+        }, cancellation);
+        if (problems.Count > 0)
+        {
+            AppendLog($"Project Forza Plus 4 refused: {string.Join(", ", problems.Select(p => $"{p.Path} ({p.Kind})"))}");
+            ProgressPanel.IsVisible = false;
+            _modPath = null;
+            MarkStep(Step.Mod, StepState.Failed, "Not Project Forza Plus 4 1.3: nothing was changed.");
+            await Dialog.AskAsync(this, "NOT PROJECT FORZA PLUS 4 1.3",
+                ProblemList(problems, "These files differ from version 1.3's, the only version supported:"), "OK");
+            return false;
+        }
+        setup.Pfp4Applied = true;
+        setup.Save();
+        _modPath = null;
+        _stepOverrides.Remove(Step.Mod);
+        AppendLog($"Project Forza Plus 4 1.3 applied: {ModeText(mode, harderAi)}.");
+        UpdateSetupRows();
+        return true;
     }
 
     private Task<bool> AcceptDisc1ProblemsAsync(IReadOnlyList<FileProblem> problems) =>
@@ -606,7 +741,20 @@ public partial class MainWindow
         if (host.Profiles.List().Count > 0) return true;
         try
         {
-            var profile = host.Profiles.Create(ProfileNameBox.Text!.Trim());
+            var name = ProfileNameBox.Text!.Trim();
+            string? save = null;
+            if (host.Setup.Game == ProfileStore.Pfp4 && StartCombo.SelectedIndex == 1)
+            {
+                var (chosen, folder) = await AskStartAsync(host, host.Payload.Version, offerNewCareer: false);
+                if (!chosen)
+                {
+                    MarkStep(Step.Profile, StepState.Waiting, "No Skip Intro save chosen.");
+                    ProgressPanel.IsVisible = false;
+                    return false;
+                }
+                save = folder;
+            }
+            var profile = save is null ? host.Profiles.Create(name) : host.Profiles.CreateFromSkipIntro(name, save);
             host.Settings.ActiveProfile = profile.Id;
             host.Settings.Save();
             AppendLog($"Profile {profile.Name} created ({profile.Id}).");
@@ -619,5 +767,23 @@ public partial class MainWindow
             await Dialog.AskAsync(this, "THE PROFILE COULD NOT BE CREATED", error.Message, "OK");
             return false;
         }
+    }
+
+    private const string NewCareer = "NEW CAREER";
+
+    // A Project Forza Plus 4 profile starts with the intro race, or from one of the mod's Skip
+    // Intro saves of the install's mode. Chosen is false when the player cancelled; Save is null
+    // for a new career.
+    private async Task<(bool Chosen, string? Save)> AskStartAsync(LauncherHost host, string version, bool offerNewCareer)
+    {
+        var mode = host.Setup.Pfp4Mode ?? DefaultMode;
+        var saves = host.ModManifest(version).Modes[mode].SkipIntro.Select(s => s.Name).ToList();
+        var answer = await Dialog.ChooseAsync(this, "HOW THE CAREER STARTS",
+            (offerNewCareer ? "NEW CAREER starts with the intro race. " : "") +
+            $"A Skip Intro save of {ModeText(mode, false)} starts after the intro with the starter car it names. " +
+            "Its car's garage picture is broken until the car is repainted once.",
+            [.. offerNewCareer ? [NewCareer] : Array.Empty<string>(), .. saves], "CANCEL");
+        if (answer is null or "CANCEL") return (false, null);
+        return (true, answer == NewCareer ? null : host.Layout.Pfp4SkipIntro(mode, answer));
     }
 }

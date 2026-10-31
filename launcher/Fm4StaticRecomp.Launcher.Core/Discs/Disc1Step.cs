@@ -41,6 +41,19 @@ public static class Disc1Step
         }
     }
 
+    public static string RefusalText(RequiredCheck check, DiscManifest manifest)
+    {
+        if (manifest.ModRelease.Files.Any(f => f.Path == Disc1Installer.Executable &&
+                                               f.Sha256.Equals(check.FoundSha256, StringComparison.OrdinalIgnoreCase)))
+            return "This folder already has Project Forza Plus 4 over it. Choose the unmodified Disc 1 (its ISO image, " +
+                   "GOD folder or extracted folder) here, and the mod's zip or folder separately.";
+        var found = check.FoundSha256.Length > 0 ? check.FoundSha256 : "no default.xex";
+        return check.Release is null
+            ? $"This disc's media ID is {(check.MediaId.Length > 0 ? check.MediaId : "unknown")} and its default.xex has SHA-256 {found}; " +
+              $"the launcher supports {string.Join(", ", manifest.DiscReleases.Select(r => r.Name))}."
+            : $"{check.Release.Name}'s default.xex should have SHA-256 {check.ExpectedSha256}; this one has {found}.";
+    }
+
     // The launcher calls this at start: a replacement cut short between its two renames
     // leaves the old game in <game>.old.
     public static void RecoverInterruptedReplace(string gameFolder)

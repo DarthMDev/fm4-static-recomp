@@ -23,6 +23,14 @@ public static class Dialog
         return answer;
     }
 
+    // One of a list of choices, laid out apart from the answer that cancels, which sits alone below.
+    public static async Task<string?> ChooseAsync(Window owner, string title, string message,
+        IReadOnlyList<string> choices, string cancel)
+    {
+        var (answer, _) = await ShowAsync(owner, title, message, [], [], [cancel], choices);
+        return answer;
+    }
+
     // Text boxes under the message; the values are returned as typed, with the answer.
     public static Task<(string? Answer, IReadOnlyList<string> Values)> PromptAsync(Window owner, string title, string message,
         IReadOnlyList<(string Label, string Value)> fields, params string[] answers) =>
@@ -30,7 +38,7 @@ public static class Dialog
 
     private static async Task<(string? Answer, IReadOnlyList<string> Values)> ShowAsync(Window owner, string title,
         string message, IReadOnlyList<(string Label, string Url)> links, IReadOnlyList<(string Label, string Value)> fields,
-        string[] answers)
+        string[] answers, IReadOnlyList<string>? choices = null)
     {
         string? chosen = null;
         var window = new Window
@@ -72,20 +80,22 @@ public static class Dialog
             boxes.Add(box);
             body.Children.Add(box);
         }
-        var buttons = new StackPanel
-        {
-            Orientation = Orientation.Horizontal, Spacing = 10, HorizontalAlignment = HorizontalAlignment.Right,
-        };
         Button? first = null;
-        foreach (var answer in answers)
+        WrapPanel Row(IEnumerable<string> labels, WrapPanelItemsAlignment alignment)
         {
-            var button = new Button { Content = answer, MinWidth = 96, HorizontalContentAlignment = HorizontalAlignment.Center };
-            button.Classes.Add("quiet");
-            button.Click += (_, _) => { chosen = answer; window.Close(); };
-            buttons.Children.Add(button);
-            first ??= button;
+            var row = new WrapPanel { ItemSpacing = 10, LineSpacing = 10, ItemsAlignment = alignment };
+            foreach (var answer in labels)
+            {
+                var button = new Button { Content = answer, MinWidth = 96, HorizontalContentAlignment = HorizontalAlignment.Center };
+                button.Classes.Add("quiet");
+                button.Click += (_, _) => { chosen = answer; window.Close(); };
+                row.Children.Add(button);
+                first ??= button;
+            }
+            return row;
         }
-        body.Children.Add(buttons);
+        if (choices is not null) body.Children.Add(Row(choices, WrapPanelItemsAlignment.Start));
+        body.Children.Add(Row(answers, WrapPanelItemsAlignment.End));
         window.Content = body;
         window.KeyDown += (_, e) => { if (e.Key == Key.Escape) window.Close(); };
         window.Opened += (_, _) => { if (boxes.Count > 0) boxes[0].Focus(); else first?.Focus(); };

@@ -6,6 +6,7 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Fm4StaticRecomp.Launcher.Controls;
+using Fm4StaticRecomp.Launcher.Core.Pfp4;
 using Fm4StaticRecomp.Launcher.Core.Settings;
 
 namespace Fm4StaticRecomp.Launcher;
@@ -22,6 +23,8 @@ public partial class MainWindow
     private int _buildJobs;
     private string _language = GameLanguages.Default.Code;
     private string _commandLineOptions = "";
+    private string _pfp4Mode = DefaultMode;
+    private bool _pfp4HarderAi;
     private Button? _saveSettingsButton, _restoreSettingsButton;
     private TextBlock? _settingsStatus;
     private int? _refreshHz;
@@ -49,6 +52,7 @@ public partial class MainWindow
         (_skipIntro, _asyncReadbacks, _presentViaDxgi, _compat, _buildJobs, _language) =
             (settings.SkipIntro, settings.AsyncReadbacks, settings.PresentViaDxgi, settings.Compat, settings.BuildJobs, settings.Language);
         _commandLineOptions = settings.CommandLineOptions;
+        (_pfp4Mode, _pfp4HarderAi) = (host.Setup.Pfp4Mode ?? DefaultMode, host.Setup.Pfp4HarderAi);
         BuildSettingsPanel("");
     }
 
@@ -72,6 +76,19 @@ public partial class MainWindow
                 foreach (var row in block.Rows.Where(graphics.Shows)) rows.Children.Add(GraphicsRow(graphics, row));
                 SettingsBody.Children.Add(rows);
             }
+        }
+
+        if (Pfp4Install)
+        {
+            SettingsBody.Children.Add(Header("PROJECT FORZA PLUS 4"));
+            var mode = Combo(Pfp4ModeNames.Select(m => m.ToUpperInvariant()).ToList(), Array.IndexOf(Pfp4ModeNames, _pfp4Mode));
+            mode.SelectionChanged += (_, _) =>
+            {
+                if (mode.SelectedIndex >= 0) _pfp4Mode = Pfp4ModeNames[mode.SelectedIndex];
+            };
+            SettingsBody.Children.Add(Labelled("CAREER MODE", mode,
+                ModeHelp + " A career started in another mode loads with a warning, once.", alwaysHelp: true));
+            SettingsBody.Children.Add(Option("HARDER AI", HarderAiHelp, _pfp4HarderAi, v => _pfp4HarderAi = v));
         }
 
         SettingsBody.Children.Add(Header("LAUNCH OPTIONS"));
@@ -270,6 +287,12 @@ public partial class MainWindow
         if (_host is not { GameRunning: false } host) return;
         try
         {
+            if (Pfp4Install && (_pfp4Mode != host.Setup.Pfp4Mode || _pfp4HarderAi != host.Setup.Pfp4HarderAi))
+            {
+                Pfp4Modes.Switch(host.Layout, host.ModManifest(host.Settings.ActiveVersion ?? host.Payload.Version), host.Setup,
+                    _pfp4Mode, _pfp4HarderAi);
+                AppendLog($"Project Forza Plus 4: {ModeText(_pfp4Mode, _pfp4HarderAi)}.");
+            }
             _graphics?.Save();
             var settings = host.Settings;
             (settings.SkipIntro, settings.AsyncReadbacks, settings.PresentViaDxgi, settings.Compat, settings.BuildJobs, settings.Language) =
@@ -280,7 +303,7 @@ public partial class MainWindow
             UpdateSummary();
             AppendLog("Settings saved.");
         }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidDataException)
         {
             if (_settingsStatus is not null) _settingsStatus.Text = $"Not saved: {error.Message}";
         }

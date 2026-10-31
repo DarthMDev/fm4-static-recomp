@@ -1,6 +1,7 @@
 using System.Text;
 using Fm4StaticRecomp.Launcher.Core.Content;
 using Fm4StaticRecomp.Launcher.Core.Install;
+using Fm4StaticRecomp.Launcher.Core.Pfp4;
 using Fm4StaticRecomp.Launcher.Core.Platform;
 using Fm4StaticRecomp.Launcher.Core.Settings;
 using Fm4StaticRecomp.Launcher.Core.Setup;
@@ -74,6 +75,9 @@ public sealed class ProfileStore(InstallLayout layout, IPlatform platform, strin
     // skip-intro folder), laid out as the game writes its own save, header included.
     public Profile CreateFromSkipIntro(string name, string saveFolder)
     {
+        if (!Directory.Exists(saveFolder))
+            throw new InvalidDataException(
+                $"The Skip Intro save {Path.GetFileName(saveFolder)} is missing from the mod's saved files. {Pfp4Modes.ChooseTheModAgain}");
         var profile = Create(name);
         try
         {
@@ -95,15 +99,15 @@ public sealed class ProfileStore(InstallLayout layout, IPlatform platform, strin
     public void RecordMode(string id, string mode, bool harderAi) => Stamp(Get(id).Folder, mode, harderAi);
 
     // Null when the profile's mode is unknown (an imported save) or the same as the install's.
-    public static string? ModeWarning(Profile profile, string mode, bool harderAi)
+    // Harder AI changes only the AI's skills, not the career, so it warns of nothing.
+    public static string? ModeWarning(Profile profile, string mode)
     {
-        if (profile.Pfp4Mode is null || (profile.Pfp4Mode == mode && (profile.Pfp4HarderAi ?? false) == harderAi)) return null;
-        return $"This career was started in {Describe(profile.Pfp4Mode, profile.Pfp4HarderAi ?? false)}; this install now runs " +
-               $"{Describe(mode, harderAi)}. The career loads and plays, but its events and prices follow the current mode.";
+        if (profile.Pfp4Mode is null || profile.Pfp4Mode == mode) return null;
+        return $"This career was started in {Describe(profile.Pfp4Mode)}; this install now runs " +
+               $"{Describe(mode)}. The career loads and plays, but its events and prices follow the current mode.";
     }
 
-    private static string Describe(string mode, bool harderAi) =>
-        $"{char.ToUpperInvariant(mode[0])}{mode[1..]} mode{(harderAi ? " with Harder AI" : "")}";
+    private static string Describe(string mode) => $"{char.ToUpperInvariant(mode[0])}{mode[1..]} mode";
 
     // The game of a source that is one of our profiles (its profile.toml, beside the user folder),
     // null for any other save folder. A profile without `game` comes from a vanilla install.
@@ -121,8 +125,9 @@ public sealed class ProfileStore(InstallLayout layout, IPlatform platform, strin
 
     // Copies a state's (or a user folder's) saves into a new profile. Installed content is
     // left behind: the profile links to the shared content instead. A source that is one of our
-    // profiles is judged by its stamp; any other by the game the player declared.
-    public Profile Import(string sourceStateOrUser, string name, string declaredGame)
+    // profiles is judged by its stamp; any other by the game the player declared. A warning the
+    // player went past stays with the profile, for whoever reads its log after a problem.
+    public Profile Import(string sourceStateOrUser, string name, string declaredGame, string? overriddenWarning = null)
     {
         var user = Directory.Exists(Path.Combine(sourceStateOrUser, "user"))
             ? Path.Combine(sourceStateOrUser, "user")
@@ -133,10 +138,7 @@ public sealed class ProfileStore(InstallLayout layout, IPlatform platform, strin
         if (!HoldsSave(user))
             throw new IOException($"{sourceStateOrUser} holds no FM4 save. Choose a state folder or its user folder.");
         var stamp = StampFile(sourceStateOrUser) is { } stampFile ? Read(Path.GetDirectoryName(stampFile)!) : null;
-        if ((stamp?.Game ?? declaredGame) != installGame)
-            throw new IOException(installGame == Pfp4
-                ? "This is a Project Forza Plus 4 install; vanilla saves cannot be used here. Import them into a vanilla install."
-                : "This is a vanilla install; Project Forza Plus 4 saves cannot be used here. Import them into a Project Forza Plus 4 install.");
+        if (Refusal(stamp?.Game ?? declaredGame) is { } refusal) throw new IOException(refusal);
         var profile = Create(name, stamp?.Pfp4Mode, stamp?.Pfp4HarderAi);
         try
         {
@@ -147,14 +149,27 @@ public sealed class ProfileStore(InstallLayout layout, IPlatform platform, strin
                 CopyDirectory(directory, Path.Combine(profile.User, folderName));
             }
             foreach (var file in Directory.GetFiles(user)) File.Copy(file, Path.Combine(profile.User, Path.GetFileName(file)));
+            if (overriddenWarning is not null)
+            {
+                var path = Path.Combine(profile.Folder, FileName);
+                var toml = TomlFile.Load(path);
+                toml.Set("import_warning", overriddenWarning, quoted: true);
+                toml.Save(path);
+            }
         }
         catch
         {
             Remove(profile);
             throw;
         }
-        return profile;
+        return Read(profile.Folder);
     }
+
+    // Why saves of this game cannot be imported here; null when they can.
+    public string? Refusal(string game) =>
+        game == installGame ? null
+        : installGame == Pfp4 ? "This is a Project Forza Plus 4 install; vanilla saves cannot be used here. Import them into a vanilla install."
+        : "This is a vanilla install; Project Forza Plus 4 saves cannot be used here. Import them into a Project Forza Plus 4 install.";
 
     private static void Remove(Profile profile)
     {
@@ -201,7 +216,7 @@ public sealed class ProfileStore(InstallLayout layout, IPlatform platform, strin
         var id = Path.GetFileName(folder);
         return new Profile(id, folder, file.Get("name") ?? id, file.Get("gamertag") ?? "Player",
             file.Get("last_backed_up_version"), file.Get("game") ?? Vanilla, file.Get("pfp4_mode"),
-            bool.TryParse(file.Get("pfp4_harder_ai"), out var harderAi) ? harderAi : null);
+            bool.TryParse(file.Get("pfp4_harder_ai"), out var harderAi) ? harderAi : null, file.Get("import_warning"));
     }
 
     private void Stamp(string folder, string? mode, bool? harderAi)
