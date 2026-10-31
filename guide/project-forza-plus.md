@@ -27,6 +27,8 @@ the same. Saves therefore never cross between the two kinds of install.
    in place, never extracted) or its extracted folder. Every file setup takes is checked against
    version 1.3; any other version is refused and nothing is changed. Disc 2 and every DLC pack
    come from the mod, so there is no Disc 2 step. Pick the career mode and Harder AI here.
+   Only the main download, `Project Forza Plus 4 v1.3.zip`, is needed. Leave out
+   `Project Forza Plus 4 Update v1.3.zip`: it only brings an older install of the mod up to 1.3.
 5. **Microsoft licence**, **Build** and **Your profile** as for vanilla. The profile starts with
    **NEW CAREER** (the intro race) or a **SKIP INTRO SAVE** (see below).
 
