@@ -20,7 +20,7 @@ Switches of the fixes that give the upscaler correct motion. Turn one off to see
 | `--present_upscaler_jitter` | `true` | Jitter the scene by a sub-pixel offset each frame |
 | `--present_upscaler_object_motion` | `true` | Give each moving object (cars, wheels, the driver) its own motion, not only the camera's |
 | `--present_upscaler_spin_free_wheels` | `true` | Spinning wheels move with their hub, without the spin, which is too fast to follow |
-| `--present_upscaler_shadow_motion` | `true` | Where the player car's ground shadow's edges swept over the ground, a temporal upscaler gets the history of the road the other way (none where that road is lit differently or an object lies on it); the asphalt elsewhere keeps the ground's motion. Off under DLSS preset K, which trails along that band (light trails with motion blur off, a dark outline with it on) |
+| `--present_upscaler_shadow_motion` | `true` | Live. Where the player car's ground shadow's edges swept over the ground, a temporal upscaler gets the history of the road the other way (none where that road is lit differently or an object lies on it); the asphalt elsewhere keeps the ground's motion. Off under DLSS preset K, which trails along that band (light trails with motion blur off, a dark outline with it on) |
 | `--present_upscaler_uncovered_ground` | `true` | Live. Ground that was under a car a frame ago gets the history of the road the other way from a temporal upscaler (none where that road is lit differently or an object lies on it; `false`: at speed DLSS preset M smudges the road behind the car with a copy of its lower body and dark blocks from its tyres). Off under DLSS preset K, which trails around the car's lower body and mirrors with it and shows no tyre blocks without it |
 | `--present_upscaler_decal_motion` | `true` | Other cars' ground shadows move with their cars |
 | `--present_upscaler_mirrors` | `true` | Live. The rear-view mirrors (cockpit, and the hood camera's mirror at the top) are drawn unjittered and put back after the upscale from the frame, as the HUD: their reflections move with the mirror's own camera, which the upscaler cannot follow, and smeared |
@@ -39,7 +39,7 @@ Views and measurements:
 | Option | Default | What it does |
 |---|---|---|
 | `--present_upscaler_view` | `upscale` | Show one of the upscaler's inputs instead of its output: `depth` (near white, far black) or `motion` (red and green around grey) |
-| `--present_upscaler_object_debug` | `0` | In the motion view: `1` object slots, `2` the reactive mask, `3` other cars' ground-shadow slots |
+| `--present_upscaler_object_debug` | `0` | In the motion view: `1` object slots, `2` the reactive mask, `3` other cars' ground-shadow slots (`2` needs `--present_upscaler_reactive_mask` or `--present_upscaler_reactive_shadows`, `3` `--present_upscaler_decal_motion`) |
 | `--present_upscaler_reactive_mask` | `false` | Mark alpha-blended scene draws (car glass, tail lights, tyre marks) in the reactive mask |
 | `--present_upscaler_reactive_shadows` | `false` | Mark the player car's ground shadow in the reactive mask |
 | `--present_upscaler_profile` | `false` | Time the upscaler on the GPU and log the mean of every 300 upscales |
