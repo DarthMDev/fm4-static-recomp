@@ -937,6 +937,22 @@ void Fm4ScenarioPush(PPCRegister& r4) {
   }
 }
 
+// The clip rectangle (left, top, right, bottom at r1 + 0xE0) of a recorded
+// command buffer, made from the viewport at r1 + 0x380 without its origin: put
+// the origin back, as the viewport's own draws have it.
+void Fm4CommandBufferClipRect(PPCRegister& r1) {
+  FM4_HOOK_CENSUS();
+  uint8_t* const membase = rex::system::kernel_state()->memory()->virtual_membase();
+  const uint8_t* const viewport = membase + r1.u32 + 0x380;
+  uint8_t* const rect = membase + r1.u32 + 0xE0;
+  const uint32_t x = LoadGuestWord(viewport);
+  const uint32_t y = LoadGuestWord(viewport + 4);
+  StoreGuestWord(rect, x);
+  StoreGuestWord(rect + 4, y);
+  StoreGuestWord(rect + 8, x + LoadGuestWord(viewport + 8));
+  StoreGuestWord(rect + 12, y + LoadGuestWord(viewport + 12));
+}
+
 namespace {
 
 // From a thumbnail's render until the game has saved it, every resolve is read

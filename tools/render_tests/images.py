@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 """Images as plain RGB bytes: the capture watcher's BMPs, our own PNGs, comparisons, chroma.
 
 Stdlib only. The per-pixel work runs through map() and slicing over bytes: a 2560x1440
@@ -184,6 +186,12 @@ def _region(image, rect):
     x0, y0, x1, y1 = rect.pixels(image.width, image.height)
     stride = image.width * 3
     return b"".join(image.rgb[y * stride + x0 * 3:y * stride + x1 * 3] for y in range(y0, y1))
+
+
+def mean(image, rect):
+    """The mean of every channel of rect's pixels (0-255)."""
+    region = _region(image, rect)
+    return sum(region) / len(region)
 
 
 def _absolute_differences(first, second):

@@ -13,6 +13,8 @@ image = "rev1"
 0x822F7C30 = { at = 0x822F76D0, fingerprint = "a10a38dfed0f4a75", changed = "reviewed: only a vtable slot far after the hooks moved (+0x114 became +0x118 at 0x822F8128); the hooks' code and registers are unchanged" }
 # hook Fm4MainLoopStep: changed function, aligned
 0x822F7D48 = { at = 0x822F77E8, fingerprint = "b595d62fce737a00", changed = "reviewed: only a vtable slot far after the hooks moved (+0x114 became +0x118 at 0x822F8128); the hooks' code and registers are unchanged" }
+# hook Fm4CommandBufferClipRect: identical function
+0x82390B94 = { at = 0x82390694, fingerprint = "c7526e334b2f9c46" }
 # kStringLookup: identical function
 0x823A4780 = { at = 0x823A4410, fingerprint = "b3d0e2f9f8d8d69d" }
 # hook Fm4LoadingScreen: identical function

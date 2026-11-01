@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 """Routes through the game's menus, each ending on a known screen or raising RunBroken.
 
 A screen is known by a string it looks up as it opens (--fm4_log_strings): its title, or the
@@ -14,6 +16,11 @@ from .game import FileOpened, Log, RunBroken, String
 
 MAIN_MENU = String("AUTOVISTA")
 CAREER = String("UPGRADE")
+UPGRADE = String("QUICK UPGRADE")
+UPGRADE_SHOP = String("Engine and Power")
+AERO = String("Aero and Appearance")
+AERO_PARTS = String("SPEED")
+PART_VIEW = String("TOGGLE")
 CARS = String("TAKE PHOTO")
 DEALER = String("ALL AFFORDABLE CARS")
 MANUFACTURERS = String("MANUFACTURER SELECT")
@@ -214,6 +221,23 @@ def dealer_showroom(session):
     _abarth_500(session, "dealer showroom")
     session.press_until("A", SHOWROOM, timeout=SCREEN_TIMEOUT, every=SCREEN_TIMEOUT,
                         step="dealer showroom")
+
+
+def upgrade_part_view(session):
+    """Main menu -> career -> UPGRADE -> UPGRADE SHOP -> Aero and Appearance -> its first part
+    (which parts depends on the car): the car in a view away from the screen's corner."""
+    enter(session, ["LEFT"] * 6, CAREER, MAIN_MENU, "upgrade: career")
+    enter(session, ["UP"] * 5 + ["DOWN"] * 2, UPGRADE, CAREER, "upgrade")
+    enter(session, ["UP"] * 5 + ["DOWN"], UPGRADE_SHOP, UPGRADE, "upgrade shop")
+    # Polled after the moves, as in _abarth_500: the shop's opening lines are not a focus.
+    _moves(session, ["LEFT"] * 6)
+    session.poll()
+    focus(session, "RIGHT", AERO, 6, len(session.lines), "upgrade shop: aero and appearance")
+    session.press_until("A", AERO_PARTS, timeout=2 * SCREEN_TIMEOUT, every=SCREEN_TIMEOUT,
+                        step="aero and appearance")
+    time.sleep(1)
+    session.press_until("A", PART_VIEW, timeout=2 * SCREEN_TIMEOUT, every=SCREEN_TIMEOUT,
+                        step="upgrade part view")
 
 
 def leave_dealer_showroom(session):

@@ -135,6 +135,18 @@ address = 0x82450DE0
 name = "Fm4ScenarioPush"
 registers = ["r4"]
 
+# A scene's recorded command buffer gets its clip rectangle fixup (type 6) as
+# (0, 0, width, height) of the renderer's viewport (r1 + 0x380: x, y, width,
+# height), its origin dropped. Only a buffer recorded untiled has that fixup (2x
+# and 4x MSAA never reach here for the views seen), so a view with an origin is
+# clipped to its size at the screen's corner in one tile (no MSAA, or a temporal
+# upscaler): the upgrade shop's part view at 115,169 lost its backdrop and floor
+# outside 880x312. Views at 0,0 (the main menu, 512x512 renders) are unchanged.
+[[midasm_hook]]
+address = 0x82390B94
+name = "Fm4CommandBufferClipRect"
+registers = ["r1"]
+
 # CCarThumbnailRenderStateMachine (vtable 0x8200DA0C, state table 0x8200D9C8)
 # renders a car's garage thumbnail in states 1 to 3 (load the uithumbnail
 # backdrop, draw, read back and save), twice per new car or paint: uithumbig,

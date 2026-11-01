@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 import struct
 import tempfile
 import unittest
@@ -106,6 +108,13 @@ class ImagesTest(unittest.TestCase):
         self.assertEqual(deficit((245, 235, 200)), 0)
         self.assertEqual(deficit((235, 200, 245)), 35)
         self.assertEqual(deficit((240, 130, 240)), 110)
+
+    def test_mean_over_the_region_only(self):
+        rgb = bytearray(solid(4, 2, (0, 0, 0)).rgb)
+        rgb[6:12] = bytes((90, 120, 150, 90, 120, 150))
+        image = Image(4, 2, bytes(rgb))
+        self.assertEqual(images.mean(image, Rect(0.5, 0, 1, 0.5)), 120)
+        self.assertEqual(images.mean(image, Rect(0, 0, 1, 1)), 30)
 
     def test_downscale_box_filter(self):
         image = Image(2, 2, bytes((0, 0, 0, 100, 100, 100, 200, 200, 200, 100, 100, 100)))

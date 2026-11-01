@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 """The scenarios and the tiers made of them. Each scenario is one launch of the game on the run's
 state (purchases carry over between the scenarios of a run), and adds CheckResults.
 
@@ -6,7 +8,8 @@ Switches of the spec's list, and how each is covered:
 - RESOLUTION SCALE: every tier runs 2x, long and full 3x, full 4x.
 - --fh1_surfaceless_clears: surfaceless-clears (a counter: tile passes per frame).
 - --fh1_async_readbacks: on in every run (a built-in default); its bugs show as tints (chroma).
-- SHOWROOM MSAA: thumbnail-msaa-off (off: a bought car's thumbnail keeps its ground shadow).
+- SHOWROOM MSAA: thumbnail-msaa-off (off: a bought car's thumbnail keeps its ground shadow, and
+  the upgrade shop's part view its backdrop).
   Every other run keeps the console's 4x, which the references were captured with.
 Left out, and why:
 - RACE MSAA, MOTION BLUR, DEPTH OF FIELD,
@@ -67,6 +70,11 @@ ONE_OFF_READBACKS = 0.25
 # Coverage under the car in a thumbnail's A plane (thumbnails.shadow_pixels): 2,652 to 7,020 with
 # the ground shadow, 337 to 414 without it, as SHOWROOM MSAA off made them from v0.2.0 on.
 SHADOW_MIN_PIXELS = 1500
+# Inside the upgrade shop's part view (115,169 to 995,481 at 1280x720), right of 880x312 from
+# the screen's corner: its dark backdrop (mean 2), or the flat grey (98) where its recorded
+# command buffer was clipped to the view's size without the view's origin.
+UPGRADE_BACKDROP = Rect(0.70, 0.25, 0.77, 0.42)
+UPGRADE_BACKDROP_MAX = 30
 
 
 @dataclass
@@ -225,7 +233,8 @@ def thumbnail_late_streaming(run):
 def thumbnail_msaa_off(run):
     """2x, SHOWROOM MSAA off (as a temporal upscaler also makes it): the bought car's thumbnail
     keeps its ground shadow. From v0.2.0 the row set the thumbnail's own tiling too, and the car
-    floated."""
+    floated. The upgrade shop's part view keeps its dark backdrop (grey with a black box in its
+    corner up to 0.3.0)."""
     scale = 2
     with run.session(scale, ["--fm4_showroom_msaa=off"]) as session:
         try:
@@ -236,6 +245,12 @@ def thumbnail_msaa_off(run):
             run.add(chroma_check(f"thumbnail {slot}", thumbnails.read_thumbnail(path),
                                  THUMBNAIL_CAR, CHROMA_MEAN, CHROMA_P95))
             _shadow(run, path, slot)
+            routes.back_to_main_menu(session)
+            routes.upgrade_part_view(session)
+            time.sleep(6)
+            image = session.capture("upgrade-part-view")
+            run.add(max_check("upgrade part view backdrop", images.mean(image, UPGRADE_BACKDROP),
+                              UPGRADE_BACKDROP_MAX))
             routes.back_to_main_menu(session)
             # The seed's cache was warmed at the console's 4x: the showroom's single-sample
             # pipelines are made here (103 in a run), so only the rest of the log checks apply.
