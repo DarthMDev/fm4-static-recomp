@@ -20,7 +20,7 @@ Switches of the fixes that give the upscaler correct motion. Turn one off to see
 | `--present_upscaler_jitter` | `true` | Jitter the scene by a sub-pixel offset each frame |
 | `--present_upscaler_object_motion` | `true` | Give each moving object (cars, wheels, the driver) its own motion, not only the camera's |
 | `--present_upscaler_spin_free_wheels` | `true` | Spinning wheels move with their hub, without the spin, which is too fast to follow |
-| `--present_upscaler_shadow_motion` | `true` | The player car's ground shadow moves with the car |
+| `--present_upscaler_shadow_motion` | `true` | Where the player car's ground shadow's edges swept over the ground, a temporal upscaler gets no history; the asphalt elsewhere keeps the ground's motion |
 | `--present_upscaler_decal_motion` | `true` | Other cars' ground shadows move with their cars |
 | `--present_upscaler_mirrors` | `true` | Live. The rear-view mirrors (cockpit, and the hood camera's mirror at the top) are drawn unjittered and put back after the upscale from the frame, as the HUD: their reflections move with the mirror's own camera, which the upscaler cannot follow, and smeared |
 | `--present_upscaler_uniform_alpha_to_coverage` | `false` | Above 1x, cut-outs (foliage, crowds, fences) take one steady threshold instead of an ordered dither, which can show as hatching on leaf edges |
