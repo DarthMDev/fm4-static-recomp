@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "platform": "macos-arm64",
+  "minimum_macos": "14.0",
+  "sdk": {
+    "repository": "https://github.com/i2kiselev/shiftglue-sdk",
+    "revision": "2460deb30668b49e272497929b07a2f2244c88f7",
+    "patches": [
+      {
+        "path": "patches/shiftglue/0001-apple-float-parser.patch",
+        "sha256": "8e2f2d2967b8b44b4f2c044d3c510954688befa61997c477714f56d7537873bf"
+      }
+    ]
+  }
+}

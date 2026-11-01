@@ -36,6 +36,7 @@ public static class LaunchArguments
             ["user_name"] = profile.Gamertag,
             ["fm4_language"] = settings.Language,
         };
+        if (OperatingSystem.IsMacOS()) options["gpu_backend"] = "vulkan";
         if (profile.Xuid is { } xuid) options["user_xuid"] = xuid;
         if (settings.SkipIntro) options["fm4_skip_intro"] = "true";
         if (settings.Compat) foreach (var (name, value) in CompatOptions) options[name] = value;
