@@ -75,6 +75,10 @@ SHADOW_MIN_PIXELS = 1500
 # command buffer was clipped to the view's size without the view's origin.
 UPGRADE_BACKDROP = Rect(0.70, 0.25, 0.77, 0.42)
 UPGRADE_BACKDROP_MAX = 30
+# The seed's white Abarth's hood in the same view (mean 200): the view was drawn, so a dark
+# backdrop is not a black frame.
+UPGRADE_CAR = Rect(0.46, 0.40, 0.56, 0.44)
+UPGRADE_CAR_MIN = 120
 
 
 @dataclass
@@ -251,6 +255,8 @@ def thumbnail_msaa_off(run):
             image = session.capture("upgrade-part-view")
             run.add(max_check("upgrade part view backdrop", images.mean(image, UPGRADE_BACKDROP),
                               UPGRADE_BACKDROP_MAX))
+            run.add(min_check("upgrade part view car", images.mean(image, UPGRADE_CAR),
+                              UPGRADE_CAR_MIN))
             routes.back_to_main_menu(session)
             # The seed's cache was warmed at the console's 4x: the showroom's single-sample
             # pipelines are made here (103 in a run), so only the rest of the log checks apply.
