@@ -57,8 +57,15 @@ On a display without G-Sync or FreeSync, turn **VSYNC** on in the GRAPHICS page.
 
 ## Lossless Scaling or NVIDIA Smooth Motion do nothing
 
-They do not see the game's frames by default. Add `--vulkan_present_via_dxgi=true` in the
-launcher's SETTINGS → ADVANCED → COMMAND-LINE OPTIONS (see [Frame generation](launch-options.md#frame-generation)).
+They do not see the game's frames by default. In the launcher, turn on SETTINGS → ADVANCED →
+**PRESENT THROUGH DXGI** and press SAVE (see [Frame generation](launch-options.md#frame-generation)).
+
+## Alt-tab is slow and the screen flashes, or Windows HDR is off after playing (NVIDIA)
+
+On some NVIDIA cards the game's fullscreen acts like exclusive fullscreen. Switching to another
+window takes a moment and the screen goes black for an instant. Windows HDR can also be off after
+the game closes. In the launcher, turn on SETTINGS → ADVANCED → **PRESENT THROUGH DXGI** and press
+SAVE.
 
 ## A car's picture in the garage is broken (noise, no shadow under the car)
 

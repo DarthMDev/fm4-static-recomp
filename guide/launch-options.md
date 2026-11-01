@@ -42,8 +42,8 @@ looks the same there, it is most likely the game's own look.
 
 Lossless Scaling and NVIDIA Smooth Motion do not see frames presented through the Vulkan
 swapchain. `--vulkan_present_via_dxgi=true` presents through DXGI instead, and both tools then
-work. It is off by default because Smooth Motion's frame pacing does not look right with it
-yet.
+work; in the launcher it is SETTINGS → ADVANCED → **PRESENT THROUGH DXGI**. It is off by default
+because Smooth Motion's frame pacing does not look right with it yet.
 
 **Debug and A/B options**: switches of individual rendering fixes, debug views of the
 upscaler's inputs and renderer diagnostics are listed in [DEBUG_OPTIONS.md](../DEBUG_OPTIONS.md).
@@ -132,8 +132,8 @@ the command line. Two exceptions:
   under the launcher, `.local\state\config\graphics.toml` in a manual install) belongs to that
   page, not to the options above: do not add other options to it.
 - **The launcher's own options** are passed on its command line and beat environment
-  variables: the paths, `fm4_language`, `fm4_skip_intro`, and COMPAT MODE's list. Set those in
-  its SETTINGS, or replace one in COMMAND-LINE OPTIONS.
+  variables: the paths, `fm4_language`, `fm4_skip_intro`, `fh1_async_readbacks`,
+  `vulkan_present_via_dxgi`, and COMPAT MODE's list. Set those in its SETTINGS, or replace one in COMMAND-LINE OPTIONS.
 
 ### Checking that an option took effect
 
