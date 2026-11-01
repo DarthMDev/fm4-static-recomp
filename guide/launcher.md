@@ -203,3 +203,9 @@ records the SDK/patch identities, compiler and tool versions, code image, and
 binary hashes. `.local/logs/macos-sdk.json` records SDK preparation. These receipts
 describe the build inputs and outputs; they do not assert that gameplay has been
 validated or that different Xcode/tool versions produce byte-identical binaries.
+
+The clean-source macOS build has also been checked with the declared macOS 14
+compile target. Control-rate parsing uses a C-locale compatibility path on Apple
+platforms because current libc++ marks floating-point `from_chars` as macOS 26+.
+The native controls regressions and FSR GPU checks run on macOS 27; running on
+macOS 14 itself still needs validation.

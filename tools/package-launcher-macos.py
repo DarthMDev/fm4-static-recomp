@@ -16,7 +16,7 @@ SOURCES = ('CMakeLists.txt', 'CMakePresets.json', 'LICENSE', 'THIRD_PARTY_NOTICE
            'cmake', 'src', 'config/rexglue', 'config/release.json', 'config/release-toolchain.json',
            'config/macos-toolchain.json', 'patches/shiftglue', 'config/supported-discs.json', 'config/pfp4-1.3.json', 'config/shaders',
            'tools/mac_sdk.py', 'tools/sdk_patches.py', 'tools/setup-macos.py', 'tools/release_analysis.py', 'tools/code_images.py',
-           'tests/macos_upscaler_smoke.cpp', 'tools/test-macos-upscalers.py')
+           'tests', 'tools/test-macos-upscalers.py')
 
 
 def source_payload(destination):
