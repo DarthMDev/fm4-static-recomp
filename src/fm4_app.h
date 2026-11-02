@@ -167,6 +167,12 @@ class Fm4App final : public rex::ReXApp {
     return true;
   }
 
+  bool ShouldStartModuleThread() override {
+    // Frame replay owns captured guest memory; running the title concurrently
+    // can overwrite it while the GPU replays the recorded commands.
+    return rex::cvar::GetFlagByName("fh1_frame_replay").empty();
+  }
+
   void LaunchModule() override {
     if (fm4_static_recomp::CurrentToolMode() == fm4_static_recomp::ToolMode::kNone) {
       rex::ReXApp::LaunchModule();

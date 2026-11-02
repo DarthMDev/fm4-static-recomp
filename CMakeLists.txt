@@ -138,3 +138,12 @@ if(APPLE AND FM4_BUILD_UPSCALER_SMOKE)
     add_executable(fm4_upscaler_smoke EXCLUDE_FROM_ALL tests/macos_upscaler_smoke.cpp)
     target_link_libraries(fm4_upscaler_smoke PRIVATE rex::runtime)
 endif()
+
+# Uses real host page faults; no game files or GPU are required.
+option(FM4_BUILD_MACOS_MEMORY_TESTS "Build macOS guest/GPU page-coherency regression" OFF)
+if(APPLE AND FM4_BUILD_MACOS_MEMORY_TESTS)
+    add_executable(fm4_macos_page_watch_test EXCLUDE_FROM_ALL
+        tests/macos_page_watch_test.cpp
+        "${REXSDK_DIR}/src/graphics/shared_memory.cpp")
+    target_link_libraries(fm4_macos_page_watch_test PRIVATE rex::runtime)
+endif()

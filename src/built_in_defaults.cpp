@@ -29,7 +29,13 @@ constexpr std::array kBeforeGpuPlugin = {Default{"gpu_backend", "vulkan"}};
 // keeps some render targets across frames, so a cold cache darkened the asphalt for seconds.
 constexpr std::array kAfterGpuPlugin = {
     Default{"async_shader_compilation", "false"},
+#if defined(__APPLE__)
+    // Apple host pages cover multiple guest pages: refresh CPU-written data
+    // each frame rather than relying solely on write-watch invalidation.
+    Default{"clear_memory_page_state", "true"},
+#else
     Default{"clear_memory_page_state", "false"},
+#endif
     Default{"host_present_fps_limit", "0"},
     Default{"gpu_record_thread", "true"},
     Default{"texture_cache_memory_limit_soft", "256"},
