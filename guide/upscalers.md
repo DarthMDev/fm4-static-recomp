@@ -110,11 +110,11 @@ again in the next frame by its mesh and its place among the draws.
 | **MSAA off** (MSAA rows show `OFF (DLSS)`) | The upscaler smooths edges itself. The rows keep your choice for when the upscaler is off. |
 | **FXAA off** | It would blur the upscaler's input. |
 | **Replay camera motion blur off** | The upscaler would turn its smear around mirrors and exhaust pipes into ghosting. `--fm4_upscaler_replay_blur=true` keeps it. |
-| **Texture detail of the output size** | Textures pick their mip level as if rendered at the output resolution (a LOD bias of `log2(render / output)`, -1 from 720p to 1440p), so the upscaled picture is not blurry. |
+| **Texture detail of the output size** | Textures pick their mip level as if rendered at the output resolution (a LOD bias of `log2(render / output)`, -1 from 720p to 1440p), so the upscaled picture is not blurry. Cut-outs are the exception: see below. |
 | **Sharper car shadows at 1x** | Taking a 1x frame, the races' ground shadow map is drawn at 512 instead of 256 and the car's own shadow map at 768 instead of 512, so their edges are not blocky after a 2x upscale. |
 | **One sharpening pass** | SHARPNESS drives one RCAS pass after the upscaler, for all three; FSR's built-in sharpening is off, so nothing is sharpened twice. |
 | **Mirrors from the frame** | The rear-view mirrors (the cockpit's, the hood camera's at the top of the screen) show what the mirror's own camera sees, which moves differently from the glass, so no motion lets the upscaler follow it and it smeared. The glass is drawn without jitter and put back over the upscale from the render, as the HUD is; its rim stays the upscaler's, for smooth edges. `--present_upscaler_mirrors=false` turns this off. |
-| **Steady cut-outs** | Foliage, fences and crowds are alpha-to-coverage cut-outs; at 1x they take one steady threshold, where a dither would flicker under the jitter. |
+| **Steady cut-outs** | Foliage, fences and crowds are alpha-to-coverage cut-outs; at 1x they take one steady threshold, where a dither would flicker under the jitter. They also keep the render size's mip level: from finer mips their shapes change in motion and clusters of leaves pop, at the cost of slightly softer leaves. `--present_upscaler_cut_out_no_bias=false` turns this off. |
 
 ## Shaders
 
