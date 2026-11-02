@@ -91,6 +91,7 @@ if(FM4_BUILD_TESTS)
         tests/string_tables_test.cpp
         tests/ui_fonts_test.cpp
         tests/graphics_page_test.cpp
+        tests/guest_frame_stats_test.cpp
         src/car_dirt.cpp
         src/code_image_check.cpp
         src/shadow_map.cpp

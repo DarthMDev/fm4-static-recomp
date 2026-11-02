@@ -1,114 +1,95 @@
-# Experimental macOS support
+# macOS Apple Silicon preview
 
-This is an Apple Silicon adaptation of DarthMDev/hl360-forza3 commit
-3865642710a69fc896767872944bde2aa85a00d8. It carries the native Metal SDK
-renderer, MoltenVK graphics fixes, performance diagnostics and launcher support
-into FM4. FM3 gameplay results are not FM4 validation results.
+This fork uses the current FM4 Static Recomp host and Avalonia launcher with
+ShiftGlue’s Vulkan renderer over MoltenVK. The older hl360/ReXGlue native Metal
+instructions do not apply. MetalFX is planned; it is not a selectable backend yet.
 
-## Build
+## Install the fork release
 
-Use a native ARM64 terminal, Xcode command-line tools with C++23 support,
-Python 3, CMake 3.25+ and Ninja. Build helpers explicitly target macOS 14.0
-instead of inheriting the build host’s OS version. Create a dedicated SDK checkout; the builder
-checks its revision and applies the ordered patch stack without resetting it.
+1. Download `FM4StaticRecomp-Launcher-macos-arm64.zip` and its `.sha256` file from
+   [DarthMDev’s releases](https://github.com/DarthMDev/fm4-static-recomp/releases).
+2. Verify it with `shasum -a 256 -c FM4StaticRecomp-Launcher-macos-arm64.zip.sha256`.
+3. Extract the ZIP into a writable folder you own. Launch `FM4 Static Recomp.app`.
+4. Follow setup with your own supported Disc 1; Disc 2 is optional. The launcher
+   verifies the disc and builds the game on your Mac. No game executable or assets
+   are distributed. See [supported discs](../README.md#supported-game).
+5. Start with default graphics and a 60 FPS limit. First use compiles shaders;
+   revisit the same race to compare warm-cache behavior.
 
-```sh
-git clone --recursive https://github.com/rexglue/rexglue-sdk.git thirdparty/rexglue-sdk
-git -C thirdparty/rexglue-sdk checkout c94f5ebdcb3c9d1a460ca48e04f9758448f8d518
-git -C thirdparty/rexglue-sdk submodule update --init --recursive
-python3 tools/Build-Mac.py --stage preflight
-python3 tools/Build-Mac.py --stage sdk
-python3 tools/Build-Mac.py --stage smoke
-python3 tools/Build-Mac.py --stage tools
-```
-
-The tools build needs no game assets. Use your own supported FM4 USA Rev 1
-Disc 1 dump under `game/disc1/` (see [input identification](../doc/inputs.md)).
+Requires Apple Silicon, a macOS 14.0 deployment target, Xcode Command Line Tools,
+Python 3.11+, CMake 3.25+ and Ninja. Install the tools with:
 
 ```sh
-python3 tools/Build-Mac.py --stage game
-python3 tools/Build-Metal.py --alloy-source /path/to/xenia-alloy --game-backend
+xcode-select --install
+brew install python cmake ninja
 ```
 
-Metal requires the locally built converter dependencies from Xenia Alloy, as
-in the FM3 port. They are not downloaded by the build helpers. Release packages include the
-runtime libraries and their notices.
-Keep dependency licenses and notices. The Metal staging command copies matching
-runtime/plugin libraries into `out/macos/game-build-metal` and creates
-`FM4 Launcher.app`. Keep that bundle beside the game, tools, configuration and
-libraries. Development packages require a writable folder for settings and saves;
-they are locally signed, not notarized.
+An internet connection is needed to fetch SDK sources and build dependencies.
+macOS 14 is the build target; runtime testing on that OS remains pending. The
+reported gameplay test used Apple M3. The bundle is ad-hoc signed, not notarized;
+Gatekeeper may require an explicit approval in System Settings → Privacy & Security.
 
-Disc image extraction is also available without the UI:
+Keep the adjacent `data` folder when updating: it holds your game, content,
+profiles, settings, source and builds. Updates on macOS are manual. Back up your
+profiles before replacing an installation. The launcher also offers Project
+Forza Plus 4 through its managed installer, but that path has not been qualified
+on macOS. Use vanilla FM4 for the baseline. DLSS requires supported NVIDIA hardware and is unavailable on Apple
+Silicon. FSR 2 and FSR 3 are temporal upscaling choices; neither enables frame
+generation here. See [validation](MACOS_PERFORMANCE.md) for what was actually tested.
+
+## Build from source
+
+Use a native ARM64 terminal and your own extracted Disc 1 at `game/disc1`:
 
 ```sh
-out/macos/tools-build/fm4tool iso /path/to/disc1.iso game/disc1
-out/macos/tools-build/fm4tool iso /path/to/disc2.iso game/disc2
-out/macos/tools-build/fm4tool install-dlc game/disc1 game/disc2 /path/to/user
+git clone https://github.com/DarthMDev/fm4-static-recomp.git
+cd fm4-static-recomp
+git checkout macos-support
+./tools/build-mac.sh
+./tools/run-mac.sh --fm4_frame_rate=60
 ```
 
-Use a separate user directory for validation. `tools/Import-Xenia.py` can copy
-an existing FM4 profile into a new directory and install its content packages;
-the source profile remains separate from subsequent game runs.
+`FM4_GAME_ROOT=/absolute/path/to/disc1 ./tools/build-mac.sh` changes the build’s
+input folder. For launch, pass `--game_data_root=/absolute/path/to/disc1` to
+`tools/run-mac.sh`. Keep saves and caches separate when comparing builds.
 
-On macOS the generated startup function registry is compiled at `-O0` with SelectionDAG and
-without a precompiled header. This avoids excessive Apple Clang instruction-selection time for
-its long sequence of registration calls; gameplay code retains Release flags.
+`config/macos-toolchain.json` pins ShiftGlue to
+`2460deb30668b49e272497929b07a2f2244c88f7` and four SHA-256 checked patches.
+The tested SDK revision matches that pin. Windows retains its independent SDK
+pin in `config/release-toolchain.json`. The helper creates an isolated SDK under
+`.local/shiftglue-sdk-macos/<revision>` and verifies its submodules. It builds
+Release ARM64 binaries in `out/build/mac-arm64-release`, including the facade
+libraries and FidelityFX runtime. Do not build only the host target: runtime
+staging and facade targets are part of the complete build.
 
-## Settings
+Remove any `FM4_SDK_ROOT` override and use a new source extraction for clean-install
+validation. A development override must match the pinned revision; its additional
+working changes are recorded, so it does not qualify as a clean managed SDK.
+Build receipts are `.local/logs/macos-sdk.json` and `macos-build.json`.
+The latter’s `gameplay_validated=false` means the build helper cannot certify
+manual gameplay; user reports are recorded separately in the validation guide.
 
-macOS defaults to the MoltenVK diagnostic baseline; the Metal package defaults
-to Metal. The launcher offers both when a staged Metal backend is present.
-Windows retains Direct3D 12. FM4 wheel controls and graphics workarounds remain
-available. Controller vibration defaults off and can be enabled independently
-of wheel force feedback.
-
-The Frame rate row offers 30 FPS, 60 FPS / 60 Hz, and 120 FPS / 120 Hz.
-60 FPS remains the default. The optional 30 FPS mode retains 60 Hz guest timing;
-manual FM4 racing confirmed normal game speed without slowdown. 60 FPS restores the normal 60 Hz
-mode without an extra host cap. 120 FPS selects the experimental 120 Hz guest
-mode and clears the host cap. Restart the game after changing modes.
-
-The launcher preserves the package’s existing `user` folder and discovers saved
-FM4 accounts on first launch, including saves created by running `fm4` directly.
-Keep this folder when updating the package. Metal staging enables the sun-glare
-workaround described in [MACOS_METAL.md](MACOS_METAL.md).
-
-Project Forza Plus installation still uses Windows PowerShell and is unavailable
-on macOS. The normal Disc 1/Disc 2 extraction tools use SDL child processes and
-native executable names.
-
-See [Metal validation](MACOS_METAL.md) and [performance investigation](MACOS_PERFORMANCE.md) for test modes, the first-race analysis and launch choices.
-
-## Release packaging
-
-Use `tools/Package-Mac.py --build-dir out/macos/game-build-metal --version VERSION`
-to create an allowlisted ZIP and SHA256 checksum. It excludes game dumps, DLC,
-profiles, caches and personal settings, removes development paths from the base
-config, checks every Mach-O deployment target and library dependency, and
-re-signs the Finder launcher. Dependencies must also be rebuilt for the chosen
-minimum macOS version; changing bundle metadata alone is insufficient.
-
-The Metal renderer targets macOS 14 Sonoma or later on Apple Silicon. Apple’s
-[shader converter requirements](https://developer.apple.com/metal/shader-converter/)
-set macOS 14 as the baseline for its full generated-library feature set. An
-explicit deployment target does not replace runtime testing on older macOS.
-
-If the Alloy DXIL converter binary targets a newer OS, rebuild it in a separate
-workspace directory before staging. For the pinned local Alloy sources:
+## Checks and packaging
 
 ```sh
-cmake -S /path/to/xenia-alloy/third_party/DirectXShaderCompiler-mac \
-  -B out/macos/dxilconv-build -G Ninja -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 \
-  -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_CXX_STANDARD=17 \
-  -DD3D12_INCLUDE_DIR=/path/to/xenia-alloy/third_party/DirectX-Headers/include/directx \
-  -DDXGI_INCLUDE_DIR=/path/to/xenia-alloy/third_party/DirectX-Headers/include/directx \
-  -DHLSL_BUILD_DXILCONV=ON -DHLSL_INCLUDE_TESTS=OFF \
-  -DLLVM_TARGETS_TO_BUILD=None -DLLVM_INCLUDE_TESTS=OFF -DLLVM_INCLUDE_EXAMPLES=OFF \
-  -DLLVM_ENABLE_BINDINGS=OFF -DLLVM_ENABLE_LIBXML2=OFF \
-  -DLLVM_ENABLE_EH=ON -DLLVM_ENABLE_RTTI=ON
-cmake --build out/macos/dxilconv-build --target dxilconv LLVMDxcSupport --parallel 4
-python3 tools/Build-Metal.py --alloy-source /path/to/xenia-alloy \
-  --dxil-build out/macos/dxilconv-build --game-backend
+python3 -m unittest discover -s tools/tests -v
+dotnet test launcher/Fm4StaticRecomp.Launcher.Tests -c Release
+python3 tools/test-macos-upscalers.py --build-dir out/build/mac-arm64-release
+python3 tools/test-macos-metal-interop.py --build-dir out/build/mac-arm64-release
+cmake -S . -B out/build/mac-arm64-release -DFM4_BUILD_TESTS=ON -DFM4_BUILD_MACOS_MEMORY_TESTS=ON
+cmake --build out/build/mac-arm64-release --target fm4_unit_tests fm4_macos_page_watch_test --parallel 4
+FM4_TEST_GAME_ROOT="$PWD/game/disc1" out/build/mac-arm64-release/fm4-tests/fm4_unit_tests
+out/build/mac-arm64-release/fm4_macos_page_watch_test
+python3 tools/package-launcher-macos.py --output-dir out/releases/macos-preview
 ```
+
+Packaging also requires the .NET 8 SDK. Use a fresh output directory. Mac release
+version and repository come from `config/macos-release.json`; the embedded payload
+receives those values in `config/release.json` without changing Windows metadata.
+Never use `--sdk-source` for a public package: it writes a local development hint.
+
+Only allowlisted source, launcher runtime and notices enter the archive. No SDK
+binaries, translated guest code, game data, saves or caches are included. The
+packager signs and verifies the app, adds installation notes to the ZIP and writes
+a SHA-256 sidecar. Publish the ZIP and sidecar together as an experimental fork
+prerelease, with the test scope and limitations from the validation guide.

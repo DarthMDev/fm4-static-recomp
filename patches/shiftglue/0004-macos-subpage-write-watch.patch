@@ -38,7 +38,13 @@ diff --git a/src/graphics/shared_memory.cpp b/src/graphics/shared_memory.cpp
 index a1ff28b..bf855c6 100644
 --- a/src/graphics/shared_memory.cpp
 +++ b/src/graphics/shared_memory.cpp
-@@ -122,8 +122,42 @@ void SharedMemory::ShutdownCommon() {
+@@ -20,4 +20,5 @@
+ #include <rex/graphics/shared_memory.h>
+ #include <rex/math.h>
+ #include <rex/memory.h>
++#include <rex/logging.h>
+ #include <rex/thread/sync_census.h>
+@@ -122,8 +123,42 @@ void SharedMemory::ShutdownCommon() {
    num_system_page_flags_ = 0;
  }
  

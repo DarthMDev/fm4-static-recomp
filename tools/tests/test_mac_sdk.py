@@ -103,6 +103,11 @@ class MacPayloadTest(unittest.TestCase):
             with zipfile.ZipFile(archive) as source:
                 for name in ('tools/mac_sdk.py', 'tools/sdk_patches.py', 'tools/setup-macos.py'):
                     self.assertIn(name, source.namelist())
+                release = json.loads(source.read('config/release.json'))
+                expected = json.loads((module.ROOT / 'config/macos-release.json').read_text())
+                self.assertEqual(release, expected)
+                self.assertIn('docs/MACOS.md', source.namelist())
+                self.assertIn('src/ui/guest_frame_stats.h', source.namelist())
                 config = json.loads(source.read('config/macos-toolchain.json'))
                 for patch in config['sdk']['patches']:
                     self.assertEqual(hashlib.sha256(source.read(patch['path'])).hexdigest(), patch['sha256'])

@@ -20,7 +20,7 @@
       },
       {
         "path": "patches/shiftglue/0004-macos-subpage-write-watch.patch",
-        "sha256": "3026c643fc3feb5a9c1f66b2cd2c9d13ab563bbcd11a92bdb4770e28c12ee76e"
+        "sha256": "e7019dbfd8f0e65c0e92af7f0f007e349edcc9867353037e8ecc9e5e05d78193"
       }
     ]
   }

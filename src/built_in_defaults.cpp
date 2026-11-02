@@ -44,11 +44,25 @@ constexpr std::array kAfterGpuPlugin = {
     // The SDK's changes since pinyon-shift-v0.3.0, held at the behaviour FM4 was verified
     // with until each is measured here. The SDK's own default otherwise.
     Default{"fh1_msaa_single_sample", "false"},
+#if defined(__APPLE__)
+    // Overlay repaint ticks must not submit the same guest image repeatedly.
+    // MoltenVK may block in nextDrawable inside vkQueueSubmit while holding
+    // the graphics queue, starving the game's submission worker.
+    Default{"pinyon_shift_fh1_source_presentation", "true"},
+    // Avoid materializing a clear as a separate render pass when the following
+    // draw can consume it as an attachment load action. MoltenVK pays for each
+    // Metal encoder; FM4's repeated clears otherwise dominate submission time.
+    Default{"fh1_fold_clears", "true"},
+    // Preserve query and memexport draws; the SDK only skips draws with no
+    // attachment writes, query samples or exported memory.
+    Default{"fh1_skip_draws_without_effect", "true"},
+#else
     Default{"fh1_fold_clears", "false"},
+    Default{"fh1_skip_draws_without_effect", "false"},
+#endif
     Default{"fh1_resolve_to_textures", "false"},
     Default{"fh1_direct_resolve_outdated", "false"},
     Default{"fh1_stable_alpha_to_coverage", "false"},
-    Default{"fh1_skip_draws_without_effect", "false"},
     Default{"fh1_native_stencil_export", "false"},
     Default{"fh1_async_specialized_passes", "false"},
     Default{"texture_band_reloads", "false"},

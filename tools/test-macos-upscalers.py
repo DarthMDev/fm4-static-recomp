@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--build-dir', type=Path, default=ROOT / 'out/build')
+    parser.add_argument('--build-dir', type=Path, default=ROOT / 'out/build/mac-arm64-release')
     args = parser.parse_args()
     if platform.system() != 'Darwin' or platform.machine() != 'arm64':
         parser.error('Use a native Apple Silicon macOS terminal')

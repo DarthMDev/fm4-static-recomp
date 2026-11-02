@@ -47,6 +47,7 @@
 #include "shader_cache/disc_shaders.h"
 #include "tool_mode.h"
 #include "ui/graphics_page.h"
+#include "ui/guest_frame_stats.h"
 #include "ui/hostui/host_ui.h"
 #include "ui/hostui/ui_fonts.h"
 
@@ -119,6 +120,15 @@ class Fm4App final : public rex::ReXApp {
     } else {
       REXLOG_ERROR("Graphics settings: cannot read {}", graphics_config_->path().string());
     }
+    // Count new guest images, independently of how often the host redraws its UI.
+    guest_frame_count_.store(0, std::memory_order_relaxed);
+    config.graphics->SetNativeGuestOutputRenderer(
+        [](const rex::system::NativeGuestOutputRenderContext& context) {
+          if (context.phase == rex::system::NativeGuestOutputPhase::kPresented) {
+            guest_frame_count_.fetch_add(1, std::memory_order_relaxed);
+          }
+          return false;
+        });
     fm4_static_recomp::InstallPixelShaderSwitches();
     rex::kernel::xboxkrnl::SetGuestFileOpenObserver([](std::string_view guest_path) {
       fm4_static_recomp::NoteGuestFileOpen(guest_path);
@@ -216,26 +226,13 @@ class Fm4App final : public rex::ReXApp {
     if (!REXCVAR_GET(controller_vibration)) {
       rex::cvar::SetFlagByName("pad_rumble_strength", "0");
     }
-    SetGuestFrameStats([]() -> rex::ui::FrameStats {
-      static uint64_t frame_counter = 0;
-      static auto last_calc = std::chrono::steady_clock::now();
-      static double smoothed_fps = 0.0;
-      static double smoothed_ms = 0.0;
-      static uint64_t last_frames = 0;
-
-      frame_counter++;
-      const auto now = std::chrono::steady_clock::now();
-      const double elapsed = std::chrono::duration<double>(now - last_calc).count();
-      if (elapsed >= 0.25) {
-        smoothed_fps = static_cast<double>(frame_counter - last_frames) / elapsed;
-        smoothed_ms = smoothed_fps > 0.0 ? (1000.0 / smoothed_fps) : 0.0;
-        last_calc = now;
-        last_frames = frame_counter;
-      }
+    SetGuestFrameStats([sampler = fm4_static_recomp::ui::GuestFrameStats{}]() mutable {
+      const auto stats = sampler.Sample(guest_frame_count_.load(std::memory_order_relaxed),
+                                        std::chrono::steady_clock::now());
       return rex::ui::FrameStats{
-          .frame_time_ms = smoothed_ms,
-          .fps = smoothed_fps,
-          .frame_count = frame_counter,
+          .frame_time_ms = stats.frame_time_ms,
+          .fps = stats.fps,
+          .frame_count = stats.frame_count,
       };
     });
     if (REXCVAR_GET(fm4_show_fps)) {
@@ -284,6 +281,8 @@ class Fm4App final : public rex::ReXApp {
   }
 
  private:
+  inline static std::atomic<uint64_t> guest_frame_count_{0};
+
   // The game code is recompiled from one code image's default.xex; the other image's would
   // run against it, so a game folder of another release is refused before the game starts.
   static bool GameFolderMatchesBuild(const std::filesystem::path& game_root) {

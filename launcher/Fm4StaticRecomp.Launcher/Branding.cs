@@ -8,5 +8,7 @@ public static class Branding
     public const string ProductName = "FM4 Static Recomp";
     public const string Disclaimer = "Not affiliated with Microsoft or Turn 10 Studios.";
     // Used only before the payload, whose config/release.json names the repository, is read.
-    public const string Repository = "https://github.com/i2kiselev/fm4-static-recomp";
+    public static readonly string Repository = OperatingSystem.IsMacOS()
+        ? "https://github.com/DarthMDev/fm4-static-recomp"
+        : "https://github.com/i2kiselev/fm4-static-recomp";
 }
