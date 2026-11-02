@@ -27,6 +27,7 @@ public partial class MainWindow
         // A saves folder on a drive that is not connected, or renamed in Explorer, lists no profiles.
         if (host.SavesFolderMissing) StatusText.Text = SavesFolderMissingText(host);
         if (active is not null && host.Settings.ActiveProfile != active.Id) SaveActiveProfile(active);
+        UpdateActions();
     }
 
     private void SaveActiveProfile(Profile profile)
