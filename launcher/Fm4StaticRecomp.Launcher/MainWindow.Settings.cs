@@ -96,6 +96,7 @@ public partial class MainWindow
             reset.Click += (_, _) =>
             {
                 _graphics?.ResetToDefaults();
+                (_windowed, _windowSize) = (false, WindowSizes.Default);
                 BuildSettingsPanel("Defaults shown; SAVE writes them.");
             };
             _restoreSettingsButton = new Button { Content = "RESTORE BACKUP", Classes = { "link" }, VerticalAlignment = VerticalAlignment.Center };
@@ -147,6 +148,7 @@ public partial class MainWindow
 
     private void AddGraphicsRows()
     {
+        AddWindowRows();
         if (_graphics is not { } graphics)
         {
             SettingsBody.Children.Add(Help(_graphicsProblem ?? "Build the game first."));
@@ -160,6 +162,41 @@ public partial class MainWindow
             foreach (var row in block.Rows.Where(graphics.Shows)) rows.Children.Add(GraphicsRow(graphics, row));
             SettingsBody.Children.Add(rows);
         }
+    }
+
+    // The window is the output in windowed play, so the scale and upscaler rows below follow it.
+    private void AddWindowRows()
+    {
+        var rows = new StackPanel { Spacing = 6, Margin = new Thickness(0, 4, 0, 10) };
+        rows.Children.Add(Option("WINDOWED", "The game starts in a window you can resize. Alt+Enter switches between window and fullscreen while you play.",
+            _windowed, v =>
+            {
+                _windowed = v;
+                OutputSizeChanged();
+            }));
+        var sizes = WindowSizes.Fitting(_primarySize, _windowSize);
+        var size = Combo(sizes.Select(WindowSizes.Label).ToList(), sizes.ToList().IndexOf(_windowSize));
+        size.SelectionChanged += (_, _) =>
+        {
+            if (size.SelectedIndex < 0) return;
+            _windowSize = sizes[size.SelectedIndex];
+            if (_windowed) OutputSizeChanged();
+        };
+        rows.Children.Add(Labelled("WINDOW SIZE", size, "The size the window starts at, and the size Alt+Enter leaves fullscreen to.", alwaysHelp: true));
+        SettingsBody.Children.Add(rows);
+    }
+
+    private void OutputSizeChanged()
+    {
+        if (_graphics is { } graphics) NoteLoweredScale(graphics);
+        BuildSettingsPanel("");
+    }
+
+    private void NoteLoweredScale(GraphicsSettings graphics)
+    {
+        if (graphics.FitScaleToUpscaler(OutputSize) is { } lowered)
+            _upscalerNote = $"Resolution scale lowered to {lowered}x: {graphics.RunningUpscaler(OutputSize)} runs up to "
+                            + $"{lowered}x on this {OutputSize!.Value.Width}x{OutputSize.Value.Height} {(_windowed ? "window" : "screen")}.";
     }
 
     private void AddOtherRows(LauncherHost host)
@@ -188,15 +225,6 @@ public partial class MainWindow
             "The game's text and voice-over. Korean, Chinese, Portuguese, Czech, Hungarian and Dutch keep the English voice-over.",
             alwaysHelp: true));
         SettingsBody.Children.Add(Option("SKIP INTRO VIDEOS", "The game starts at its title screen.", _skipIntro, v => _skipIntro = v));
-        SettingsBody.Children.Add(Option("WINDOWED", "The game starts in a window you can resize. Alt+Enter switches between window and fullscreen while you play.",
-            _windowed, v => _windowed = v));
-        var sizes = WindowSizes.Fitting(_primarySize, _windowSize);
-        var size = Combo(sizes.Select(WindowSizes.Label).ToList(), sizes.ToList().IndexOf(_windowSize));
-        size.SelectionChanged += (_, _) =>
-        {
-            if (size.SelectedIndex >= 0) _windowSize = sizes[size.SelectedIndex];
-        };
-        SettingsBody.Children.Add(Labelled("WINDOW SIZE", size, "The size the window starts at, and the size Alt+Enter leaves fullscreen to.", alwaysHelp: true));
 
         SettingsBody.Children.Add(Header("ADVANCED"));
         SettingsBody.Children.Add(Help("These are the recommended defaults. Don't change them unless you're sure what a setting does."));
@@ -342,9 +370,7 @@ public partial class MainWindow
                 {
                     if (combo.SelectedIndex < 0) return;
                     graphics.Set(row.Key!, choices[combo.SelectedIndex].Value);
-                    if (upscalerRow && graphics.FitScaleToUpscaler(OutputSize) is { } lowered)
-                        _upscalerNote = $"Resolution scale lowered to {lowered}x: {graphics.RunningUpscaler(OutputSize)} runs up to "
-                                        + $"{lowered}x on this {OutputSize!.Value.Width}x{OutputSize.Value.Height} {(_windowed ? "window" : "screen")}.";
+                    if (upscalerRow) NoteLoweredScale(graphics);
                     // Rows shown only for some of this setting's values, and the rows the upscaler
                     // and scale decide, follow it.
                     if (upscalerRow || row.Key == "resolution_scale"

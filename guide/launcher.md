@@ -38,12 +38,12 @@ instead, see the [manual install](manual-install.md).
 | **PLAY** | Starts the game. |
 | **PROFILE** | Adds, renames, imports and deletes profiles (separate saves). |
 | **CONTENT** | Installs Disc 2 and DLC. Install them only here: the game's own Disc 2 install waits for a disc change that never comes. Also [unlocks the unicorn cars](#unicorn-cars). |
-| **GRAPHICS** | The [GRAPHICS page's settings](graphics.md). **SAVE** on top writes this page and SETTINGS together. |
-| **SETTINGS** | The game's language, launch options (among them [playing in a window](#playing-in-a-window)), advanced options (among them the [saves folder](#the-saves-folder)) and [command-line options](launch-options.md#with-the-launcher-command-line-options) for debugging. |
+| **GRAPHICS** | [Playing in a window](#playing-in-a-window) and the [GRAPHICS page's settings](graphics.md). **SAVE** on top writes this page and SETTINGS together. |
+| **SETTINGS** | The game's language, launch options, advanced options (among them the [saves folder](#the-saves-folder)) and [command-line options](launch-options.md#with-the-launcher-command-line-options) for debugging. |
 
 ## Playing in a window
 
-SETTINGS → LAUNCH OPTIONS → **WINDOWED** starts the game in a window, and **WINDOW SIZE** picks
+**WINDOWED**, at the top of GRAPHICS, starts the game in a window, and **WINDOW SIZE** picks
 its size in pixels. **Alt+Enter** switches between the window and fullscreen at any moment while
 you play, also after a fullscreen start, and leaves the setting as it is.
 
@@ -54,7 +54,8 @@ WINDOW SIZE. For a size the list does not have, use
 - The picture stays 16:9: a maximised window, or one set to another shape, shows black bars.
 - An upscaler runs only while the render (1280x720 x RESOLUTION SCALE) fits the window. In a
   smaller window the picture is [downscaled without it](upscalers.md). With WINDOWED on, the
-  launcher's GRAPHICS goes by WINDOW SIZE instead of your screen.
+  RESOLUTION SCALE and UPSCALER rows in GRAPHICS go by WINDOW SIZE instead of your screen: turning
+  WINDOWED on or picking a smaller size lowers a scale the upscaler cannot run at.
 
 ## A career from Xenia Canary
 

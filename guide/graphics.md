@@ -44,6 +44,7 @@ FRAME RATE, RESOLUTION SCALE, UPSCALER and SHARPNESS are not part of a preset.
 | FRAME RATE | Frame rate of races, menus and the showroom, 60 fps up to your display's refresh rate (at most 240). Pick a rate your PC holds (see [Benchmarks](performance.md#benchmarks)). Without G-Sync or FreeSync, pick the refresh rate or a whole fraction of it. How it works: [High frame rates](high-frame-rate.md). |
 | VSYNC | Off by default, which suits G-Sync and FreeSync displays. Turn it on if you see tearing. |
 | RESOLUTION SCALE | 1x to 4x of 1280x720 on each axis, up to 5120x2880. |
+| WINDOWED, WINDOW SIZE | In the launcher only, at the top of its GRAPHICS: the game starts in a window of this size, and **Alt+Enter** switches between window and fullscreen while you play. RESOLUTION SCALE and UPSCALER then go by the window instead of your screen: with an upscaler chosen, turning WINDOWED on or picking a smaller size lowers a scale it cannot run at, shown as a change before SAVE. From the next start. More in [Playing in a window](launcher.md#playing-in-a-window). |
 
 ### Anti-aliasing and textures
 

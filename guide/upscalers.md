@@ -10,7 +10,7 @@ upscalers need.
 ## Quick start
 
 1. Open the GRAPHICS page: **BACK + START** held together on a controller, **F6**, or Play
-   Career → My Profile → Options → GRAPHICS. The launcher's GRAPHICS have the same rows.
+   Career → My Profile → Options → GRAPHICS. The launcher's GRAPHICS have the same rows and a few launcher-only ones.
 2. **UPSCALER**: DLSS on an NVIDIA RTX GPU, otherwise FSR 3 or FSR 2 (any GPU). The row skips
    an upscaler your GPU cannot run.
 3. **RESOLUTION SCALE**: the render size, from the table below.
