@@ -1,15 +1,27 @@
 # FM4 Static Recomp
 
-[![Latest release](https://img.shields.io/github/v/release/i2kiselev/fm4-static-recomp?label=release)](https://github.com/i2kiselev/fm4-static-recomp/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/i2kiselev/fm4-static-recomp/total)](https://github.com/i2kiselev/fm4-static-recomp/releases)
-[![Platform](https://img.shields.io/badge/platform-Windows%2010%2B%20x64-blue)](#what-you-need)
+[![Latest release](https://img.shields.io/github/v/release/DarthMDev/fm4-static-recomp?label=release)](https://github.com/DarthMDev/fm4-static-recomp/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/DarthMDev/fm4-static-recomp/total)](https://github.com/DarthMDev/fm4-static-recomp/releases)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20ARM64-blue)](#what-you-need)
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-green)](LICENSE)
 
 An unofficial static recompilation of the Xbox 360 release of *Forza Motorsport 4* for
-Windows, built on your own PC from your own disc.
+Windows and an experimental Apple Silicon macOS fork, built locally from your own disc.
+
+This is [DarthMDev’s fork](https://github.com/DarthMDev/fm4-static-recomp) of
+[i2kiselev’s FM4 Static Recomp](https://github.com/i2kiselev/fm4-static-recomp).
+**Mac users: start with the [macOS guide](docs/MACOS.md).** Download
+`FM4StaticRecomp-Launcher-macos-arm64.zip` from this fork’s releases; the Windows
+launcher instructions below describe the upstream Windows build.
+
+On November 2, 2026, the user reported stable **60 FPS in menus and a Free Play
+race** on Apple M3, using the first default car and track, default graphics settings
+and a 60 FPS limit. No graphics issues were observed after the geometry/coherency
+fixes. This is one tested configuration, not all-track qualification.
+[macOS guide and testing status](docs/MACOS.md#testing-status).
 
 The game's PowerPC code is translated ahead of time into C++ by the
-[ShiftGlue SDK](https://github.com/arcanite24/shiftglue-sdk) and compiled for x86-64. Its GPU
+[ShiftGlue SDK](https://github.com/arcanite24/shiftglue-sdk) and compiled for x86-64 on Windows or ARM64 on macOS. Its GPU
 commands run on ShiftGlue's native Vulkan renderer, written for
 [Pinyon Shift](https://github.com/arcanite24/pinyon-shift) (*Forza Horizon*) and extended
 here for FM4.
@@ -28,7 +40,7 @@ here for FM4.
 > driver and shadow from the game's draws. Choose **UPSCALER** on the GRAPHICS page
 > (**BACK + START** on a controller, or **F6**). How it works and what to pick:
 > **[Upscalers](guide/upscalers.md)**. Everything else in this version:
-> [release notes](https://github.com/i2kiselev/fm4-static-recomp/releases/latest).
+> [release notes](https://github.com/DarthMDev/fm4-static-recomp/releases/latest).
 
 > [!NOTE]
 > **Experimental release.** The offline game modes play without known blocking problems
@@ -42,10 +54,10 @@ here for FM4.
 
 <sub>YouTube plays video at up to 60 fps; the frame rates are the game's during the recording.</sub>
 
-## Quick start
+## Quick start (Windows)
 
 1. Download `FM4StaticRecomp-Launcher.zip` from the
-   [latest release](https://github.com/i2kiselev/fm4-static-recomp/releases/latest) and extract
+   [latest release](https://github.com/DarthMDev/fm4-static-recomp/releases/latest) and extract
    it into a short folder you own, for example `D:\FM4`.
 2. Start `FM4StaticRecompLauncher.exe` and follow its five setup steps: Disc 1, Disc 2
    (optional), the Microsoft licence, the build and your profile.
@@ -65,6 +77,7 @@ the command line? See the [manual install](guide/manual-install.md).
 
 | Guide | What's in it |
 |---|---|
+| [macOS](docs/MACOS.md) | Apple Silicon installation, source builds, release packaging and validation |
 | [Launcher](guide/launcher.md) | First setup, profiles, content, the `data` folder, a saves folder of your own, updates |
 | [Manual install](guide/manual-install.md) | Command-line setup, Disc 2 and DLC, updating |
 | [Project Forza Plus 4](guide/project-forza-plus.md) | Setting up the mod: its own install, career modes, saves, what is left out |

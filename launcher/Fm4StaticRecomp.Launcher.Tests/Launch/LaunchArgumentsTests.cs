@@ -67,6 +67,27 @@ public class LaunchArgumentsTests
     }
 
     [Fact]
+    public void Show_fps_passes_the_flag_when_enabled()
+    {
+        var (layout, profile, settings, temp) = Setup();
+        using var _ = temp;
+        settings.ShowFps = true;
+        var args = LaunchArguments.ForPlay(layout, "0.1.0", profile, settings, new WindowsPlatform());
+        Assert.Contains("--fm4_show_fps=true", args);
+    }
+
+    [Fact]
+    public void Controller_vibration_off_disables_rumble_and_pad_strength()
+    {
+        var (layout, profile, settings, temp) = Setup();
+        using var _ = temp;
+        settings.ControllerVibration = false;
+        var args = LaunchArguments.ForPlay(layout, "0.1.0", profile, settings, new WindowsPlatform());
+        Assert.Contains("--controller_vibration=false", args);
+        Assert.Contains("--pad_rumble_strength=0", args);
+    }
+
+    [Fact]
     public void Never_repeats_an_option()
     {
         var (layout, profile, settings, temp) = Setup();

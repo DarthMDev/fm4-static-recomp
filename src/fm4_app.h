@@ -23,9 +23,11 @@
 #include <rex/ui/flags.h>
 #include <rex/ui/keybinds.h>
 #include <rex/ui/overlay/achievement_notification.h>
+#include <rex/ui/overlay/debug_overlay.h>
 #include <rex/ui/vulkan/provider.h>
 #include <rex/ui/window.h>
 #include <rex/ui/windowed_app_context.h>
+#include <SDL3/SDL.h>
 
 #include "built_in_defaults.h"
 #include "code_image_check.h"
@@ -45,6 +47,7 @@
 #include "shader_cache/disc_shaders.h"
 #include "tool_mode.h"
 #include "ui/graphics_page.h"
+#include "ui/guest_frame_stats.h"
 #include "ui/hostui/host_ui.h"
 #include "ui/hostui/ui_fonts.h"
 
@@ -54,6 +57,8 @@ REXCVAR_DECLARE(std::string, fm4_dump_disc_shaders);
 REXCVAR_DECLARE(std::string, fm4_build_shader_cache);
 REXCVAR_DECLARE(std::string, fm4_shader_list_dir);
 REXCVAR_DECLARE(std::string, fm4_export_ui_fonts);
+REXCVAR_DECLARE(bool, fm4_show_fps);
+REXCVAR_DECLARE(bool, controller_vibration);
 
 class Fm4App final : public rex::ReXApp {
  public:
@@ -96,6 +101,9 @@ class Fm4App final : public rex::ReXApp {
       return;
     }
     config.gpu_plugin = "fh1";
+#if defined(__APPLE__)
+    SDL_SetHint(SDL_HINT_AUDIO_CHANNELS, "2");
+#endif
     fm4_static_recomp::ConfigureScriptedInput(config);
     fm4_static_recomp::ApplyBuiltInDefaults(fm4_static_recomp::DefaultStage::kBeforeGpuPlugin);
     // The GPU settings are registered by the plugin, so it is loaded here
@@ -112,6 +120,15 @@ class Fm4App final : public rex::ReXApp {
     } else {
       REXLOG_ERROR("Graphics settings: cannot read {}", graphics_config_->path().string());
     }
+    // Count new guest images, independently of how often the host redraws its UI.
+    guest_frame_count_.store(0, std::memory_order_relaxed);
+    config.graphics->SetNativeGuestOutputRenderer(
+        [](const rex::system::NativeGuestOutputRenderContext& context) {
+          if (context.phase == rex::system::NativeGuestOutputPhase::kPresented) {
+            guest_frame_count_.fetch_add(1, std::memory_order_relaxed);
+          }
+          return false;
+        });
     fm4_static_recomp::InstallPixelShaderSwitches();
     rex::kernel::xboxkrnl::SetGuestFileOpenObserver([](std::string_view guest_path) {
       fm4_static_recomp::NoteGuestFileOpen(guest_path);
@@ -167,6 +184,12 @@ class Fm4App final : public rex::ReXApp {
     return true;
   }
 
+  bool ShouldStartModuleThread() override {
+    // Frame replay owns captured guest memory; running the title concurrently
+    // can overwrite it while the GPU replays the recorded commands.
+    return rex::cvar::GetFlagByName("fh1_frame_replay").empty();
+  }
+
   void LaunchModule() override {
     if (fm4_static_recomp::CurrentToolMode() == fm4_static_recomp::ToolMode::kNone) {
       rex::ReXApp::LaunchModule();
@@ -200,6 +223,31 @@ class Fm4App final : public rex::ReXApp {
       }
     });
     InstallKeyboard();
+    if (!REXCVAR_GET(controller_vibration)) {
+      rex::cvar::SetFlagByName("pad_rumble_strength", "0");
+    }
+    SetGuestFrameStats([sampler = fm4_static_recomp::ui::GuestFrameStats{}]() mutable {
+      const auto stats = sampler.Sample(guest_frame_count_.load(std::memory_order_relaxed),
+                                        std::chrono::steady_clock::now());
+      return rex::ui::FrameStats{
+          .frame_time_ms = stats.frame_time_ms,
+          .fps = stats.fps,
+          .frame_count = stats.frame_count,
+      };
+    });
+    if (REXCVAR_GET(fm4_show_fps)) {
+      rex::ui::SetBuildLabel(" ");
+      if (rex::ui::Window* const window = this->window()) {
+        window->app_context().CallInUIThreadDeferred([] {
+          rex::ui::TriggerBind("bind_debug_overlay");
+        });
+      }
+    }
+    rex::ui::RegisterBind("bind_toggle_fullscreen", "F11", "Toggle fullscreen", [this] {
+      const bool fs = !rex::cvar::GetFlagByName("fullscreen").empty() &&
+                      rex::cvar::GetFlagByName("fullscreen") != "false";
+      rex::cvar::SetFlagByName("fullscreen", fs ? "false" : "true");
+    });
     // The SDK's pad_chord_game_menu runs the bind of this name.
     rex::ui::RegisterBind("bind_game_menu", "F6", "Toggle the GRAPHICS page", [this] {
       // A START pressed before BACK has already closed the page by itself.
@@ -215,6 +263,7 @@ class Fm4App final : public rex::ReXApp {
   }
 
   void OnShutdown() override {
+    rex::ui::UnregisterBind("bind_toggle_fullscreen");
     rex::ui::UnregisterBind("bind_game_menu");
     fm4_static_recomp::SetInputTick(nullptr);
     fm4_static_recomp::SetPromptTextSource(nullptr);
@@ -232,6 +281,8 @@ class Fm4App final : public rex::ReXApp {
   }
 
  private:
+  inline static std::atomic<uint64_t> guest_frame_count_{0};
+
   // The game code is recompiled from one code image's default.xex; the other image's would
   // run against it, so a game folder of another release is refused before the game starts.
   static bool GameFolderMatchesBuild(const std::filesystem::path& game_root) {

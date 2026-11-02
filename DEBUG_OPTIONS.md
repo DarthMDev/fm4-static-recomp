@@ -87,6 +87,7 @@ Costs (wrong image unless noted):
 | `--fh1_debug_skip_resolve_reloads`, `--fh1_debug_skip_resolve_reloads_format=<n>` | Never reload textures from resolved memory (stale images) |
 | `--fh1_native_gpu_profile_draws` | With `--fh1_native_gpu_profile`, also time every draw by its pixel shader |
 | `--fh1_frame_replay_repeat=<n>` | Run a replayed frame `n` times, as a GPU benchmark |
+| `--fh1_untile_predicated_tiling=true` | Live. Combine predicated tile passes into one draw pass. FM4 disables this on macOS, matching Windows: enabling it can clip the default 4x MSAA menus and leaves stale image bands |
 | `--fh1_debug_untile=1\|2` | Diagnostics of the single-pass tiling: keep the first tile's predication, or draw the later tiles too |
 
 Resolves and visibility:

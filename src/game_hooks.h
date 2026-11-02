@@ -33,4 +33,7 @@ void InstallPixelShaderSwitches();
 // thumbnail ends the readback hold its render began.
 void NoteGuestFileOpen(std::string_view guest_path);
 
+// The guest vblank counter, incremented on every vblank step.
+uint64_t GuestVblankCount();
+
 }  // namespace fm4_static_recomp
