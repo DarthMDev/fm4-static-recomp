@@ -83,7 +83,7 @@ stay on your PC; `tools\microsoft-licences.ps1` prints the current links.
    stall while shaders compile. It adds the shaders and pipelines listed in
    `config\shaders` to your cache and never removes anything; the repository ships only
    that list (hashes, render states, edit positions), no game data. The first launch then
-   compiles the listed pipelines for your GPU before the title screen: about 30 seconds on
+   compiles the listed pipelines for your GPU before the title screen: up to 40 seconds on
    the [test bench](performance.md#test-bench), longer on a processor with fewer threads; the
    game may look frozen meanwhile. `-SkipShaderCache` leaves it out. Pass the same `-StateRoot` you play with so the cache
    lands there.

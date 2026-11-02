@@ -7,7 +7,7 @@ Problems players have run into, and what fixes them. Not listed here? See
 
 ## The game looks frozen on its first start
 
-The first start of every new version builds its shaders for about 30 seconds before the title
+The first start of every new version builds its shaders for up to 40 seconds before the title
 screen, and the window may not respond meanwhile. Wait; later starts skip this.
 
 ## The game crashes in a busy moment, a different spot each time

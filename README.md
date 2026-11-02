@@ -52,8 +52,8 @@ here for FM4.
 3. Press **PLAY**.
 
 > [!NOTE]
-> The first start compiles the game's shaders for your GPU before the title screen: about
-> 30 seconds, longer on a processor with fewer threads. The game may look frozen meanwhile; let
+> The first start compiles the game's shaders for your GPU before the title screen: up to
+> 40 seconds, longer on a processor with fewer threads. The game may look frozen meanwhile; let
 > it finish. Later starts take a second or two; the compile runs again after an update and after
 > a GPU driver update.
 
