@@ -58,6 +58,11 @@ constexpr std::array kAfterGpuPlugin = {
     Default{"vulkan_texture_load_compute_copy", "false"},
     Default{"vulkan_small_texture_copy_views", "false"},
 #if defined(__APPLE__)
+    // The SDK enables FH1's single-pass tiling optimization on macOS. FM4's
+    // 4x MSAA menus need the original tile passes or parts of the UI are
+    // clipped and replaced by stale EDRAM contents. Match the Windows path
+    // while preserving the console's showroom and race MSAA settings.
+    Default{"fh1_untile_predicated_tiling", "false"},
     Default{"fh1_readback_small_float_resolves", "true"},
     Default{"vulkan_present_mode", "fifo"},
     Default{"swap_post_effect_scene_only", "false"},
