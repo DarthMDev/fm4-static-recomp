@@ -18,7 +18,7 @@ On November 2, 2026, the user reported stable **60 FPS in menus and a Free Play
 race** on Apple M3, using the first default car and track, default graphics settings
 and a 60 FPS limit. No graphics issues were observed after the geometry/coherency
 fixes. This is one tested configuration, not all-track qualification.
-[Validation and remaining checks](docs/MACOS_PERFORMANCE.md).
+[macOS guide and testing status](docs/MACOS.md#testing-status).
 
 The game's PowerPC code is translated ahead of time into C++ by the
 [ShiftGlue SDK](https://github.com/arcanite24/shiftglue-sdk) and compiled for x86-64 on Windows or ARM64 on macOS. Its GPU
@@ -78,7 +78,6 @@ the command line? See the [manual install](guide/manual-install.md).
 | Guide | What's in it |
 |---|---|
 | [macOS](docs/MACOS.md) | Apple Silicon installation, source builds, release packaging and validation |
-| [MetalFX plan](docs/MACOS_METAL.md) | Vulkan–Metal feasibility, temporal upscaling and later frame interpolation |
 | [Launcher](guide/launcher.md) | First setup, profiles, content, the `data` folder, a saves folder of your own, updates |
 | [Manual install](guide/manual-install.md) | Command-line setup, Disc 2 and DLC, updating |
 | [Project Forza Plus 4](guide/project-forza-plus.md) | Setting up the mod: its own install, career modes, saves, what is left out |

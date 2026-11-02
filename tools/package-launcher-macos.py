@@ -17,7 +17,7 @@ SOURCES = ('CMakeLists.txt', 'CMakePresets.json', 'LICENSE', 'THIRD_PARTY_NOTICE
            'config/macos-toolchain.json', 'patches/shiftglue', 'config/supported-discs.json', 'config/pfp4-1.3.json', 'config/shaders',
            'tools/mac_sdk.py', 'tools/sdk_patches.py', 'tools/setup-macos.py', 'tools/release_analysis.py', 'tools/code_images.py',
            'tests', 'tools/test-macos-upscalers.py', 'tools/test-macos-metal-interop.py',
-           'tools/metal-interop', 'README.md', 'docs')
+           'tools/metal-interop', 'README.md', 'docs/MACOS.md')
 
 
 def source_payload(destination, release=None):

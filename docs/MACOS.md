@@ -35,7 +35,7 @@ profiles before replacing an installation. The launcher also offers Project
 Forza Plus 4 through its managed installer, but that path has not been qualified
 on macOS. Use vanilla FM4 for the baseline. DLSS requires supported NVIDIA hardware and is unavailable on Apple
 Silicon. FSR 2 and FSR 3 are temporal upscaling choices; neither enables frame
-generation here. See [validation](MACOS_PERFORMANCE.md) for what was actually tested.
+generation here. See [testing status](#testing-status) below.
 
 ## Build from source
 
@@ -67,7 +67,7 @@ validation. A development override must match the pinned revision; its additiona
 working changes are recorded, so it does not qualify as a clean managed SDK.
 Build receipts are `.local/logs/macos-sdk.json` and `macos-build.json`.
 The latter’s `gameplay_validated=false` means the build helper cannot certify
-manual gameplay; user reports are recorded separately in the validation guide.
+manual gameplay; the reported test scope is summarized below.
 
 ## Checks and packaging
 
@@ -92,4 +92,27 @@ Only allowlisted source, launcher runtime and notices enter the archive. No SDK
 binaries, translated guest code, game data, saves or caches are included. The
 packager signs and verifies the app, adds installation notes to the ZIP and writes
 a SHA-256 sidecar. Publish the ZIP and sidecar together as an experimental fork
-prerelease, with the test scope and limitations from the validation guide.
+prerelease, with the test scope and limitations below.
+
+## Testing status
+
+On November 2, 2026, the user reported stable 60 FPS in menus and a Free Play race
+on Apple M3, using the first default car and track, default graphics settings and
+a 60 FPS limit. No graphics issues were observed after the geometry/coherency
+fixes. The upscaler remained at its default selection.
+
+The isolated source payload rebuilt successfully using the pinned managed SDK.
+Automated checks passed: 15 Python tests, 349 launcher tests, 98 native cases
+with 11,803 assertions, the real 16 KB page-coherency regression, and FSR 2/3
+GPU dispatch and resize checks. One optional native fixture case was skipped.
+The packaged launcher initialized successfully and its signature was verified.
+
+A standalone Vulkan–Metal test also passed color, reconstructed-depth and motion
+texture sharing with GPU synchronization in both directions, without texture
+readbacks. This is a feasibility result; MetalFX temporal upscaling and frame
+interpolation are not included in the release.
+
+Explicit FSR 2/3 gameplay, more cars/tracks/modes, longer sessions, physical
+controllers, runtime testing on macOS 14 and a fresh end-to-end installation of
+the final release ZIP remain unqualified. The reported 60 FPS is not a measured
+frame-pacing or input-latency result.
