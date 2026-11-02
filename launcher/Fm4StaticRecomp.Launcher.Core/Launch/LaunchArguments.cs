@@ -23,7 +23,7 @@ public static class LaunchArguments
     ];
 
     public static IReadOnlyList<string> ForPlay(InstallLayout layout, string version, Profile profile,
-        LauncherSettings settings, IPlatform platform)
+        LauncherSettings settings, IPlatform platform, string installGame = "vanilla")
     {
         var options = new Dictionary<string, string>
         {
@@ -37,6 +37,8 @@ public static class LaunchArguments
             ["fm4_language"] = settings.Language,
         };
         if (profile.Xuid is { } xuid) options["user_xuid"] = xuid;
+        // The mod's AI is tuned on Xenia, about six physics substeps a tick at its 62 fps.
+        if (installGame == ProfileStore.Pfp4) options["fm4_car_min_substeps"] = "6";
         if (settings.SkipIntro) options["fm4_skip_intro"] = "true";
         if (settings.Compat) foreach (var (name, value) in CompatOptions) options[name] = value;
         if (!settings.AsyncReadbacks) options["fh1_async_readbacks"] = "false";

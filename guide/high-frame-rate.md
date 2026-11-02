@@ -64,9 +64,8 @@ screen the vblank runs at 480 Hz until the cars start to move. In one measured l
 - **A rate the PC cannot hold stutters.** The main loop keeps ticking at the vblank rate while
   fewer frames are drawn, so a shown frame jumps by one or two ticks. Lower FRAME RATE or the
   resolution scale until it holds.
-- **AI cars at high frame rates** are being looked into. Some cars' physics take 239 substeps a
-  second instead of 359, which at 240 fps is one substep a frame; whether the AI drives
-  differently with so few is not settled yet.
+- **AI cars** cover the same distance at 60, 120 and 240 fps on the unmodded game. On
+  [Project Forza Plus 4](project-forza-plus.md#frame-rate-and-the-ai) the port keeps more substeps a tick.
 - **Frame generation** tools (Lossless Scaling, NVIDIA Smooth Motion) need an
   [opt-in](launch-options.md#frame-generation).
 

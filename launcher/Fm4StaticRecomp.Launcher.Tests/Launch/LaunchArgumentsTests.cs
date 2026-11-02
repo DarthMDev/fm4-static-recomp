@@ -38,6 +38,17 @@ public class LaunchArgumentsTests
     }
 
     [Fact]
+    public void Play_keeps_the_console_substeps_per_tick_only_on_a_project_forza_plus_install()
+    {
+        var (layout, profile, settings, temp) = Setup();
+        using var _ = temp;
+        Assert.DoesNotContain(LaunchArguments.ForPlay(layout, "0.1.0", profile with { Game = "pfp4" }, settings, new WindowsPlatform(), "vanilla"),
+            a => a.StartsWith("--fm4_car_min_substeps"));
+        Assert.Contains("--fm4_car_min_substeps=6",
+            LaunchArguments.ForPlay(layout, "0.1.0", profile, settings, new WindowsPlatform(), "pfp4"));
+    }
+
+    [Fact]
     public void Play_signs_in_with_the_xuid_of_an_imported_xenia_save()
     {
         var (layout, profile, settings, temp) = Setup();

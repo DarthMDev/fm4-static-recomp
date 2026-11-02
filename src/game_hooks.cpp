@@ -101,6 +101,8 @@ REXCVAR_DEFINE_BOOL(fm4_hook_census, false, "Forza Motorsport 4",
                     "Diagnostics: log each midasm hook's first hit (Hook census: <name>), for "
                     "the render tests' check that a code image reaches the hooks 1.0 does");
 
+REXCVAR_DEFINE_INT32(fm4_car_min_substeps, 0, "Forza Motorsport 4",
+                     "A car's physics substeps per tick are at least this many (0: the game's own count)");
 REXCVAR_DEFINE_STRING(fm4_physics_log, "", "Forza Motorsport 4",
                       "Diagnostics: a CSV file that receives every main loop time step, every "
                       "car's physics substep count and, ten times a simulated second, the "
@@ -677,6 +679,10 @@ void LogCarStep(uint32_t car, uint32_t substeps, uint32_t low_detail, double sec
   std::fputc('\n', log);
 }
 
+uint32_t CarMinSubsteps() {
+  return static_cast<uint32_t>(std::max(0, REXCVAR_GET(fm4_car_min_substeps)));
+}
+
 bool ReplayBlur() {
   return REXCVAR_GET(fm4_upscaler_replay_blur) || !rex::ui::IsTemporalUpscalerActive();
 }
@@ -711,11 +717,17 @@ void Fm4MainLoopStep(PPCRegister& r30, PPCRegister& f31) {
 
 void Fm4PhysicsLogCar(PPCRegister& r30, PPCRegister& r31, PPCRegister& r28, PPCRegister& f31) {
   FM4_HOOK_CENSUS();
+  // A floor on the count, not a higher CarPhysicsUpdateHz: it follows the step a tick really took,
+  // whatever FRAME RATE asks for. Set r28 means the hard-coded 239 Hz, which the mod's ini never reaches.
+  if ((r28.u32 & 0xFF) == 0) {
+    r31.u32 = std::max(r31.u32, CarMinSubsteps());
+  }
   LogCarStep(r30.u32, r31.u32, r28.u32 & 0xFF, f31.f64);
 }
 
 void Fm4PhysicsLogOtherCar(PPCRegister& r30, PPCRegister& r11, PPCRegister& f31) {
   FM4_HOOK_CENSUS();
+  r11.u32 = std::max(r11.u32, CarMinSubsteps());
   LogCarStep(r30.u32, r11.u32, 2, f31.f64);
 }
 

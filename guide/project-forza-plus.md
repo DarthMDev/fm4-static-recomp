@@ -54,6 +54,14 @@ place of Disc 2's 2.8 GB, and its career modes kept for later changes (0.25 GB).
 SETTINGS → PROJECT FORZA PLUS 4 changes both later, from files setup kept (no zip needed).
 Garages survive a change; a career started in another mode loads with a warning, once.
 
+## Frame rate and the AI
+
+The mod's AI was tuned on Xenia, at about 62 fps and six car physics substeps a tick. The mod's FPS
+files keep that ratio by raising the physics rate to match a fixed frame rate. The port does not use
+those files: on a Project Forza Plus 4 install cars take at least six substeps a tick at any FRAME
+RATE, without needing a file per rate. A long tick after a hitch still takes the extra substeps its
+length needs, as on the unmodded game.
+
 ## Saves
 
 - Each profile records its game and the mode it last ran in.
