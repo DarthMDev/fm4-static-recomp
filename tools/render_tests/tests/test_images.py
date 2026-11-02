@@ -9,6 +9,35 @@ from render_tests import images
 from render_tests.images import Image, ImageLimits, Rect
 
 
+def scene(width, height, zoom=1, cells=24):
+    """A fixed pattern of cells, drawn at any size; zoom keeps only its top left corner."""
+    rgb = bytearray()
+    for y in range(height):
+        for x in range(width):
+            cell_x, cell_y = x * cells // (width * zoom), y * cells // (height * zoom)
+            rgb += bytes([(cell_x * 89 + cell_y * 157 + cell_x * cell_y * 31) % 256] * 3)
+    return Image(width, height, bytes(rgb))
+
+
+class FramingTest(unittest.TestCase):
+    def test_the_same_scene_at_another_size_has_the_same_framing(self):
+        self.assertGreater(images.framing_correlation(scene(640, 360), scene(320, 180)), 0.9)
+
+    def test_a_scene_left_at_a_larger_size_does_not(self):
+        cropped = scene(320, 180, zoom=2)
+        self.assertLess(images.framing_correlation(scene(640, 360), cropped), 0.5)
+
+    def test_a_flat_picture_is_not_a_match(self):
+        self.assertEqual(images.framing_correlation(scene(160, 90), solid(160, 90, (9, 9, 9))), 0.0)
+
+    def test_only_the_region_counts(self):
+        first, second = bytearray(scene(160, 90).rgb), scene(160, 90).rgb
+        first[:160 * 18 * 3] = bytes(160 * 18 * 3)
+        view = Rect(0, 0.2, 1, 1)
+        self.assertAlmostEqual(
+            images.framing_correlation(Image(160, 90, bytes(first)), Image(160, 90, second), view), 1.0)
+
+
 def solid(width, height, rgb):
     return Image(width, height, bytes(rgb) * (width * height))
 

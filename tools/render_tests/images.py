@@ -194,6 +194,28 @@ def mean(image, rect):
     return sum(region) / len(region)
 
 
+def framing_correlation(first, second, rect=Rect(0, 0, 1, 1), columns=160, rows=90):
+    """How alike two pictures of any sizes are laid out, -1 to 1: the correlation of their luma
+    on a grid. A scene left at another size or moved in the frame falls far below the same scene
+    at another resolution, whatever filter scaled it."""
+    def luma(image):
+        x0, y0, x1, y1 = rect.pixels(image.width, image.height)
+        values = []
+        for row in range(rows):
+            y = y0 + (y1 - y0) * (2 * row + 1) // (2 * rows)
+            for column in range(columns):
+                x = x0 + (x1 - x0) * (2 * column + 1) // (2 * columns)
+                r, g, b = image.rgb[(y * image.width + x) * 3:(y * image.width + x) * 3 + 3]
+                values.append(0.299 * r + 0.587 * g + 0.114 * b)
+        return values
+
+    a, b = luma(first), luma(second)
+    mean_a, mean_b = sum(a) / len(a), sum(b) / len(b)
+    product = sum((p - mean_a) * (q - mean_b) for p, q in zip(a, b))
+    energy = sum((p - mean_a) ** 2 for p in a) * sum((q - mean_b) ** 2 for q in b)
+    return product / math.sqrt(energy) if energy else 0.0
+
+
 def _absolute_differences(first, second):
     return bytes(map(abs, map(operator.sub, first, second)))
 

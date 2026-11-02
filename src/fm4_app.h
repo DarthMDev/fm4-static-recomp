@@ -25,6 +25,7 @@
 #include <rex/ui/overlay/achievement_notification.h>
 #include <rex/ui/vulkan/provider.h>
 #include <rex/ui/window.h>
+#include <rex/ui/window_listener.h>
 #include <rex/ui/windowed_app_context.h>
 
 #include "built_in_defaults.h"
@@ -54,6 +55,29 @@ REXCVAR_DECLARE(std::string, fm4_dump_disc_shaders);
 REXCVAR_DECLARE(std::string, fm4_build_shader_cache);
 REXCVAR_DECLARE(std::string, fm4_shader_list_dir);
 REXCVAR_DECLARE(std::string, fm4_export_ui_fonts);
+
+// Alt+Enter, ahead of the GRAPHICS page and the keyboard driver: Enter alone is START and the
+// menus' A. Upstream's SDK has no such key today; if a merge brings one, keep only one.
+class FullscreenToggle final : public rex::ui::WindowInputListener {
+ public:
+  explicit FullscreenToggle(rex::ui::Window& window) : window_(window) {
+    window_.AddInputListener(this, fm4_static_recomp::hostui::HostUi::kZOrder + 1);
+  }
+  ~FullscreenToggle() override { window_.RemoveInputListener(this); }
+
+  void OnKeyDown(rex::ui::KeyEvent& e) override {
+    if (e.virtual_key() != rex::ui::VirtualKey::kReturn || !e.is_alt_pressed()) {
+      return;
+    }
+    e.set_handled(true);
+    if (!e.prev_state()) {
+      window_.SetFullscreen(!window_.IsFullscreen());
+    }
+  }
+
+ private:
+  rex::ui::Window& window_;
+};
 
 class Fm4App final : public rex::ReXApp {
  public:
@@ -187,6 +211,7 @@ class Fm4App final : public rex::ReXApp {
     }
     if (rex::ui::Window* const window = this->window()) {
       window->SetCursorVisibility(rex::ui::Window::CursorVisibility::kAutoHidden);
+      fullscreen_toggle_ = std::make_unique<FullscreenToggle>(*window);
       fm4_static_recomp::ui::LimitFrameRateToDisplay(
           fm4_static_recomp::ui::DisplayRefreshHz(window->GetNativeWindowHandle()));
     }
@@ -220,6 +245,7 @@ class Fm4App final : public rex::ReXApp {
     fm4_static_recomp::SetPromptTextSource(nullptr);
     fm4_static_recomp::SetGraphicsPageOpener(nullptr);
     host_ui_.reset();
+    fullscreen_toggle_.reset();
   }
 
   // A registered dialog, even one with nothing to draw, moves presentation to
@@ -420,4 +446,5 @@ class Fm4App final : public rex::ReXApp {
   std::unique_ptr<fm4_static_recomp::input::PromptSwap> prompt_swap_;
   std::atomic<bool> keyboard_prompts_{false};
   std::unique_ptr<fm4_static_recomp::hostui::HostUi> host_ui_;
+  std::unique_ptr<FullscreenToggle> fullscreen_toggle_;
 };

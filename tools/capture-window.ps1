@@ -29,7 +29,8 @@ if ($window -eq [IntPtr]::Zero) { throw "Process $ProcessId has no main window."
 [void][Fm4StaticRecomp.Capture]::SetThreadDpiAwarenessContext([IntPtr](-4))
 $rect = New-Object Fm4StaticRecomp.Capture+RECT
 [void][Fm4StaticRecomp.Capture]::GetClientRect($window, [ref]$rect)
-$bitmap = New-Object System.Drawing.Bitmap ($rect.Right - $rect.Left), ($rect.Bottom - $rect.Top)
+$bitmap = New-Object System.Drawing.Bitmap ($rect.Right - $rect.Left), ($rect.Bottom - $rect.Top),
+    ([System.Drawing.Imaging.PixelFormat]::Format24bppRgb)
 $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
 $dc = $graphics.GetHdc()
 # PW_CLIENTONLY | PW_RENDERFULLCONTENT, so a swapchain-presented window is captured.

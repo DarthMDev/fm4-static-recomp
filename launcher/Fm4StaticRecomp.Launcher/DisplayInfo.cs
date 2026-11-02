@@ -10,7 +10,10 @@ namespace Fm4StaticRecomp.Launcher;
 public static class DisplayInfo
 {
     private const int DefaultToNearest = 2;
+    private const int DefaultToPrimary = 1;
     private const int CurrentSettings = -1;
+    private const int EffectiveDpi = 0;
+    private const int MediumDpi = 96;
 
     public static int? RefreshHz(TopLevel? window) => Mode(window) is { DisplayFrequency: > 1 } mode ? mode.DisplayFrequency : null;
 
@@ -18,17 +21,40 @@ public static class DisplayInfo
     public static (int Width, int Height)? Size(TopLevel? window) =>
         Mode(window) is { PelsWidth: > 0, PelsHeight: > 0 } mode ? (mode.PelsWidth, mode.PelsHeight) : null;
 
+    // The scale of the primary display, where the game's window opens; 96 is 100 %.
+    public static int PrimaryDpi()
+    {
+        if (!OperatingSystem.IsWindows()) return MediumDpi;
+        return GetDpiForMonitor(PrimaryMonitor(), EffectiveDpi, out var dpi, out _) == 0 && dpi > 0 ? (int)dpi : MediumDpi;
+    }
+
+    public static (int Width, int Height)? PrimarySize() =>
+        OperatingSystem.IsWindows() && Mode(PrimaryMonitor()) is { PelsWidth: > 0, PelsHeight: > 0 } mode ? (mode.PelsWidth, mode.PelsHeight) : null;
+
+    private static nint PrimaryMonitor() => MonitorFromPoint(0, DefaultToPrimary);
+
     private static DevMode? Mode(TopLevel? window)
     {
         if (!OperatingSystem.IsWindows() || window?.TryGetPlatformHandle()?.Handle is not { } handle) return null;
+        return Mode(MonitorFromWindow(handle, DefaultToNearest));
+    }
+
+    private static DevMode? Mode(nint handle)
+    {
         var monitor = new MonitorInfoEx { Size = Marshal.SizeOf<MonitorInfoEx>() };
-        if (!GetMonitorInfo(MonitorFromWindow(handle, DefaultToNearest), ref monitor)) return null;
+        if (!GetMonitorInfo(handle, ref monitor)) return null;
         var mode = new DevMode { Size = (short)Marshal.SizeOf<DevMode>() };
         return EnumDisplaySettings(monitor.DeviceName, CurrentSettings, ref mode) ? mode : null;
     }
 
     [DllImport("user32.dll")]
     private static extern nint MonitorFromWindow(nint window, int flags);
+
+    [DllImport("user32.dll")]
+    private static extern nint MonitorFromPoint(long point, int flags);
+
+    [DllImport("shcore.dll")]
+    private static extern int GetDpiForMonitor(nint monitor, int type, out uint dpiX, out uint dpiY);
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode, EntryPoint = "GetMonitorInfoW")]
     [return: MarshalAs(UnmanagedType.Bool)]

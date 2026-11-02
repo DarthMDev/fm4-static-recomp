@@ -65,7 +65,7 @@ the command line? See the [manual install](guide/manual-install.md).
 
 | Guide | What's in it |
 |---|---|
-| [Launcher](guide/launcher.md) | First setup, profiles, content, the `data` folder, a saves folder of your own, updates |
+| [Launcher](guide/launcher.md) | First setup, profiles, content, playing in a window (Alt+Enter), the `data` folder, a saves folder of your own, updates |
 | [Manual install](guide/manual-install.md) | Command-line setup, Disc 2 and DLC, updating |
 | [Project Forza Plus 4](guide/project-forza-plus.md) | Setting up the mod: its own install, career modes, saves, what is left out |
 | [Graphics settings](guide/graphics.md) | The in-game GRAPHICS page, presets, what each setting does |

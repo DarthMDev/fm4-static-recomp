@@ -1,5 +1,6 @@
 // Copyright (c) 2026, i2kiselev
 // BSD 3-Clause License: see LICENSE in the repository root.
+using System.Globalization;
 using Fm4StaticRecomp.Launcher.Core.Install;
 using Fm4StaticRecomp.Launcher.Core.Platform;
 using Fm4StaticRecomp.Launcher.Core.Profiles;
@@ -23,7 +24,7 @@ public static class LaunchArguments
     ];
 
     public static IReadOnlyList<string> ForPlay(InstallLayout layout, string version, Profile profile,
-        LauncherSettings settings, IPlatform platform, string installGame = "vanilla")
+        LauncherSettings settings, IPlatform platform, string installGame = "vanilla", int displayDpi = 96)
     {
         var options = new Dictionary<string, string>
         {
@@ -43,6 +44,13 @@ public static class LaunchArguments
         if (settings.Compat) foreach (var (name, value) in CompatOptions) options[name] = value;
         if (!settings.AsyncReadbacks) options["fh1_async_readbacks"] = "false";
         if (settings.PresentViaDxgi && platform.SupportsDxgiPresentation) options["vulkan_present_via_dxgi"] = "true";
+        if (settings.Windowed) options["fullscreen"] = "false";
+        // In fullscreen too: Alt+Enter leaves to this size.
+        if (settings.Windowed || !PredatesWindowSizeApart(version))
+        {
+            options["window_width"] = LogicalSize(settings.WindowSize.Width, displayDpi).ToString(CultureInfo.InvariantCulture);
+            options["window_height"] = LogicalSize(settings.WindowSize.Height, displayDpi).ToString(CultureInfo.InvariantCulture);
+        }
         var args = options.Select(o => $"--{o.Key}={o.Value}").ToList();
         // A COMMAND-LINE OPTIONS entry replaces the launcher's value, never repeats it: the SDK drops every
         // argument when one is given twice.
@@ -54,6 +62,19 @@ public static class LaunchArguments
         }
         return args;
     }
+
+    // The smallest size the game's display scale, rounding up, takes to at least the real one: one pixel
+    // short, a render of that size no longer fits and its upscaler stays off.
+    private static int LogicalSize(int real, int dpi)
+    {
+        var logical = real * 96 / dpi;
+        return (logical * dpi + 95) / 96 < real ? logical + 1 : logical;
+    }
+
+    // An older version (GO BACK TO, or while an update builds) has no Alt+Enter, and takes the window's
+    // size for the guest's video mode: below 1280x720, on a scaled display, the game changes its text layout.
+    private static bool PredatesWindowSizeApart(string version) =>
+        Version.TryParse(version, out var parsed) && parsed < new Version(0, 3, 1);
 
     // The SDK reads --no-name as --name=false, the same option.
     private static string NameOf(string argument) =>

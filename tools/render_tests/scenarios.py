@@ -8,6 +8,7 @@ Switches of the spec's list, and how each is covered:
 - RESOLUTION SCALE: every tier runs 2x, long and full 3x, full 4x.
 - --fh1_surfaceless_clears: surfaceless-clears (a counter: tile passes per frame).
 - --fh1_async_readbacks: on in every run (a built-in default); its bugs show as tints (chroma).
+- UPSCALER, RESOLUTION SCALE live, the window's size and fullscreen: window-upscalers.
 - SHOWROOM MSAA: thumbnail-msaa-off (off: a bought car's thumbnail keeps its ground shadow, and
   the upgrade shop's part view its backdrop).
   Every other run keeps the console's 4x, which the references were captured with.
@@ -465,11 +466,132 @@ def cold_cache(run):
             run.keep_log(session)
 
 
+# The window's sizes in a window-upscalers pass, largest first: at 150 % display scale the first
+# still holds the 2x render, so a pass crosses from an upscaler running to it standing aside.
+WINDOW_SIZES = ((1800, 1012), (1600, 900), (1280, 720), (1024, 576), (640, 360))
+WINDOW_UPSCALERS = ("bilinear", "fsr", "fsr2", "fsr3", "dlss")
+# What a launch logs once the upscaler has really run for this render size.
+WINDOW_UPSCALER_RAN = {"fsr2": r"FidelityFX: FSR 2\.\S+ context", "fsr3": r"FidelityFX: FSR 3\.\S+ context",
+                       "dlss": r"DLSS: feature"}
+_UPSCALER_AVAILABLE = re.compile(r"VulkanPresenter: upscaler (\w+) \(.*\) available")
+# Below the top in a race: the timer and the OSD of a capture tool change between two captures.
+# In the garage only its 3D scene: the menus around it are drawn right whatever the upscaler does.
+WINDOW_FRAMING_VIEWS = {"garage": GARAGE_CAR, "hot lap": Rect(0, 0.2, 1, 1)}
+# Measured on stills from races: the right framing 0.69 to 0.99 (a car on the grid moves a little,
+# a small window aliases), FSR 2's scene at the old output size 0.07 to 0.14.
+WINDOW_FRAMING_MIN = 0.5
+# Sizes make no pipelines of their own, but DLSS Auto's preset M to K below a 1.8x upscale made 8
+# the seed's cache lacks, in one pass: WARM_PIPELINES holds them.
+
+
+def _set_window_size(session, size):
+    session.set_option("window_width", size[0])
+    session.set_option("window_height", size[1])
+
+
+def _pipelines_created(session):
+    session.poll()
+    return sum(line.text.startswith("Creating graphics pipeline state") for line in session.lines)
+
+
+def _window_framing(run, session, place, upscaler, scale):
+    label = f"{place} {upscaler} {scale}x"
+    session.set_option("present_effect", upscaler)
+    _set_window_size(session, WINDOW_SIZES[0])
+    time.sleep(4)
+    first = session.capture_window(f"window {label} first")
+
+    pipelines = _pipelines_created(session)
+    render = (1280 * scale, 720 * scale)
+    # DLSS needs the scene's depth and motion, which the garage's view lacks: it stands aside there
+    # (FSR gets neutral inputs), so only a hot lap shows it running.
+    expected_to_run = upscaler in WINDOW_UPSCALER_RAN and not (upscaler == "dlss" and place == "garage")
+    if expected_to_run and first.width >= render[0] and first.height >= render[1]:
+        session.poll()
+        ran = re.compile(f"{WINDOW_UPSCALER_RAN[upscaler]} for {render[0]}x{render[1]} to ")
+        run.add(CheckResult(f"window upscaler ran {label}",
+                            any(ran.search(line.text) for line in session.lines),
+                            "logged" if any(ran.search(line.text) for line in session.lines)
+                            else "no context or feature", "logged"))
+
+    def same_framing(step, size):
+        image = session.capture_window(f"window {label} {step}")
+        correlation = images.framing_correlation(first, image, WINDOW_FRAMING_VIEWS[place])
+        run.add(min_check(f"window framing {label} {step}", round(correlation, 3),
+                          WINDOW_FRAMING_MIN))
+        # Without these a game that stopped would pass: its last picture has the same framing. A
+        # guest capture is written from a frame in flight, and breaks the run if none comes.
+        expected = (first.width * size[0] // WINDOW_SIZES[0][0],
+                    first.height * size[1] // WINDOW_SIZES[0][1])
+        run.add(CheckResult(f"window size {label} {step}",
+                            abs(image.width - expected[0]) <= 2 and abs(image.height - expected[1]) <= 2,
+                            image.size, f"{expected[0]}x{expected[1]}"))
+        session.capture(f"window {label} {step} guest")
+
+    for size in WINDOW_SIZES[1:]:
+        _set_window_size(session, size)
+        time.sleep(2.5)
+        same_framing(f"{size[0]}x{size[1]}", size)
+    _set_window_size(session, WINDOW_SIZES[0])
+    time.sleep(2.5)
+    same_framing("back to first", WINDOW_SIZES[0])
+    session.set_option("fullscreen", "true")
+    time.sleep(2.5)
+    fullscreen = session.capture_window(f"window {label} fullscreen")
+    run.add(CheckResult(f"window went fullscreen {label}", fullscreen.width > first.width,
+                        fullscreen.size, f"wider than {first.size}"))
+    session.set_option("fullscreen", "false")
+    time.sleep(2.5)
+    same_framing("out of fullscreen", WINDOW_SIZES[0])
+    run.add(max_check(f"window pipelines {label}", _pipelines_created(session) - pipelines,
+                      WARM_PIPELINES))
+
+
+def window_upscalers(run):
+    """Every upscaler at 1x and 2x, in the garage and in a race, which render differently: resized,
+    and back from fullscreen (through the option: Alt+Enter itself takes real keys and the focus),
+    the window shows the same framing and makes no pipelines. Both hold still: the garage has the showroom's rendering without the showroom's
+    orbiting camera, and the race is a hot lap on the handbrake (the brake reverses, and on a grid an
+    AI car may hit the player's). FSR 2 once kept a larger output's size: only the scene's top left
+    corner showed."""
+    # The scale is read when the renderer starts.
+    for scale in (1, 2):
+        with run.session(scale) as session:
+            try:
+                routes.to_main_menu(session)
+                after = _title_time(session)
+                routes.buy_car(session)
+                routes.garage(session, from_main_menu=False)
+                session.poll()
+                available = {"bilinear", "fsr"} | {
+                    match.group(1) for line in session.lines
+                    for match in [_UPSCALER_AVAILABLE.search(line.text)] if match}
+                run.add(CheckResult("window FSR 2 and 3 available", {"fsr2", "fsr3"} <= available,
+                                    " ".join(sorted(available)), "both, on any GPU"))
+                upscalers = [name for name in WINDOW_UPSCALERS if name in available]
+                for upscaler in upscalers:
+                    _window_framing(run, session, "garage", upscaler, scale)
+                routes.back_to_main_menu(session)
+                routes.quick_race(session, hot_lap=True)
+                session.hold("A LX=0", 600)
+                # A hot lap starts rolling.
+                time.sleep(12)
+                for upscaler in upscalers:
+                    _window_framing(run, session, "hot lap", upscaler, scale)
+                session.poll()
+                # Not "cache warm": the first upscaler of a launch turns MSAA off, which makes
+                # pipelines the shipped list may lack. _window_framing counts what the window does.
+                run.add(*(result for result in log_checks(session.lines, after, WARM_PIPELINES)
+                          if result.name != "cache warm"), defaults_check(session.lines))
+            finally:
+                run.keep_log(session)
+
+
 SCENARIOS = {"short": short, "thumbnail-msaa-off": thumbnail_msaa_off,
              "thumbnail-late-streaming": thumbnail_late_streaming, "session-2x": session_2x,
              "session-3x": session_3x, "car-dirt": car_dirt,
              "surfaceless-clears": surfaceless_clears, "vram-4x": vram_4x,
-             "validation": validation, "cold-cache": cold_cache}
+             "validation": validation, "cold-cache": cold_cache, "window-upscalers": window_upscalers}
 TIERS = {
     "short": ["short", "thumbnail-msaa-off", "thumbnail-late-streaming"],
     "long": ["short", "thumbnail-msaa-off", "thumbnail-late-streaming", "session-2x",
@@ -477,5 +599,5 @@ TIERS = {
     # The cold cache empties the run's shader cache: it comes last.
     "full": ["short", "thumbnail-msaa-off", "thumbnail-late-streaming", "session-2x",
              "session-3x", "car-dirt", "surfaceless-clears", "vram-4x", "validation",
-             "cold-cache"],
+             "window-upscalers", "cold-cache"],
 }

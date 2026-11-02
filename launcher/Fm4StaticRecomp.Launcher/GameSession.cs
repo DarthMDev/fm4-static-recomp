@@ -34,7 +34,7 @@ public sealed class GameSession(LauncherHost host)
                 UseShellExecute = false,
                 WorkingDirectory = host.Layout.BuildFolder(version),
             };
-            foreach (var argument in LaunchArguments.ForPlay(host.Layout, version, profile, host.Settings, host.Platform, host.Setup.Game ?? "vanilla"))
+            foreach (var argument in LaunchArguments.ForPlay(host.Layout, version, profile, host.Settings, host.Platform, host.Setup.Game ?? "vanilla", DisplayInfo.PrimaryDpi()))
                 start.ArgumentList.Add(argument);
             StartedUtc = DateTime.UtcNow;
             using var process = Process.Start(start)!;

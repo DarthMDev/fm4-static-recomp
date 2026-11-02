@@ -19,6 +19,8 @@ public sealed class LauncherSettings
         AsyncReadbacks = _file.Get("async_readbacks") != "false";
         PresentViaDxgi = _file.Get("present_via_dxgi") == "true";
         Compat = _file.Get("compat") == "true";
+        Windowed = _file.Get("windowed") == "true";
+        WindowSize = WindowSizes.Parse(_file.Get("window_size"));
         BuildJobs = int.TryParse(_file.Get("build_jobs"), out var jobs) && jobs is >= 0 and <= MaximumBuildJobs ? jobs : 0;
         AcceptedMicrosoftLicence = _file.Get("accepted_microsoft_licence");
         UseVisualStudioInstaller = _file.Get("toolchain_source") == "VisualStudio";
@@ -34,6 +36,8 @@ public sealed class LauncherSettings
     public bool AsyncReadbacks { get; set; }
     public bool PresentViaDxgi { get; set; }
     public bool Compat { get; set; }
+    public bool Windowed { get; set; }
+    public (int Width, int Height) WindowSize { get; set; }
     public int BuildJobs { get; set; }
     public string? AcceptedMicrosoftLicence { get; set; }
     public bool UseVisualStudioInstaller { get; set; }
@@ -59,6 +63,8 @@ public sealed class LauncherSettings
         Flag("async_readbacks", AsyncReadbacks);
         Flag("present_via_dxgi", PresentViaDxgi);
         Flag("compat", Compat);
+        Flag("windowed", Windowed);
+        Text("window_size", WindowSizes.Label(WindowSize));
         _file.Set("build_jobs", BuildJobs.ToString(System.Globalization.CultureInfo.InvariantCulture), quoted: false);
         Text("accepted_microsoft_licence", AcceptedMicrosoftLicence);
         _file.Set("toolchain_source", UseVisualStudioInstaller ? "VisualStudio" : "Feed", quoted: true);

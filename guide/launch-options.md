@@ -20,6 +20,9 @@ or in the launcher's SETTINGS.
 | `--fm4_language=<code>` | The game's language (see [Languages](#languages)) |
 | `--fm4_config_root=<folder>` | Where `graphics.toml` and `controls.toml` live (default: the state folder's `config`) |
 | `--fh1_async_readbacks=false` | Turn off asynchronous readbacks, if you ever see a corrupted texture |
+| `--fullscreen=false` | Start in a window; **Alt+Enter** switches while you play. In the launcher: [WINDOWED](launcher.md#playing-in-a-window) |
+| `--window_width=<n>`, `--window_height=<n>` | The window's size, multiplied by Windows' display scale (at 150 %, 1600 opens 2400 pixels wide). In the launcher, WINDOW SIZE is in real pixels |
+| `--window_aspect_ratio=16:9` | The shape the window keeps while resized and at its start (the default); `free` leaves it free, with black bars around the 16:9 picture |
 | `--vulkan_present_via_dxgi=true` | Present through DXGI, for [frame generation tools](#frame-generation) |
 | `--pad_chord_game_menu=BACK+START` | Controller buttons held together that open the GRAPHICS page (`A`, `B`, `X`, `Y`, `LB`, `RB`, `LS`, `RS`, `BACK`, `START`, `UP`, `DOWN`, `LEFT`, `RIGHT` joined by `+`); empty turns it off |
 
@@ -133,7 +136,7 @@ the command line. Two exceptions:
   page, not to the options above: do not add other options to it.
 - **The launcher's own options** are passed on its command line and beat environment
   variables: the paths, `fm4_language`, `fm4_skip_intro`, `fh1_async_readbacks`,
-  `vulkan_present_via_dxgi`, and COMPAT MODE's list. Set those in its SETTINGS, or replace one in COMMAND-LINE OPTIONS.
+  `vulkan_present_via_dxgi`, `fullscreen`, `window_width`, `window_height`, and COMPAT MODE's list. Set those in its SETTINGS, or replace one in COMMAND-LINE OPTIONS.
 
 ### Checking that an option took effect
 

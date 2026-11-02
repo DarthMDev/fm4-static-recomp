@@ -29,6 +29,7 @@ constexpr std::array kBeforeGpuPlugin = {Default{"gpu_backend", "vulkan"}};
 // keeps some render targets across frames, so a cold cache darkened the asphalt for seconds.
 constexpr std::array kAfterGpuPlugin = {
     Default{"async_shader_compilation", "false"},
+    Default{"window_aspect_ratio", "16:9"},
     Default{"clear_memory_page_state", "false"},
     Default{"host_present_fps_limit", "0"},
     Default{"gpu_record_thread", "true"},

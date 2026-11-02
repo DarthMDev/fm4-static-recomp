@@ -14,6 +14,8 @@ public class LauncherSettingsTests
         Assert.True(settings.SkipIntro);
         Assert.True(settings.AsyncReadbacks);
         Assert.False(settings.PresentViaDxgi);
+        Assert.False(settings.Windowed);
+        Assert.Equal((1280, 720), settings.WindowSize);
         Assert.False(settings.Compat);
         Assert.False(settings.UseVisualStudioInstaller);
         Assert.Equal(0, settings.BuildJobs);
@@ -25,6 +27,49 @@ public class LauncherSettingsTests
         Assert.Equal("", settings.CommandLineOptions);
         Assert.Null(settings.SavesFolder);
     }
+
+    [Fact]
+    public void The_window_settings_round_trip()
+    {
+        using var temp = new TempDir();
+        var path = Path.Combine(temp.Path, "launcher.toml");
+        var settings = LauncherSettings.Load(path);
+        settings.Windowed = true;
+        settings.WindowSize = (1920, 1080);
+        settings.Save();
+        var loaded = LauncherSettings.Load(path);
+        Assert.True(loaded.Windowed);
+        Assert.Equal((1920, 1080), loaded.WindowSize);
+    }
+
+    [Theory]
+    [InlineData("1000x500")]
+    [InlineData("big")]
+    public void A_window_size_not_on_the_list_falls_back_to_the_default(string written)
+    {
+        using var temp = new TempDir();
+        var path = Path.Combine(temp.Path, "launcher.toml");
+        File.WriteAllText(path, $"window_size = \"{written}\"");
+        Assert.Equal((1280, 720), LauncherSettings.Load(path).WindowSize);
+    }
+
+    [Fact]
+    public void Offers_the_window_sizes_smaller_than_the_display()
+    {
+        Assert.Equal([(1280, 720), (1600, 900), (1920, 1080)], WindowSizes.Fitting((2560, 1440), (1280, 720)));
+        Assert.Equal([(1280, 720)], WindowSizes.Fitting((1366, 768), (1280, 720)));
+    }
+
+    [Fact]
+    public void Offers_the_smallest_window_size_and_the_chosen_one_whatever_the_display()
+    {
+        Assert.Equal([(1280, 720)], WindowSizes.Fitting((1280, 720), (1280, 720)));
+        Assert.Equal([(1280, 720), (2560, 1440)], WindowSizes.Fitting((1366, 768), (2560, 1440)));
+    }
+
+    [Fact]
+    public void Offers_every_window_size_on_an_unknown_display() =>
+        Assert.Equal(WindowSizes.All, WindowSizes.Fitting(null, (1280, 720)));
 
     [Fact]
     public void Round_trips_every_property()

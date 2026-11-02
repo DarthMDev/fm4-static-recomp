@@ -19,6 +19,112 @@ public class LaunchArgumentsTests
     }
 
     [Fact]
+    public void Play_is_fullscreen_by_default_with_the_size_alt_enter_leaves_to()
+    {
+        var (layout, profile, settings, temp) = Setup();
+        using var _ = temp;
+        var args = LaunchArguments.ForPlay(layout, "0.3.1", profile, settings, new WindowsPlatform());
+        Assert.DoesNotContain(args, a => a.StartsWith("--fullscreen"));
+        Assert.Contains("--window_width=1280", args);
+        Assert.Contains("--window_height=720", args);
+    }
+
+    [Fact]
+    public void Windowed_play_opens_a_window_of_the_chosen_size()
+    {
+        var (layout, profile, settings, temp) = Setup();
+        using var _ = temp;
+        settings.Windowed = true;
+        settings.WindowSize = (1600, 900);
+        var args = LaunchArguments.ForPlay(layout, "0.1.0", profile, settings, new WindowsPlatform());
+        Assert.Contains("--fullscreen=false", args);
+        Assert.Contains("--window_width=1600", args);
+        Assert.Contains("--window_height=900", args);
+    }
+
+    [Theory]
+    [InlineData("0.3.0")]
+    [InlineData("0.2.2")]
+    public void A_fullscreen_older_version_gets_no_window_size(string version)
+    {
+        var (layout, profile, settings, temp) = Setup();
+        using var _ = temp;
+        var args = LaunchArguments.ForPlay(layout, version, profile, settings, new WindowsPlatform(), displayDpi: 144);
+        Assert.DoesNotContain(args, a => a.StartsWith("--window_"));
+    }
+
+    [Fact]
+    public void A_windowed_older_version_keeps_its_window_size()
+    {
+        var (layout, profile, settings, temp) = Setup();
+        using var _ = temp;
+        settings.Windowed = true;
+        var args = LaunchArguments.ForPlay(layout, "0.3.0", profile, settings, new WindowsPlatform());
+        Assert.Contains("--window_width=1280", args);
+    }
+
+    // The game multiplies its window size by the display's scale, rounding up, and SDL then holds the window at 16:9.
+    private static (int Width, int Height) RealWindow(int logicalWidth, int logicalHeight, int dpi)
+    {
+        var (width, height) = ((logicalWidth * dpi + 95) / 96, (logicalHeight * dpi + 95) / 96);
+        var aspect = 16f / 9f;
+        if (width / (float)height > aspect) width = (int)MathF.Round(height * aspect, MidpointRounding.AwayFromZero);
+        else if (width / (float)height < aspect) height = (int)MathF.Round(width / aspect, MidpointRounding.AwayFromZero);
+        return (width, height);
+    }
+
+    // One pixel short and a render of the same size no longer fits: its upscaler stays off.
+    [Theory]
+    [InlineData(144, 2560, 1440)]
+    [InlineData(144, 1600, 900)]
+    [InlineData(216, 1280, 720)]
+    [InlineData(288, 1280, 720)]
+    [InlineData(216, 3840, 2160)]
+    [InlineData(168, 2560, 1440)]
+    public void A_window_on_a_scaled_display_is_never_short_of_its_size(int dpi, int width, int height)
+    {
+        var (layout, profile, settings, temp) = Setup();
+        using var _ = temp;
+        settings.WindowSize = (width, height);
+        var args = LaunchArguments.ForPlay(layout, "0.3.1", profile, settings, new WindowsPlatform(), displayDpi: dpi);
+        var logical = (Width: Value(args, "--window_width="), Height: Value(args, "--window_height="));
+        var real = RealWindow(logical.Width, logical.Height, dpi);
+        Assert.InRange(real.Width, width, width + 4);
+        Assert.InRange(real.Height, height, height + 4);
+    }
+
+    private static int Value(IReadOnlyList<string> args, string prefix) =>
+        int.Parse(args.Single(a => a.StartsWith(prefix))[prefix.Length..]);
+
+    [Theory]
+    [InlineData(120, 1600, 900, 1280, 720)]
+    [InlineData(144, 1280, 720, 853, 480)]
+    [InlineData(144, 1600, 900, 1067, 600)]
+    [InlineData(168, 1600, 900, 914, 514)]
+    public void The_window_size_is_in_real_pixels_on_a_scaled_display(int dpi, int width, int height, int logicalWidth, int logicalHeight)
+    {
+        var (layout, profile, settings, temp) = Setup();
+        using var _ = temp;
+        settings.WindowSize = (width, height);
+        var args = LaunchArguments.ForPlay(layout, "0.3.1", profile, settings, new WindowsPlatform(), displayDpi: dpi);
+        Assert.Contains($"--window_width={logicalWidth}", args);
+        Assert.Contains($"--window_height={logicalHeight}", args);
+    }
+
+    [Fact]
+    public void Command_line_options_replace_the_window_settings()
+    {
+        var (layout, profile, settings, temp) = Setup();
+        using var _ = temp;
+        settings.Windowed = true;
+        settings.CommandLineOptions = "--fullscreen=true --window_width=1000 --window_height=500";
+        var args = LaunchArguments.ForPlay(layout, "0.1.0", profile, settings, new WindowsPlatform());
+        Assert.Equal(["--fullscreen=true"], args.Where(a => a.StartsWith("--fullscreen")));
+        Assert.Equal(["--window_width=1000"], args.Where(a => a.StartsWith("--window_width")));
+        Assert.Equal(["--window_height=500"], args.Where(a => a.StartsWith("--window_height")));
+    }
+
+    [Fact]
     public void Play_points_the_game_at_the_profile_and_shared_folders()
     {
         var (layout, profile, settings, temp) = Setup();

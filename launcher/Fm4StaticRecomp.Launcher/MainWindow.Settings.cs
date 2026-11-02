@@ -25,7 +25,8 @@ public partial class MainWindow
 
     private GraphicsSettings? _graphics;
     private string? _graphicsProblem;
-    private bool _skipIntro, _asyncReadbacks, _presentViaDxgi, _compat;
+    private bool _skipIntro, _asyncReadbacks, _presentViaDxgi, _compat, _windowed;
+    private (int Width, int Height) _windowSize = WindowSizes.Default;
     private int _buildJobs;
     private string _language = GameLanguages.Default.Code;
     private string _commandLineOptions = "";
@@ -35,8 +36,11 @@ public partial class MainWindow
     private Button? _saveSettingsButton, _restoreSettingsButton;
     private TextBlock? _settingsStatus, _unsavedMark;
     private int? _refreshHz;
-    private (int Width, int Height)? _displaySize;
+    private (int Width, int Height)? _displaySize, _primarySize;
     private string? _upscalerNote;
+
+    // What the game's picture ends up on, which decides whether an upscaler runs.
+    private (int Width, int Height)? OutputSize => _windowed ? _windowSize : _displaySize;
 
     private static readonly string[] AntiAliasingKeys = ["fm4_showroom_msaa", "fm4_race_msaa", "swap_post_effect"];
 
@@ -45,6 +49,7 @@ public partial class MainWindow
         if (_host is not { } host) return;
         _refreshHz = DisplayInfo.RefreshHz(this);
         _displaySize = DisplayInfo.Size(this);
+        _primarySize = DisplayInfo.PrimarySize();
         try
         {
             _graphics = host.Graphics();
@@ -58,6 +63,7 @@ public partial class MainWindow
         var settings = host.Settings;
         (_skipIntro, _asyncReadbacks, _presentViaDxgi, _compat, _buildJobs, _language) =
             (settings.SkipIntro, settings.AsyncReadbacks, settings.PresentViaDxgi, settings.Compat, settings.BuildJobs, settings.Language);
+        (_windowed, _windowSize) = (settings.Windowed, settings.WindowSize);
         _commandLineOptions = settings.CommandLineOptions;
         (_savesFolder, _savesNote) = (settings.SavesFolder, null);
         (_pfp4Mode, _pfp4HarderAi) = (host.Setup.Pfp4Mode ?? DefaultMode, host.Setup.Pfp4HarderAi);
@@ -134,6 +140,7 @@ public partial class MainWindow
                || (_skipIntro, _asyncReadbacks, _presentViaDxgi, _compat, _buildJobs, _language, _commandLineOptions.Trim())
                != (settings.SkipIntro, settings.AsyncReadbacks, settings.PresentViaDxgi, settings.Compat, settings.BuildJobs,
                    settings.Language, settings.CommandLineOptions)
+               || (_windowed, _windowSize) != (settings.Windowed, settings.WindowSize)
                || !string.Equals(_savesFolder, settings.SavesFolder, StringComparison.OrdinalIgnoreCase)
                || (Pfp4Install && (_pfp4Mode != (host.Setup.Pfp4Mode ?? DefaultMode) || _pfp4HarderAi != host.Setup.Pfp4HarderAi));
     }
@@ -181,6 +188,15 @@ public partial class MainWindow
             "The game's text and voice-over. Korean, Chinese, Portuguese, Czech, Hungarian and Dutch keep the English voice-over.",
             alwaysHelp: true));
         SettingsBody.Children.Add(Option("SKIP INTRO VIDEOS", "The game starts at its title screen.", _skipIntro, v => _skipIntro = v));
+        SettingsBody.Children.Add(Option("WINDOWED", "The game starts in a window you can resize. Alt+Enter switches between window and fullscreen while you play.",
+            _windowed, v => _windowed = v));
+        var sizes = WindowSizes.Fitting(_primarySize, _windowSize);
+        var size = Combo(sizes.Select(WindowSizes.Label).ToList(), sizes.ToList().IndexOf(_windowSize));
+        size.SelectionChanged += (_, _) =>
+        {
+            if (size.SelectedIndex >= 0) _windowSize = sizes[size.SelectedIndex];
+        };
+        SettingsBody.Children.Add(Labelled("WINDOW SIZE", size, "The size the window starts at, and the size Alt+Enter leaves fullscreen to.", alwaysHelp: true));
 
         SettingsBody.Children.Add(Header("ADVANCED"));
         SettingsBody.Children.Add(Help("These are the recommended defaults. Don't change them unless you're sure what a setting does."));
@@ -316,19 +332,19 @@ public partial class MainWindow
             {
                 // As on the game's GRAPHICS page, a running upscaler takes over the anti-aliasing:
                 // the row says so and keeps the player's choice for later.
-                if (AntiAliasingKeys.Contains(row.Key) && graphics.TemporalUpscaler(_displaySize) is { } upscaler)
+                if (AntiAliasingKeys.Contains(row.Key) && graphics.TemporalUpscaler(OutputSize) is { } upscaler)
                     return Labelled(row.Label, Combo([$"OFF ({upscaler})"], 0, enabled: false), row.Description);
                 var upscalerRow = row.Key == "present_effect";
-                var choices = row.Key == "resolution_scale" ? graphics.ScaleChoices(_displaySize) : row.Choices!;
+                var choices = row.Key == "resolution_scale" ? graphics.ScaleChoices(OutputSize) : row.Choices!;
                 var index = choices.Select(c => c.Value).ToList().IndexOf(graphics.Value(row.Key!));
                 var combo = Combo(choices.Select(c => c.Label).ToList(), index);
                 combo.SelectionChanged += (_, _) =>
                 {
                     if (combo.SelectedIndex < 0) return;
                     graphics.Set(row.Key!, choices[combo.SelectedIndex].Value);
-                    if (upscalerRow && graphics.FitScaleToUpscaler(_displaySize) is { } lowered)
-                        _upscalerNote = $"Resolution scale lowered to {lowered}x: {graphics.RunningUpscaler(_displaySize)} runs up to "
-                                        + $"{lowered}x on this {_displaySize!.Value.Width}x{_displaySize.Value.Height} screen.";
+                    if (upscalerRow && graphics.FitScaleToUpscaler(OutputSize) is { } lowered)
+                        _upscalerNote = $"Resolution scale lowered to {lowered}x: {graphics.RunningUpscaler(OutputSize)} runs up to "
+                                        + $"{lowered}x on this {OutputSize!.Value.Width}x{OutputSize.Value.Height} {(_windowed ? "window" : "screen")}.";
                     // Rows shown only for some of this setting's values, and the rows the upscaler
                     // and scale decide, follow it.
                     if (upscalerRow || row.Key == "resolution_scale"
@@ -437,6 +453,7 @@ public partial class MainWindow
             var settings = host.Settings;
             (settings.SkipIntro, settings.AsyncReadbacks, settings.PresentViaDxgi, settings.Compat, settings.BuildJobs, settings.Language) =
                 (_skipIntro, _asyncReadbacks, _presentViaDxgi, _compat, _buildJobs, _language);
+            (settings.Windowed, settings.WindowSize) = (_windowed, _windowSize);
             settings.CommandLineOptions = _commandLineOptions.Trim();
             settings.Save();
             if (_settingsStatus is not null) _settingsStatus.Text = leftover ?? "Saved. Applies at the next start.";

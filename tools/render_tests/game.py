@@ -246,6 +246,11 @@ class WindowsHost:
     def sleep(self, seconds):
         time.sleep(seconds)
 
+    def capture_window(self, path):
+        subprocess.run(["pwsh", "-NoProfile", "-File", str(TOOLS / "capture-window.ps1"),
+                        "-ProcessId", str(self.pid), "-Path", str(path), "-MaxWidth", "0"],
+                       check=True, capture_output=True, text=True)
+
     def append_input(self, line):
         with open(self.input_path, "a", encoding="ascii") as script:
             script.write(line + "\n")
@@ -350,6 +355,15 @@ class Session:
                 return
             if self.host.now() >= deadline:
                 raise RunBroken(step, f"no {signal!r} within {timeout:g} s")
+
+    def capture_window(self, name):
+        """What the window shows, upscaler and HUD included, at its size, as an Image kept as
+        <run>\\captures\\<name>.png. A guest capture is taken before the upscaler."""
+        self._act(f"capture window {name}")
+        path = self.run_dir / "captures" / f"{name}.png"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        self.host.capture_window(path)
+        return images.read_png(path)
 
     def capture(self, name, timeout=10):
         """The guest output as an Image, kept as <run>\\captures\\<name>.png."""

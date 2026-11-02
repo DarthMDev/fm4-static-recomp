@@ -23,6 +23,7 @@ AERO_PARTS = String("SPEED")
 PART_VIEW = String("TOGGLE")
 CARS = String("TAKE PHOTO")
 DEALER = String("ALL AFFORDABLE CARS")
+AI_DRIVER = Log(r"^String: \(AI\)")
 MANUFACTURERS = String("MANUFACTURER SELECT")
 CAR_SELECT = String("CAR SELECT")
 SHOWROOM = String("COLOR SELECT")
@@ -128,19 +129,23 @@ def _abarth_500(session, step):
     focus(session, "RIGHT", ABARTH_500, 3, since, f"{step}: 500 esseesse")
 
 
-def showroom(session):
-    """Main menu -> Free Play -> Quick Race -> Abarth 500: the showroom (colour select)."""
+def showroom(session, hot_lap=False):
+    """Main menu -> Free Play -> Quick Race or Hot Lap -> Abarth 500: the showroom (colour select)."""
     enter(session, ["LEFT"] * 6 + ["RIGHT"] * 3, String("QUICK RACE"), MAIN_MENU, "free play")
-    enter(session, ["LEFT"] * 3, MANUFACTURERS, String("QUICK RACE"), "quick race")
+    event = ["LEFT"] * 3 + ["RIGHT"] * 2 if hot_lap else ["LEFT"] * 3
+    enter(session, event, MANUFACTURERS, String("QUICK RACE"), "quick race")
     _abarth_500(session, "quick race")
     session.press_until("A", SHOWROOM, timeout=SCREEN_TIMEOUT, every=SCREEN_TIMEOUT,
                         step="showroom")
 
 
-def quick_race(session, environment_steps=0, environment=None):
+def quick_race(session, environment_steps=0, environment=None, hot_lap=False):
     """Main menu -> the showroom -> assists -> environment -> track -> GO RACE -> START RACE.
-    Ends at GO; environment names the expected one, if given."""
-    showroom(session)
+    Ends at GO; environment names the expected one, if given. A hot lap has the track alone, which
+    is checked: this menu logs all its entries on every move, so its strings cannot show the focus."""
+    session.poll()
+    start = len(session.lines)
+    showroom(session, hot_lap)
     time.sleep(1)
     session.press_until("A", ASSISTS, timeout=SCREEN_TIMEOUT, every=SCREEN_TIMEOUT, step="assists")
     session.press_until("A", ENVIRONMENTS, timeout=SCREEN_TIMEOUT, every=SCREEN_TIMEOUT,
@@ -161,6 +166,8 @@ def quick_race(session, environment_steps=0, environment=None):
     # The grid fades in at full presentation rate about a second before GO.
     session.wait(RACE_SHOWN, 60, step="race fade-in")
     time.sleep(1)
+    if hot_lap and _seen(session, AI_DRIVER, start):
+        raise RunBroken("hot lap", "AI drivers on the track: a dropped press chose another event")
 
 
 def drive(session, seconds):
