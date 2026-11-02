@@ -11,6 +11,10 @@
         "sha256": "8e2f2d2967b8b44b4f2c044d3c510954688befa61997c477714f56d7537873bf"
       },
       {
+        "path": "patches/shiftglue/0002-macos-stereo-downmix.patch",
+        "sha256": "1778a49abe8fc019647cd6cfd4eb776a8e14020603374b7a299cdb07983af433"
+      },
+      {
         "path": "patches/shiftglue/0003-vulkan-vertex-residency.patch",
         "sha256": "9ef750a4bd0dfae14a358c2f246e6c80b07362aabeb74fde7e001f4cc3d2eae5"
       },

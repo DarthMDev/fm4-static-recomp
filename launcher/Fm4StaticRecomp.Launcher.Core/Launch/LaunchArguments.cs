@@ -39,6 +39,12 @@ public static class LaunchArguments
         if (OperatingSystem.IsMacOS()) options["gpu_backend"] = "vulkan";
         if (profile.Xuid is { } xuid) options["user_xuid"] = xuid;
         if (settings.SkipIntro) options["fm4_skip_intro"] = "true";
+        if (settings.ShowFps) options["fm4_show_fps"] = "true";
+        if (!settings.ControllerVibration)
+        {
+            options["controller_vibration"] = "false";
+            options["pad_rumble_strength"] = "0";
+        }
         if (settings.Compat) foreach (var (name, value) in CompatOptions) options[name] = value;
         if (!settings.AsyncReadbacks) options["fh1_async_readbacks"] = "false";
         if (settings.PresentViaDxgi && platform.SupportsDxgiPresentation) options["vulkan_present_via_dxgi"] = "true";

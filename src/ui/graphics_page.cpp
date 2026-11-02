@@ -51,6 +51,7 @@ struct Setting {
 };
 
 const Setting kFrameRate = {"fm4_frame_rate", false, {}, 60, 240};
+const Setting kFullscreen = {"fullscreen", false, {{"ON", "true"}, {"OFF", "false"}}};
 const Setting kVsync = {"vulkan_present_mode", true, {{"OFF", "immediate"}, {"ON", "fifo"}}};
 const Setting kDetail = {"fm4_level_of_detail",
                          true,
@@ -114,7 +115,7 @@ const Setting* const kPresetSettings[] = {
 constexpr size_t kPresetSettingCount = std::size(kPresetSettings);
 
 const Setting* const kSettings[] = {
-    &kFrameRate, &kVsync, &kScale, &kUpscaler, &kDlssPreset, &kSharpness, &kPostAa,
+    &kFrameRate, &kFullscreen, &kVsync, &kScale, &kUpscaler, &kDlssPreset, &kSharpness, &kPostAa,
     &kShowroomMsaa, &kRaceMsaa, &kAnisotropy,
     &kSceneryShadows, &kReflectionUpdates, &kDetail, &kMirror, &kBloom, &kSoftParticles, &kCrowds,
     &kMotionBlur, &kDepthOfField, &kCarDirt};
@@ -159,6 +160,8 @@ const RowText kRows[] = {
      "Frames per second in races, menus and the showroom, from the console's 60 up to your "
      "display's refresh rate. A rate the GPU cannot hold stutters: lower it or the resolution "
      "scale."},
+    {"FULLSCREEN", &kFullscreen,
+     "Run in borderless fullscreen (ON) or a window (OFF). Press F11 to toggle anytime."},
     {"VSYNC", &kVsync,
      "On stops tearing on a display without G-Sync or FreeSync. With either, leave it off: "
      "on, an Nvidia GPU shows frames through the desktop, without variable refresh and at a "

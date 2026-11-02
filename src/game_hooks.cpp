@@ -242,7 +242,7 @@ uint32_t GuestText(std::u16string_view text) {
       rex::system::kernel_state()->memory()->SystemHeapAlloc(uint32_t(2 * (text.size() + 1)));
   uint8_t* const host = rex::system::kernel_state()->memory()->virtual_membase() + address;
   for (size_t i = 0; i <= text.size(); ++i) {
-    const char16_t c = i < text.size() ? text[i] : u' ';
+    const char16_t c = i < text.size() ? text[i] : u'\0';
     host[2 * i] = uint8_t(c >> 8);
     host[2 * i + 1] = uint8_t(c);
   }
@@ -1064,8 +1064,11 @@ void Fm4RaceMenuSceneDestroyed(PPCRegister& r3) {
   REXLOG_INFO("Race menu scene destroyed {:08X}", r3.u32);
 }
 
+std::atomic<uint64_t> g_guest_vblank_count{0};
+
 bool Fm4SkipVblankCallback() {
   FM4_HOOK_CENSUS();
+  g_guest_vblank_count.fetch_add(1, std::memory_order_relaxed);
   // Runs on every vblank, so a new rate applies from the next one. A race waking
   // on every second vblank of one at twice its rate is no substitute: a frame then
   // flips on whichever vblank follows its swap, and frames whose swap falls near
@@ -1093,6 +1096,10 @@ bool Fm4SkipVblankCallback() {
 }
 
 namespace fm4_static_recomp {
+
+uint64_t GuestVblankCount() {
+  return g_guest_vblank_count.load(std::memory_order_relaxed);
+}
 
 void InstallPixelShaderSwitches() {
   rex::cvar::SetFlagByName("gpu_wrap_seam_vertex_shaders", DirtVertexShaderList());

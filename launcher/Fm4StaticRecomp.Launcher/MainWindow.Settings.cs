@@ -25,7 +25,7 @@ public partial class MainWindow
 
     private GraphicsSettings? _graphics;
     private string? _graphicsProblem;
-    private bool _skipIntro, _asyncReadbacks, _presentViaDxgi, _compat;
+    private bool _skipIntro, _asyncReadbacks, _presentViaDxgi, _compat, _showFps, _controllerVibration;
     private int _buildJobs;
     private string _language = GameLanguages.Default.Code;
     private string _commandLineOptions = "";
@@ -56,8 +56,8 @@ public partial class MainWindow
             _graphicsProblem = $"The graphics settings list could not be read: {error.Message}";
         }
         var settings = host.Settings;
-        (_skipIntro, _asyncReadbacks, _presentViaDxgi, _compat, _buildJobs, _language) =
-            (settings.SkipIntro, settings.AsyncReadbacks, settings.PresentViaDxgi, settings.Compat, settings.BuildJobs, settings.Language);
+        (_skipIntro, _asyncReadbacks, _presentViaDxgi, _compat, _showFps, _controllerVibration, _buildJobs, _language) =
+            (settings.SkipIntro, settings.AsyncReadbacks, settings.PresentViaDxgi, settings.Compat, settings.ShowFps, settings.ControllerVibration, settings.BuildJobs, settings.Language);
         _commandLineOptions = settings.CommandLineOptions;
         (_savesFolder, _savesNote) = (settings.SavesFolder, null);
         (_pfp4Mode, _pfp4HarderAi) = (host.Setup.Pfp4Mode ?? DefaultMode, host.Setup.Pfp4HarderAi);
@@ -131,8 +131,8 @@ public partial class MainWindow
         if (_host is not { } host) return false;
         var settings = host.Settings;
         return _graphics?.Changed == true
-               || (_skipIntro, _asyncReadbacks, _presentViaDxgi, _compat, _buildJobs, _language, _commandLineOptions.Trim())
-               != (settings.SkipIntro, settings.AsyncReadbacks, settings.PresentViaDxgi, settings.Compat, settings.BuildJobs,
+               || (_skipIntro, _asyncReadbacks, _presentViaDxgi, _compat, _showFps, _controllerVibration, _buildJobs, _language, _commandLineOptions.Trim())
+               != (settings.SkipIntro, settings.AsyncReadbacks, settings.PresentViaDxgi, settings.Compat, settings.ShowFps, settings.ControllerVibration, settings.BuildJobs,
                    settings.Language, settings.CommandLineOptions)
                || !string.Equals(_savesFolder, settings.SavesFolder, StringComparison.OrdinalIgnoreCase)
                || (Pfp4Install && (_pfp4Mode != (host.Setup.Pfp4Mode ?? DefaultMode) || _pfp4HarderAi != host.Setup.Pfp4HarderAi));
@@ -181,6 +181,8 @@ public partial class MainWindow
             "The game's text and voice-over. Korean, Chinese, Portuguese, Czech, Hungarian and Dutch keep the English voice-over.",
             alwaysHelp: true));
         SettingsBody.Children.Add(Option("SKIP INTRO VIDEOS", "The game starts at its title screen.", _skipIntro, v => _skipIntro = v));
+        SettingsBody.Children.Add(Option("SHOW FPS", "Displays the real-time frame rate and frame timing overlay.", _showFps, v => _showFps = v));
+        SettingsBody.Children.Add(Option("CONTROLLER VIBRATION", "Controller rumble motors for impacts, road bumps and engine revs.", _controllerVibration, v => _controllerVibration = v));
 
         SettingsBody.Children.Add(Header("ADVANCED"));
         SettingsBody.Children.Add(Help("These are the recommended defaults. Don't change them unless you're sure what a setting does."));
@@ -435,8 +437,8 @@ public partial class MainWindow
             }
             _graphics?.Save();
             var settings = host.Settings;
-            (settings.SkipIntro, settings.AsyncReadbacks, settings.PresentViaDxgi, settings.Compat, settings.BuildJobs, settings.Language) =
-                (_skipIntro, _asyncReadbacks, _presentViaDxgi, _compat, _buildJobs, _language);
+            (settings.SkipIntro, settings.AsyncReadbacks, settings.PresentViaDxgi, settings.Compat, settings.ShowFps, settings.ControllerVibration, settings.BuildJobs, settings.Language) =
+                (_skipIntro, _asyncReadbacks, _presentViaDxgi, _compat, _showFps, _controllerVibration, _buildJobs, _language);
             settings.CommandLineOptions = _commandLineOptions.Trim();
             settings.Save();
             if (_settingsStatus is not null) _settingsStatus.Text = leftover ?? "Saved. Applies at the next start.";

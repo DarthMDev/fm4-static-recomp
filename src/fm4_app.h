@@ -23,9 +23,11 @@
 #include <rex/ui/flags.h>
 #include <rex/ui/keybinds.h>
 #include <rex/ui/overlay/achievement_notification.h>
+#include <rex/ui/overlay/debug_overlay.h>
 #include <rex/ui/vulkan/provider.h>
 #include <rex/ui/window.h>
 #include <rex/ui/windowed_app_context.h>
+#include <SDL3/SDL.h>
 
 #include "built_in_defaults.h"
 #include "code_image_check.h"
@@ -54,6 +56,8 @@ REXCVAR_DECLARE(std::string, fm4_dump_disc_shaders);
 REXCVAR_DECLARE(std::string, fm4_build_shader_cache);
 REXCVAR_DECLARE(std::string, fm4_shader_list_dir);
 REXCVAR_DECLARE(std::string, fm4_export_ui_fonts);
+REXCVAR_DECLARE(bool, fm4_show_fps);
+REXCVAR_DECLARE(bool, controller_vibration);
 
 class Fm4App final : public rex::ReXApp {
  public:
@@ -96,6 +100,9 @@ class Fm4App final : public rex::ReXApp {
       return;
     }
     config.gpu_plugin = "fh1";
+#if defined(__APPLE__)
+    SDL_SetHint(SDL_HINT_AUDIO_CHANNELS, "2");
+#endif
     fm4_static_recomp::ConfigureScriptedInput(config);
     fm4_static_recomp::ApplyBuiltInDefaults(fm4_static_recomp::DefaultStage::kBeforeGpuPlugin);
     // The GPU settings are registered by the plugin, so it is loaded here
@@ -206,6 +213,44 @@ class Fm4App final : public rex::ReXApp {
       }
     });
     InstallKeyboard();
+    if (!REXCVAR_GET(controller_vibration)) {
+      rex::cvar::SetFlagByName("pad_rumble_strength", "0");
+    }
+    SetGuestFrameStats([]() -> rex::ui::FrameStats {
+      static uint64_t frame_counter = 0;
+      static auto last_calc = std::chrono::steady_clock::now();
+      static double smoothed_fps = 0.0;
+      static double smoothed_ms = 0.0;
+      static uint64_t last_frames = 0;
+
+      frame_counter++;
+      const auto now = std::chrono::steady_clock::now();
+      const double elapsed = std::chrono::duration<double>(now - last_calc).count();
+      if (elapsed >= 0.25) {
+        smoothed_fps = static_cast<double>(frame_counter - last_frames) / elapsed;
+        smoothed_ms = smoothed_fps > 0.0 ? (1000.0 / smoothed_fps) : 0.0;
+        last_calc = now;
+        last_frames = frame_counter;
+      }
+      return rex::ui::FrameStats{
+          .frame_time_ms = smoothed_ms,
+          .fps = smoothed_fps,
+          .frame_count = frame_counter,
+      };
+    });
+    if (REXCVAR_GET(fm4_show_fps)) {
+      rex::ui::SetBuildLabel(" ");
+      if (rex::ui::Window* const window = this->window()) {
+        window->app_context().CallInUIThreadDeferred([] {
+          rex::ui::TriggerBind("bind_debug_overlay");
+        });
+      }
+    }
+    rex::ui::RegisterBind("bind_toggle_fullscreen", "F11", "Toggle fullscreen", [this] {
+      const bool fs = !rex::cvar::GetFlagByName("fullscreen").empty() &&
+                      rex::cvar::GetFlagByName("fullscreen") != "false";
+      rex::cvar::SetFlagByName("fullscreen", fs ? "false" : "true");
+    });
     // The SDK's pad_chord_game_menu runs the bind of this name.
     rex::ui::RegisterBind("bind_game_menu", "F6", "Toggle the GRAPHICS page", [this] {
       // A START pressed before BACK has already closed the page by itself.
@@ -221,6 +266,7 @@ class Fm4App final : public rex::ReXApp {
   }
 
   void OnShutdown() override {
+    rex::ui::UnregisterBind("bind_toggle_fullscreen");
     rex::ui::UnregisterBind("bind_game_menu");
     fm4_static_recomp::SetInputTick(nullptr);
     fm4_static_recomp::SetPromptTextSource(nullptr);

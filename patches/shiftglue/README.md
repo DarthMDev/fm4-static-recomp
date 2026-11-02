@@ -20,11 +20,16 @@ release validation path; a development override is not evidence of a clean build
 port and target its separate ReXGlue/Metal backend. The current Avalonia/ShiftGlue
 launcher uses `tools/setup-macos.py` and `tools/package-launcher-macos.py`.
 
+`0002-macos-stereo-downmix.patch` requests a stereo SDL stream on macOS and
+uses the existing multichannel-to-stereo fold for the game's audio output.
+
 `0003-vulkan-vertex-residency.patch` removes the address/size shortcut from
 vertex-buffer residency checks. A binding can retain its address and size after
 CPU writes invalidate the underlying shared-memory pages; the per-frame binding
-bit must lead to `RequestRange` again so those pages are re-uploaded. macOS also
-keeps `clear_memory_page_state` enabled to refresh CPU-written pages each frame.
+bit must lead to `RequestRange` again so those pages are re-uploaded.
+After applying `0004`, continued live driving also remained stable with
+`clear_memory_page_state=false`. That is the default, avoiding redundant
+per-frame uploads of unchanged CPU data.
 The address/size change alone did not resolve the reported stretched geometry;
 `0004` addresses the host-page invalidation defect identified afterward.
 

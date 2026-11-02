@@ -14,6 +14,12 @@ REXCVAR_DEFINE_STRING(fm4_config_root, "", "Forza Motorsport 4",
                       "Folder of graphics.toml and controls.toml; empty means the state root's "
                       "config folder");
 
+REXCVAR_DEFINE_BOOL(fm4_show_fps, false, "Forza Motorsport 4",
+                    "Show the FPS and frame timing debug overlay on start");
+
+REXCVAR_DEFINE_BOOL(controller_vibration, true, "Input",
+                    "Enable controller vibration rumble");
+
 namespace fm4_static_recomp {
 namespace {
 
@@ -29,13 +35,8 @@ constexpr std::array kBeforeGpuPlugin = {Default{"gpu_backend", "vulkan"}};
 // keeps some render targets across frames, so a cold cache darkened the asphalt for seconds.
 constexpr std::array kAfterGpuPlugin = {
     Default{"async_shader_compilation", "false"},
-#if defined(__APPLE__)
-    // Apple host pages cover multiple guest pages: refresh CPU-written data
-    // each frame rather than relying solely on write-watch invalidation.
-    Default{"clear_memory_page_state", "true"},
-#else
+    // Keep CPU pages cached; write-watch invalidation handles changed data.
     Default{"clear_memory_page_state", "false"},
-#endif
     Default{"host_present_fps_limit", "0"},
     Default{"gpu_record_thread", "true"},
     Default{"texture_cache_memory_limit_soft", "256"},
@@ -56,6 +57,13 @@ constexpr std::array kAfterGpuPlugin = {
     Default{"texture_cache_memory_budget_limits", "false"},
     Default{"vulkan_texture_load_compute_copy", "false"},
     Default{"vulkan_small_texture_copy_views", "false"},
+#if defined(__APPLE__)
+    Default{"fh1_readback_small_float_resolves", "true"},
+    Default{"vulkan_present_mode", "fifo"},
+    Default{"swap_post_effect_scene_only", "false"},
+    Default{"execute_unclipped_draw_vs_on_cpu", "false"},
+    Default{"force_convert_quad_lists_to_triangle_lists", "true"},
+#else
     Default{"fh1_readback_small_float_resolves", "false"},
     // With vsync on the SDK presents mailbox or FIFO, which Nvidia composes through the
     // desktop: no independent flip, so no variable refresh rate, and mailbox dropped from
@@ -64,6 +72,7 @@ constexpr std::array kAfterGpuPlugin = {
     Default{"swap_post_effect_scene_only", "false"},
     Default{"execute_unclipped_draw_vs_on_cpu", "false"},
     Default{"force_convert_quad_lists_to_triangle_lists", "false"},
+#endif
     Default{"wait_reg_mem_yield_us", "2000"},
     Default{"gpu_d3d_shader_cache", "0"},
     Default{"guest_reservation_sections_unlocked", "false"},
