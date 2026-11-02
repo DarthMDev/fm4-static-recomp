@@ -26,8 +26,8 @@ from datetime import datetime
 from pathlib import Path
 
 from . import counters, images, routes, seed, thumbnails
-from .checks import (CheckResult, Figures, References, chroma_check, defaults_check, differ_check,
-                     hooks_hit, log_checks, max_check, min_check, ratio_check, reference_size,
+from .checks import (CheckResult, Figures, References, chroma_check, defaults_check,
+                     depth_bands_per_frame, differ_check, hooks_hit, log_checks, max_check, min_check, ratio_check, reference_size,
                      tint_check)
 from .game import Session
 from .images import ImageLimits, Rect
@@ -425,15 +425,75 @@ def validation(run):
             after = _title_time(session)
             _drive_only(run, session, scale, "race validation")
             _log_checks(run, session, after)
-            loaded = any(_LAYER_INSERTED in line.text for line in session.lines)
-            run.add(CheckResult("validation layer loaded", loaded, "yes" if loaded else "no",
-                                "yes", "" if loaded else "install the Vulkan SDK"))
-            errors = 0
-            if layer_log.exists():
-                errors = layer_log.read_text(encoding="utf-8", errors="replace").count(
-                    "Validation Error")
-            run.add(CheckResult("validation layer log", errors == 0, f"{errors} errors", "0",
-                                str(layer_log)))
+            _layer_checks(run, session, layer_log)
+        finally:
+            run.keep_log(session)
+
+
+def _layer_checks(run, session, layer_log):
+    # Without these a run the layer never saw passes: errors reach the log only through it.
+    loaded = any(_LAYER_INSERTED in line.text for line in session.lines)
+    run.add(CheckResult("validation layer loaded", loaded, "yes" if loaded else "no",
+                        "yes", "" if loaded else "install the Vulkan SDK"))
+    errors = 0
+    if layer_log.exists():
+        errors = layer_log.read_text(encoding="utf-8", errors="replace").count(
+            "Validation Error")
+    run.add(CheckResult("validation layer log", errors == 0, f"{errors} errors", "0",
+                        str(layer_log)))
+
+
+def _depth_bands_since(session, mark, timeout=90):
+    """Two of the executor's counter lines since a switch: every 600 frames, so a slow GPU takes
+    longer, and an older line would count frames from before the switch."""
+    deadline = time.monotonic() + timeout
+    while True:
+        session.poll()
+        bands = depth_bands_per_frame(session.lines[mark:])
+        if bands or time.monotonic() >= deadline:
+            return bands
+        time.sleep(1)
+
+
+def validation_upscaler(run):
+    """1x under thread safety, an upscaler turned on at run time in the main menu and in a hot lap:
+    the scene keeps its MSAA tiles until the next is pushed, so camera depth is captured per tile.
+    A set rewritten per tile once raced the submission worker's bind (the 161st's errors), though
+    never on a launch with an upscaler, which has one tile. The layer only sees calls that overlap,
+    so a clean run proves less than a failing one. The upscaler goes off before the race, whose
+    scene is then pushed with its tiles."""
+    scale = 1
+    layer_log = run.dir / "validation-upscaler-layer.log"
+    env = dict(VALIDATION_ENV, VK_KHRONOS_VALIDATION_LOG_FILENAME=str(layer_log))
+    with run.session(scale, ["--vulkan_validation_enabled=true"], env=env) as session:
+        try:
+            routes.to_main_menu(session)
+            after = _title_time(session)
+            session.poll()
+            available = {match.group(1) for line in session.lines
+                         for match in [_UPSCALER_AVAILABLE.search(line.text)] if match}
+            # Any temporal upscaler tracks the camera; FSR 3 runs on every GPU.
+            upscaler = "dlss" if "dlss" in available else "fsr3"
+            mark = len(session.lines)
+            session.set_option("present_effect", upscaler)
+            time.sleep(25)
+            run.add(min_check(f"validation {upscaler} on in the menu: depth bands a frame",
+                              _depth_bands_since(session, mark), 2))
+            session.set_option("present_effect", "bilinear")
+            routes.quick_race(session, hot_lap=True)
+            session.hold("A LX=0", 600)
+            # A hot lap starts rolling.
+            time.sleep(12)
+            session.poll()
+            mark = len(session.lines)
+            session.set_option("present_effect", upscaler)
+            time.sleep(25)
+            run.add(min_check(f"validation {upscaler} on in a hot lap: depth bands a frame",
+                              _depth_bands_since(session, mark), 2))
+            # Not "cache warm": an upscaler's tiles make pipelines the shipped list may lack.
+            run.add(*(result for result in log_checks(session.lines, after, WARM_PIPELINES)
+                      if result.name != "cache warm"), defaults_check(session.lines))
+            _layer_checks(run, session, layer_log)
         finally:
             run.keep_log(session)
 
@@ -591,7 +651,8 @@ SCENARIOS = {"short": short, "thumbnail-msaa-off": thumbnail_msaa_off,
              "thumbnail-late-streaming": thumbnail_late_streaming, "session-2x": session_2x,
              "session-3x": session_3x, "car-dirt": car_dirt,
              "surfaceless-clears": surfaceless_clears, "vram-4x": vram_4x,
-             "validation": validation, "cold-cache": cold_cache, "window-upscalers": window_upscalers}
+             "validation": validation, "validation-upscaler": validation_upscaler,
+             "cold-cache": cold_cache, "window-upscalers": window_upscalers}
 TIERS = {
     "short": ["short", "thumbnail-msaa-off", "thumbnail-late-streaming"],
     "long": ["short", "thumbnail-msaa-off", "thumbnail-late-streaming", "session-2x",
@@ -599,5 +660,5 @@ TIERS = {
     # The cold cache empties the run's shader cache: it comes last.
     "full": ["short", "thumbnail-msaa-off", "thumbnail-late-streaming", "session-2x",
              "session-3x", "car-dirt", "surfaceless-clears", "vram-4x", "validation",
-             "window-upscalers", "cold-cache"],
+             "validation-upscaler", "window-upscalers", "cold-cache"],
 }

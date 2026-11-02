@@ -16,6 +16,7 @@ NOT_ON_THE_DISC = frozenset({"1E6883FCCDE1F688", "B6C9863F710683EC", "A4A965C189
 _VALIDATION_ERROR = re.compile(r"^Vulkan Error \(")
 _REFUSED_DEFAULT = re.compile(r"^Built-in default: (\S+) refused")
 _HOOK_HIT = re.compile(r"^Hook census: (\w+)$")
+_DEPTH_BANDS = re.compile(r"^FH1 native executor \(Vulkan\) frame=(\d+) .*camera_depth_snapshot=(\d+)")
 SHADER_LIST = Path(__file__).resolve().parents[1] / "shader_list.py"
 
 
@@ -203,6 +204,16 @@ def log_checks(lines, after, allowed_pipelines=0):
         CheckResult("no crash", not critical, f"{len(critical)} critical lines", "0",
                     critical[0].text[:200] if critical else ""),
     ]
+
+
+def depth_bands_per_frame(lines):
+    """Camera depth captures a frame, between the last two of the executor's counter lines: one
+    for each of a scene's tiles while tracking runs, 0 while it does not."""
+    counts = [(int(match.group(1)), int(match.group(2))) for line in lines
+              for match in [_DEPTH_BANDS.match(line.text)] if match][-2:]
+    if len(counts) < 2 or counts[1][0] == counts[0][0]:
+        return 0
+    return round((counts[1][1] - counts[0][1]) / (counts[1][0] - counts[0][0]), 1)
 
 
 def defaults_check(lines):

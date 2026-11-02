@@ -7,7 +7,7 @@ from pathlib import Path
 
 from render_tests import images, seed
 from render_tests.checks import (References, band_check, chroma_check, defaults_check,
-                                 differ_check, hook_census_check, hooks_hit, log_checks,
+                                 depth_bands_per_frame, differ_check, hook_census_check, hooks_hit, log_checks,
                                  max_check, min_check, pipeline_list_check)
 from render_tests.images import Image, ImageLimits, Rect
 from render_tests.logtail import parse
@@ -151,6 +151,18 @@ class ChecksTest(unittest.TestCase):
         self.assertFalse(results["no validation errors"].passed)
         self.assertEqual(results["no validation errors"].value, "1 errors")
         self.assertTrue(results["no crash"].passed)
+
+    def test_depth_bands_per_frame(self):
+        def stats(frame, snapshots, takes):
+            return line("01:05:00.000", f"FH1 native executor (Vulkan) frame={frame} draws=1 stats="
+                        f"{{camera_depth_snapshot={snapshots},camera_take={takes},camera_cut=1}}")
+        self.assertEqual(depth_bands_per_frame([stats(600, 952, 316), stats(1200, 2752, 916)]), 3)
+        # Per frame, not per take: one tile with a camera only every third frame is not three.
+        self.assertEqual(depth_bands_per_frame([stats(600, 200, 200), stats(1200, 800, 400)]), 1)
+        self.assertEqual(depth_bands_per_frame([stats(600, 952, 316)]), 0)
+        self.assertEqual(depth_bands_per_frame([stats(600, 952, 316), stats(1200, 952, 316)]), 0)
+        self.assertEqual(depth_bands_per_frame([line("01:05:00.000", "FH1 native executor (Vulkan) "
+                                                     "frame=600 draws=1 stats={}")] * 2), 0)
 
 
 if __name__ == "__main__":
