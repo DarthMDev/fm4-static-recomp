@@ -36,7 +36,7 @@ public class LaunchArgumentsTests
         using var _ = temp;
         settings.Windowed = true;
         settings.WindowSize = (1600, 900);
-        var args = LaunchArguments.ForPlay(layout, "0.1.0", profile, settings, new WindowsPlatform());
+        var args = LaunchArguments.ForPlay(layout, "0.3.1", profile, settings, new WindowsPlatform());
         Assert.Contains("--fullscreen=false", args);
         Assert.Contains("--window_width=1600", args);
         Assert.Contains("--window_height=900", args);
@@ -53,14 +53,17 @@ public class LaunchArgumentsTests
         Assert.DoesNotContain(args, a => a.StartsWith("--window_"));
     }
 
-    [Fact]
-    public void A_windowed_older_version_keeps_its_window_size()
+    [Theory]
+    [InlineData("0.3.0")]
+    [InlineData("0.2.2")]
+    public void A_windowed_older_version_starts_fullscreen(string version)
     {
         var (layout, profile, settings, temp) = Setup();
         using var _ = temp;
         settings.Windowed = true;
-        var args = LaunchArguments.ForPlay(layout, "0.3.0", profile, settings, new WindowsPlatform());
-        Assert.Contains("--window_width=1280", args);
+        var args = LaunchArguments.ForPlay(layout, version, profile, settings, new WindowsPlatform(), displayDpi: 144);
+        Assert.DoesNotContain(args, a => a.StartsWith("--fullscreen"));
+        Assert.DoesNotContain(args, a => a.StartsWith("--window_"));
     }
 
     // The game multiplies its window size by the display's scale, rounding up, and SDL then holds the window at 16:9.

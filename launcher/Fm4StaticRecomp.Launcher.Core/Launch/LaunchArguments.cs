@@ -45,10 +45,12 @@ public static class LaunchArguments
         if (!settings.AsyncReadbacks) options["fh1_async_readbacks"] = "false";
         if (settings.PresentViaDxgi && platform.SupportsDxgiPresentation) options["vulkan_present_via_dxgi"] = "true";
         if (settings.Diagnostic30Fps) options["fm4_frame_rate"] = "30";
-        if (settings.Windowed) options["fullscreen"] = "false";
-        // In fullscreen too: Alt+Enter leaves to this size.
-        if (settings.Windowed || !PredatesWindowSizeApart(version))
+        // In fullscreen too: Alt+Enter leaves to this size. An older version (GO BACK TO, or while an update
+        // builds) starts fullscreen: it takes the window's size for the guest's video mode, and below 1280x720,
+        // on a scaled display, the game changes its text layout.
+        if (!PredatesWindowSizeApart(version))
         {
+            if (settings.Windowed) options["fullscreen"] = "false";
             options["window_width"] = LogicalSize(settings.WindowSize.Width, displayDpi).ToString(CultureInfo.InvariantCulture);
             options["window_height"] = LogicalSize(settings.WindowSize.Height, displayDpi).ToString(CultureInfo.InvariantCulture);
         }
@@ -72,8 +74,6 @@ public static class LaunchArguments
         return (logical * dpi + 95) / 96 < real ? logical + 1 : logical;
     }
 
-    // An older version (GO BACK TO, or while an update builds) has no Alt+Enter, and takes the window's
-    // size for the guest's video mode: below 1280x720, on a scaled display, the game changes its text layout.
     private static bool PredatesWindowSizeApart(string version) =>
         Version.TryParse(version, out var parsed) && parsed < new Version(0, 3, 1);
 

@@ -56,6 +56,7 @@ WINDOW SIZE. For a size the list does not have, use
   smaller window the picture is [downscaled without it](upscalers.md). With WINDOWED on, the
   RESOLUTION SCALE and UPSCALER rows in GRAPHICS go by WINDOW SIZE instead of your screen: turning
   WINDOWED on or picking a smaller size lowers a scale the upscaler cannot run at.
+- A version before 0.3.1 (after [GO BACK TO](#updates)) always starts fullscreen.
 
 ## A career from Xenia Canary
 
