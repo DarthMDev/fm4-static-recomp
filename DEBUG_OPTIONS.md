@@ -109,3 +109,9 @@ Resolves and visibility:
 | `--fh1_visibility_census=<n>` | Every `n` frames, an occlusion query around each draw, logging how many draw nothing |
 | `--fh1_visibility_census_no_depth` | Census frames draw without the depth test |
 | `--fh1_visibility_oracle_skip`, `--fh1_visibility_oracle_late_only` | Drop draws that drew nothing at their last census (wrong image) |
+
+GPU crashes (device lost, `Failed to submit a Vulkan command buffer: -4`):
+
+| Option | What it does |
+|---|---|
+| `--vulkan_device_address_bindings` | Track which objects the driver places at which GPU addresses; after a device loss the log names what was at, or was last freed from, each faulting address, and the driver's crash data, when the driver provides it, is saved as `vulkan-device-fault.bin` beside the log (the fault's description and addresses are logged without the option) |
