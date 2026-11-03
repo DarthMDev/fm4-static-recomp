@@ -404,43 +404,32 @@ def vram_4x(run):
             run.keep_log(session)
 
 
-# The fifty-fourth session's settings: only the layer's thread safety, which caught the AMD
-# fence crash; the whole layer makes a race unplayably slow.
-VALIDATION_ENV = {f"VK_KHRONOS_VALIDATION_{name}": "false" for name in (
-    "VALIDATE_CORE", "VALIDATE_SYNC", "CHECK_SHADERS", "STATELESS_PARAM", "OBJECT_LIFETIME",
-    "HANDLE_WRAPPING")}
-VALIDATION_ENV["VK_KHRONOS_VALIDATION_THREAD_SAFETY"] = "true"
-VALIDATION_ENV["VK_KHRONOS_VALIDATION_DUPLICATE_MESSAGE_LIMIT"] = "0"
+# The layer's defaults (core and thread safety on, synchronization off); each scenario took about
+# 2 minutes under them. Errors only: a warning on every draw rotates the log past everything else.
+VALIDATION_ENV = {"VK_KHRONOS_VALIDATION_REPORT_FLAGS": "error",
+                  "VK_KHRONOS_VALIDATION_DUPLICATE_MESSAGE_LIMIT": "0"}
 _LAYER_INSERTED = 'Inserted device layer "VK_LAYER_KHRONOS_validation"'
 
 
 def validation(run):
-    """2x with the Vulkan validation layer's thread safety: a race logs no validation error."""
+    """2x with the Vulkan validation layer: a race logs no validation error."""
     scale = 2
-    layer_log = run.dir / "validation-layer.log"
-    env = dict(VALIDATION_ENV, VK_KHRONOS_VALIDATION_LOG_FILENAME=str(layer_log))
-    with run.session(scale, ["--vulkan_validation_enabled=true"], env=env) as session:
+    with run.session(scale, ["--vulkan_validation_enabled=true"], env=VALIDATION_ENV) as session:
         try:
             routes.to_main_menu(session)
             after = _title_time(session)
             _drive_only(run, session, scale, "race validation")
             _log_checks(run, session, after)
-            _layer_checks(run, session, layer_log)
+            _layer_checks(run, session)
         finally:
             run.keep_log(session)
 
 
-def _layer_checks(run, session, layer_log):
-    # Without these a run the layer never saw passes: errors reach the log only through it.
+def _layer_checks(run, session):
+    # Without this a run the layer never saw passes: errors reach the log only through it.
     loaded = any(_LAYER_INSERTED in line.text for line in session.lines)
     run.add(CheckResult("validation layer loaded", loaded, "yes" if loaded else "no",
                         "yes", "" if loaded else "install the Vulkan SDK"))
-    errors = 0
-    if layer_log.exists():
-        errors = layer_log.read_text(encoding="utf-8", errors="replace").count(
-            "Validation Error")
-    run.add(CheckResult("validation layer log", errors == 0, f"{errors} errors", "0",
-                        str(layer_log)))
 
 
 def _depth_bands_since(session, mark, timeout=90):
@@ -456,16 +445,15 @@ def _depth_bands_since(session, mark, timeout=90):
 
 
 def validation_upscaler(run):
-    """1x under thread safety, an upscaler turned on at run time in the main menu and in a hot lap:
-    the scene keeps its MSAA tiles until the next is pushed, so camera depth is captured per tile.
+    """1x under the validation layer, an upscaler turned on at run time in the main menu (FSR 3
+    too) and in a hot lap: the scene keeps its MSAA tiles until the next is pushed, so camera
+    depth is captured per tile.
     A set rewritten per tile once raced the submission worker's bind (the 161st's errors), though
     never on a launch with an upscaler, which has one tile. The layer only sees calls that overlap,
     so a clean run proves less than a failing one. The upscaler goes off before the race, whose
     scene is then pushed with its tiles."""
     scale = 1
-    layer_log = run.dir / "validation-upscaler-layer.log"
-    env = dict(VALIDATION_ENV, VK_KHRONOS_VALIDATION_LOG_FILENAME=str(layer_log))
-    with run.session(scale, ["--vulkan_validation_enabled=true"], env=env) as session:
+    with run.session(scale, ["--vulkan_validation_enabled=true"], env=VALIDATION_ENV) as session:
         try:
             routes.to_main_menu(session)
             after = _title_time(session)
@@ -479,6 +467,16 @@ def validation_upscaler(run):
             time.sleep(25)
             run.add(min_check(f"validation {upscaler} on in the menu: depth bands a frame",
                               _depth_bands_since(session, mark), 2))
+            if upscaler != "fsr3":
+                # The FidelityFX context creates shaders that need the device's 16-bit features.
+                mark = len(session.lines)
+                session.set_option("present_effect", "fsr3")
+                time.sleep(10)
+                session.poll()
+                ran = any(re.search(WINDOW_UPSCALER_RAN["fsr3"], line.text)
+                          for line in session.lines[mark:])
+                run.add(CheckResult("validation fsr3 on in the menu", ran,
+                                    "context" if ran else "no context", "context"))
             session.set_option("present_effect", "bilinear")
             routes.quick_race(session, hot_lap=True)
             session.hold("A LX=0", 600)
@@ -493,7 +491,7 @@ def validation_upscaler(run):
             # Not "cache warm": an upscaler's tiles make pipelines the shipped list may lack.
             run.add(*(result for result in log_checks(session.lines, after, WARM_PIPELINES)
                       if result.name != "cache warm"), defaults_check(session.lines))
-            _layer_checks(run, session, layer_log)
+            _layer_checks(run, session)
         finally:
             run.keep_log(session)
 
