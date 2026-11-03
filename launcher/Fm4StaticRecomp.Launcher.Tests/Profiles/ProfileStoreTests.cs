@@ -201,6 +201,131 @@ public class ProfileStoreTests
         Assert.True(File.Exists(Path.Combine(profile.User, "E030000047B76145", "4D530910", "00000001", "ForzaProfile", "ForzaProfile")));
     }
 
+    // A profile 0.3.0 imported from Xenia: the Xenia folder copied as it was, no xuid recorded.
+    private static void OldXeniaImport(TempDir temp, bool withRuntimeCareer)
+    {
+        temp.File(@"profiles\old\profile.toml", "name = \"Old\"\ngamertag = \"Old\"\n"u8.ToArray());
+        temp.File(@"profiles\old\user\E030000047B76145\4D530910\00000001\ForzaProfile\ForzaProfile", [1]);
+        temp.File(@"profiles\old\user\E030000047B76145\4D530910\Headers\00000001\ForzaProfile.header", CanaryHeader("Wesx1"));
+        if (withRuntimeCareer) temp.File(@"profiles\old\user\B13EBABEBABEBABE\4D530910\00000001\ForzaProfile\ForzaProfile", [2]);
+    }
+
+    [Fact]
+    public void A_xenia_save_imported_before_0_3_1_is_signed_in_with_once_repaired()
+    {
+        var (temp, store, _) = Make();
+        using var _t = temp;
+        OldXeniaImport(temp, withRuntimeCareer: false);
+        Assert.Single(store.RepairXeniaImports());
+        var repaired = Assert.Single(store.List());
+        Assert.Equal(("old", "E030000047B76145"), (repaired.Id, repaired.Xuid));
+        Assert.Equal(ContentHeader.Build(ContentHeader.SaveGame, "Wesx1", "ForzaProfile", null),
+            File.ReadAllBytes(Path.Combine(repaired.User, "E030000047B76145", "4D530910", "Headers", "00000001", "ForzaProfile.header")));
+        Assert.Empty(store.RepairXeniaImports());
+    }
+
+    [Fact]
+    public void A_xenia_save_imported_before_0_3_1_beside_a_new_career_gets_a_profile_of_its_own()
+    {
+        var (temp, store, _) = Make();
+        using var _t = temp;
+        OldXeniaImport(temp, withRuntimeCareer: true);
+        Assert.Single(store.RepairXeniaImports());
+        Assert.Null(store.Get("old").Xuid);
+        var xenia = store.List().Single(p => p.Id != "old");
+        Assert.Equal(("Old (Xenia)", "E030000047B76145"), (xenia.Name, xenia.Xuid));
+        Assert.True(File.Exists(Path.Combine(xenia.User, "E030000047B76145", "4D530910", "00000001", "ForzaProfile", "ForzaProfile")));
+        Assert.False(Directory.Exists(Path.Combine(xenia.User, ProfileStore.SaveXuid)));
+        Assert.Equal(ContentHeader.Build(ContentHeader.SaveGame, "Wesx1", "ForzaProfile", null),
+            File.ReadAllBytes(Path.Combine(xenia.User, "E030000047B76145", "4D530910", "Headers", "00000001", "ForzaProfile.header")));
+        Assert.Empty(store.RepairXeniaImports());
+        Assert.Equal(2, store.List().Count);
+    }
+
+    [Fact]
+    public void The_profile_keeping_its_new_career_is_left_as_it_was()
+    {
+        var (temp, store, _) = Make();
+        using var _t = temp;
+        OldXeniaImport(temp, withRuntimeCareer: true);
+        var header = Path.Combine(temp.Path, @"profiles\old\user\E030000047B76145\4D530910\Headers\00000001\ForzaProfile.header");
+        store.RepairXeniaImports();
+        Assert.Equal(CanaryHeader("Wesx1"), File.ReadAllBytes(header));
+        Assert.Equal([2], File.ReadAllBytes(Path.Combine(temp.Path, @"profiles\old\user\B13EBABEBABEBABE\4D530910\00000001\ForzaProfile\ForzaProfile")));
+    }
+
+    [Fact]
+    public void Several_xenia_saves_each_get_a_profile_named_by_their_xuid()
+    {
+        var (temp, store, _) = Make();
+        using var _t = temp;
+        OldXeniaImport(temp, withRuntimeCareer: false);
+        temp.File(@"profiles\old\user\e0300000aaaaaaaa\4D530910\00000001\ForzaProfile\ForzaProfile", [3]);
+        Assert.Equal(2, store.RepairXeniaImports().Count);
+        Assert.Equal(["Old", "Old (Xenia E030000047B76145)", "Old (Xenia e0300000aaaaaaaa)"],
+            store.List().Select(p => p.Name).Order(StringComparer.Ordinal));
+        Assert.Null(store.Get("old").Xuid);
+        Assert.Empty(store.RepairXeniaImports());
+    }
+
+    [Fact]
+    public void A_copy_cut_short_is_made_again_and_a_finished_one_is_kept()
+    {
+        var (temp, store, _) = Make();
+        using var _t = temp;
+        OldXeniaImport(temp, withRuntimeCareer: true);
+        temp.File(@"profiles\old\user\E0300000AAAAAAAA\4D530910\00000001\ForzaProfile\ForzaProfile", [3]);
+        temp.File(@"profiles\done\profile.toml", "name = \"Done\"\nxenia_copy_of = \"old/E030000047B76145\"\nxuid = \"E030000047B76145\"\n"u8.ToArray());
+        temp.File(@"profiles\cut\profile.toml", "name = \"Cut\"\nxenia_copy_of = \"old/E0300000AAAAAAAA\"\n"u8.ToArray());
+        temp.File(@"profiles\cut\user\E0300000AAAAAAAA\4D530910\00000001\ForzaProfile\Forza", [3]);
+        Directory.CreateDirectory(Path.Combine(temp.Path, @"profiles\cut\user", ProfileStore.ContentFolderName));
+        Assert.Single(store.RepairXeniaImports());
+        Assert.Equal(["Done", "Old", "Old (Xenia E0300000AAAAAAAA)"], store.List().Select(p => p.Name).Order(StringComparer.Ordinal));
+        Assert.Equal("E0300000AAAAAAAA", store.List().Single(p => p.Name.EndsWith("AAAA)")).Xuid);
+    }
+
+    [Fact]
+    public void An_unreadable_profile_is_reported_and_the_others_are_repaired()
+    {
+        var (temp, store, _) = Make();
+        using var _t = temp;
+        OldXeniaImport(temp, withRuntimeCareer: false);
+        temp.File(@"profiles\broken\profile.toml", "name = \"Broken\"\n"u8.ToArray());
+        var gone = Path.Combine(temp.Path, "gone");
+        Directory.CreateDirectory(gone);
+        Platforms.Current.CreateDirectoryLink(Path.Combine(temp.Path, @"profiles\broken\user"), gone);
+        Directory.Delete(gone);
+        var lines = store.RepairXeniaImports();
+        Assert.Equal(2, lines.Count);
+        Assert.Contains(lines, l => l.StartsWith("Profile Broken:") && l.Contains("could not be repaired"));
+        Assert.Equal("E030000047B76145", store.Get("old").Xuid);
+    }
+
+    [Fact]
+    public void An_import_of_a_repaired_profile_is_not_split_again()
+    {
+        var (temp, store, _) = Make();
+        using var _t = temp;
+        temp.File(@"elsewhere\profile.toml", "name = \"Old\"\ngame = \"vanilla\"\nxenia_repaired = true\n"u8.ToArray());
+        temp.File(@"elsewhere\user\B13EBABEBABEBABE\4D530910\00000001\ForzaProfile\ForzaProfile", [2]);
+        temp.File(@"elsewhere\user\E030000047B76145\4D530910\00000001\ForzaProfile\ForzaProfile", [1]);
+        store.Import(Path.Combine(temp.Path, "elsewhere"), "Moved", "vanilla");
+        Assert.Empty(store.RepairXeniaImports());
+    }
+
+    [Fact]
+    public void Repair_leaves_profiles_of_the_runtime_s_own_or_with_a_recorded_xuid_alone()
+    {
+        var (temp, store, _) = Make();
+        using var _t = temp;
+        temp.File(@"profiles\own\profile.toml", "name = \"Own\"\n"u8.ToArray());
+        temp.File(@"profiles\own\user\b13ebabebabebabe\4D530910\00000001\ForzaProfile\ForzaProfile", [1]);
+        temp.File(@"profiles\new\profile.toml", "name = \"New\"\nxuid = \"E030000047B76145\"\n"u8.ToArray());
+        temp.File(@"profiles\new\user\E030000047B76145\4D530910\00000001\ForzaProfile\ForzaProfile", [1]);
+        Assert.Empty(store.RepairXeniaImports());
+        Assert.Equal(2, store.List().Count);
+    }
+
     [Fact]
     public void Only_a_save_s_container_header_is_rewritten()
     {

@@ -56,7 +56,7 @@ WINDOW SIZE. For a size the list does not have, use
   smaller window the picture is [downscaled without it](upscalers.md). With WINDOWED on, the
   RESOLUTION SCALE and UPSCALER rows in GRAPHICS go by WINDOW SIZE instead of your screen: turning
   WINDOWED on or picking a smaller size lowers a scale the upscaler cannot run at.
-- A version before 0.3.1 (after [GO BACK TO](#updates)) always starts fullscreen.
+- A version before 0.3.1 (after [GO BACK TO](#updates), or while an update builds) always starts fullscreen.
 
 ## A career from Xenia Canary
 
@@ -71,6 +71,13 @@ WINDOW SIZE. For a size the list does not have, use
 The game accepts a save only from the Xbox profile it was made with, so the new profile plays as
 that Xenia profile. Xenia's copy is not changed. Install your Disc 2 and DLC in **CONTENT**.
 Only Xenia Canary saves are supported.
+
+A Xenia save imported with version 0.3.0 or older did not load (the game started a new career instead).
+The launcher repairs it once, at its first start after the update: the profile then loads the Xenia
+career, or, if you played a new career in that profile meanwhile, the Xenia career gets a profile of its
+own, named like the old one with `(Xenia)` after it, and the new career stays where it is. Pick the
+new profile in the list beside PLAY. A profile that held saves of several Xenia profiles gets one new
+profile for each, named with that Xenia profile's 16 letters and digits.
 
 The car pictures in the garage come with the save: the game draws each one once, when the car
 arrives, and keeps it. A picture Xenia drew wrong (noise, no shadow under the car) stays wrong

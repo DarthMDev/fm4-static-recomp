@@ -141,6 +141,7 @@ public partial class MainWindow : Window
         {
             AppendLog($"Could not tidy the game folder: {error.Message}");
         }
+        foreach (var line in await Task.Run(host.Profiles.RepairXeniaImports)) AppendLog(line);
         if (_skip is null) _ = StartUpdateCheckAsync();
         _ = RefreshFlagsAsync();
         var kind = StartDecision.Decide(host.Setup, host.Profiles.List().Count, host.Payload.Version, host.SavesFolderMissing);

@@ -19,6 +19,9 @@ public sealed class ProfileStore(InstallLayout layout, IPlatform platform, strin
     public const string Pfp4 = "pfp4";
     private const string Vanilla = "vanilla";
     internal const string FileName = "profile.toml";
+    private const string XeniaRepairedKey = "xenia_repaired";
+    // "<profile id>/<xuid>" of the profile and Xenia save a repair copied.
+    private const string XeniaCopyOfKey = "xenia_copy_of";
 
     public IReadOnlyList<Profile> List() =>
         Directory.Exists(layout.Profiles)
@@ -170,6 +173,8 @@ public sealed class ProfileStore(InstallLayout layout, IPlatform platform, strin
             var toml = TomlFile.Load(path);
             if (overriddenWarning is not null) toml.Set("import_warning", overriddenWarning, quoted: true);
             if (!xuid.Equals(SaveXuid, StringComparison.OrdinalIgnoreCase)) toml.Set("xuid", xuid, quoted: true);
+            if (StampFile(sourceStateOrUser) is { } repaired && TomlFile.Load(repaired).Get(XeniaRepairedKey) == "true")
+                toml.Set(XeniaRepairedKey, "true", quoted: false);
             toml.Save(path);
         }
         catch
@@ -178,6 +183,77 @@ public sealed class ProfileStore(InstallLayout layout, IPlatform platform, strin
             throw;
         }
         return Read(profile.Folder);
+    }
+
+    // 0.3.0 imported a Xenia save as it was: no xuid recorded and Canary's headers kept, so the game,
+    // signed in with the runtime's XUID, never read it. Once per profile: without a career of the runtime's
+    // beside it, the profile signs in with the Xenia XUID; with one, each Xenia career gets a profile of its
+    // own and the career played since stays where it is. One line per repair, for the log.
+    public IReadOnlyList<string> RepairXeniaImports()
+    {
+        var lines = new List<string>();
+        var profiles = List();
+        foreach (var profile in profiles)
+        {
+            try
+            {
+                var path = Path.Combine(profile.Folder, FileName);
+                var toml = TomlFile.Load(path);
+                if (profile.Xuid is not null || toml.Get(XeniaRepairedKey) == "true" || toml.Get(XeniaCopyOfKey) is not null) continue;
+                var saves = Saves(profile.User);
+                var xenia = saves.Where(s => !Path.GetFileName(s).Equals(SaveXuid, StringComparison.OrdinalIgnoreCase)).ToList();
+                if (xenia.Count == 0) continue;
+                if (xenia.Count == 1 && saves.Count == 1)
+                {
+                    var xuid = Path.GetFileName(xenia[0]);
+                    RewriteContainerHeaders(Path.Combine(xenia[0], "4D530910", "Headers"));
+                    toml.Set("xuid", xuid, quoted: true);
+                    toml.Save(path);
+                    lines.Add($"Profile {profile.Name}: the Xenia save imported before 0.3.1 now loads (signs in as {xuid}).");
+                    continue;
+                }
+                foreach (var save in xenia)
+                {
+                    var xuid = Path.GetFileName(save);
+                    var source = $"{profile.Id}/{xuid}";
+                    // A copy cut short at an earlier start has no xuid yet, which is written last: it is made again.
+                    if (profiles.FirstOrDefault(p => TomlFile.Load(Path.Combine(p.Folder, FileName)).Get(XeniaCopyOfKey) == source) is { } earlier)
+                    {
+                        if (earlier.Xuid is not null) continue;
+                        Remove(earlier);
+                    }
+                    var name = xenia.Count == 1 ? $"{profile.Name} (Xenia)" : $"{profile.Name} (Xenia {xuid})";
+                    var copy = Create(name, profile.Pfp4Mode, profile.Pfp4HarderAi);
+                    try
+                    {
+                        var copyPath = Path.Combine(copy.Folder, FileName);
+                        var copyToml = TomlFile.Load(copyPath);
+                        copyToml.Set(XeniaCopyOfKey, source, quoted: true);
+                        copyToml.Set("gamertag", profile.Gamertag, quoted: true);
+                        copyToml.Set("game", profile.Game, quoted: true);
+                        if (profile.ImportWarning is { } warning) copyToml.Set("import_warning", warning, quoted: true);
+                        copyToml.Save(copyPath);
+                        CopyDirectory(save, Path.Combine(copy.User, xuid));
+                        RewriteContainerHeaders(Path.Combine(copy.User, xuid, "4D530910", "Headers"));
+                        copyToml.Set("xuid", xuid, quoted: true);
+                        copyToml.Save(copyPath);
+                    }
+                    catch
+                    {
+                        Remove(copy);
+                        throw;
+                    }
+                    lines.Add($"Profile {profile.Name}: the Xenia save imported before 0.3.1 is now the profile {name}.");
+                }
+                toml.Set(XeniaRepairedKey, "true", quoted: false);
+                toml.Save(path);
+            }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+            {
+                lines.Add($"Profile {profile.Name}: the Xenia save imported before 0.3.1 could not be repaired: {error.Message}");
+            }
+        }
+        return lines;
     }
 
     // Why saves of this game cannot be imported here; null when they can.

@@ -34,6 +34,9 @@ public partial class MainWindow
         int exitCode;
         try
         {
+            // A profile imported or moved in since the start is repaired before it plays.
+            foreach (var line in await Task.Run(host.Profiles.RepairXeniaImports)) AppendLog(line);
+            profile = host.Profiles.Get(profile.Id);
             AppendLog($"Starting version {host.Settings.ActiveVersion} on profile {profile.Name}.");
             if (host.Settings.CommandLineOptions.Length > 0) AppendLog($"Command-line options: {host.Settings.CommandLineOptions}");
             if (profile.ImportWarning is { } warning) AppendLog($"Profile {profile.Name} was imported past a warning: {warning}.");
