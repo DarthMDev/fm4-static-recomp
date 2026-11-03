@@ -96,15 +96,15 @@
   "sdk": {
     "repository": "https://github.com/i2kiselev/shiftglue-sdk",
     "branch": "fm4-static-recomp",
-    "revision": "8afc313b4a0cc5e582a0e6b67b3eaa691f1f15b6",
+    "revision": "9b7d513bf16f79a7871e8761d56b441d4f3153f0",
     "fallback_path": ".local/shiftglue-sdk",
     "bundle": {
-      "url": "https://github.com/i2kiselev/shiftglue-sdk/releases/download/fm4-sdk-8afc313b4a0c/shiftglue-sdk-8afc313b4a0c-windows-x64.tar.xz",
-      "sha256": "E0C811BE8909F5EBB4167E1D53BE41A98051C9914D791A70D268817E2F714233",
+      "url": "https://github.com/i2kiselev/shiftglue-sdk/releases/download/fm4-sdk-9b7d513bf16f/shiftglue-sdk-9b7d513bf16f-windows-x64.tar.xz",
+      "sha256": "373A13316D2E9F65082409339089EEB6C79CDD061FEF04E2A657E0D29918D47B",
       "install_path": ".local/shiftglue-sdk-prebuilt",
       "sources": {
-        "url": "https://github.com/i2kiselev/shiftglue-sdk/releases/download/fm4-sdk-8afc313b4a0c/shiftglue-sdk-8afc313b4a0c-sources.tar.xz",
-        "sha256": "1056F0969F194D469C25967C438EFC0AA9179B75B9B7B74A5EE65504618C1D96"
+        "url": "https://github.com/i2kiselev/shiftglue-sdk/releases/download/fm4-sdk-9b7d513bf16f/shiftglue-sdk-9b7d513bf16f-sources.tar.xz",
+        "sha256": "AE74A2D276821F6294BB99E6EF867184C17E8DA8E9DE1B16FA466A0B51AA9F3A"
       }
     }
   }
