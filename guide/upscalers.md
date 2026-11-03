@@ -29,7 +29,7 @@ upscalers need.
 An upscaler only upscales: with one chosen, RESOLUTION SCALE offers the scales whose render
 fits the screen. A larger scale saved before, or a window smaller than the render, is
 downscaled without the upscaler; the row then reads e.g. `DLSS (OFF AT 3X)`, and MSAA and post
-AA apply again.
+AA apply again. In a window: [Upscalers in a window](windowed.md#upscalers-in-a-window).
 
 **DLSS PRESET** (launcher only, while UPSCALER is DLSS): Auto takes preset M where DLSS
 upscales by more than 1.8x on an RTX 40 or later GPU, and K otherwise. K, M, J and L force one;
@@ -119,14 +119,14 @@ again in the next frame by its mesh and its place among the draws.
 ## Shaders
 
 The extra pipelines an upscaler needs are part of the shader cache setup builds from your disc
-(4,819 pipelines, recorded from a DLSS playthrough). A combination it lacks builds in the
-background while the game draws with the ordinary pipeline, instead of freezing.
+(5,652 pipelines, recorded from play with every upscaler on 1.0, Rev 1 and Project Forza Plus 4).
+A combination it lacks builds in the background while the game draws with the ordinary pipeline,
+instead of freezing.
 
 ## Known limitations
 
-- **The side mirrors seen from the chase camera** look too reflective.
 - **The mirrors** are at the render resolution, scaled up, like the HUD.
-- **Thin details** shimmer in places: road cracks and painted lines in the distance, distant
+- **Thin details** can shimmer in places: road cracks and painted lines in the distance, distant
   fences, trees and crowds.
 - **The HUD and menus** stay at the render resolution, scaled up; the 3D picture behind a
   semi-transparent HUD panel is the render-resolution frame.

@@ -5,6 +5,18 @@
 Problems players have run into, and what fixes them. Not listed here? See
 [Reporting issues](reporting-issues.md).
 
+## I want Project Forza Plus 4, but my launcher is already set up for vanilla
+
+An install cannot be switched to the mod. Set up a second one:
+
+1. Extract `FM4StaticRecomp-Launcher.zip` again, into a **new, empty folder** (for example
+   `D:\FM4-PFP4`), not over your current one.
+2. Start `FM4StaticRecompLauncher.exe` from the new folder and choose **PROJECT FORZA PLUS 4** at
+   its first step. Then follow [Project Forza Plus 4 → Setup](project-forza-plus.md#setup).
+
+Your vanilla install and its saves stay as they are. Start a new career on the mod: vanilla saves
+do not work there.
+
 ## The game looks frozen on its first start
 
 The first start of every new version builds its shaders for up to 40 seconds before the title

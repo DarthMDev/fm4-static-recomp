@@ -19,8 +19,9 @@ instead, see the [manual install](manual-install.md).
 
    | Step | What happens |
    |---|---|
-   | **Game** | Vanilla, or [Project Forza Plus 4](project-forza-plus.md) 1.3 over it. Fixed for the install. |
+   | **Game** | Vanilla, or [Project Forza Plus 4](project-forza-plus.md) 1.3 over it. Chosen once: the install cannot be switched later. For the mod next to a vanilla install, extract the launcher into a second, empty folder. |
    | **Disc 1** | Drop or choose your ISO, GOD folder or extracted folder. It is verified and extracted. |
+   | **Project Forza Plus 4 1.3** (mod installs only) | The mod's zip or folder, in place of the Disc 2 step; see [Project Forza Plus 4](project-forza-plus.md#setup). |
    | **Disc 2** (optional) | An ISO, a GOD folder or the folder with its four packages, or **Later** (CONTENT installs it any time). It is verified now and installed after the build, so keep it where it is until then. |
    | **Microsoft licence** | The build downloads Microsoft's C++ runtime and Windows SDK files from Microsoft. Read and accept their licences, or decline and use Microsoft's installer instead, which asks for administrator permission once. |
    | **Build** | The launcher downloads its build tools, translates and compiles the game. |
@@ -36,52 +37,22 @@ instead, see the [manual install](manual-install.md).
 | Button | What it does |
 |---|---|
 | **PLAY** | Starts the game. |
-| **PROFILE** | Adds, renames, imports and deletes profiles (separate saves). |
+| **PROFILE** | Adds, renames, imports and deletes [profiles](saves.md) (separate saves). |
 | **CONTENT** | Installs Disc 2 and DLC. Install them only here: the game's own Disc 2 install waits for a disc change that never comes. Also [unlocks the unicorn cars](#unicorn-cars). |
-| **GRAPHICS** | [Playing in a window](#playing-in-a-window) and the [GRAPHICS page's settings](graphics.md). **SAVE** on top writes this page and SETTINGS together. |
-| **SETTINGS** | The game's language, launch options, advanced options (among them the [saves folder](#the-saves-folder)) and [command-line options](launch-options.md#with-the-launcher-command-line-options) for debugging. |
+| **GRAPHICS** | [Playing in a window](windowed.md) and the [GRAPHICS page's settings](graphics.md). **SAVE** on top writes this page and SETTINGS together. |
+| **SETTINGS** | The game's language, launch options, advanced options (among them the [saves folder](saves.md#the-saves-folder), [PRESENT THROUGH DXGI](launch-options.md#frame-generation) and [30 FPS (DIAGNOSTIC)](high-frame-rate.md#testing-a-slow-processor)) and [command-line options](launch-options.md#with-the-launcher-command-line-options) for debugging. On a Project Forza Plus 4 install also its [career mode](project-forza-plus.md#career-modes-and-harder-ai). |
 
 ## Playing in a window
 
-**WINDOWED**, at the top of GRAPHICS, starts the game in a window, and **WINDOW SIZE** picks
-its size in pixels. **Alt+Enter** switches between the window and fullscreen at any moment while
-you play, also after a fullscreen start, and leaves the setting as it is.
+**WINDOWED** and **WINDOW SIZE**, at the top of GRAPHICS, start the game in a window, and
+**Alt+Enter** switches between a window and fullscreen while you play. Resizing, black bars and
+upscalers in a window: [Playing in a window](windowed.md).
 
-Drag the window's edges to resize it, and it keeps its 16:9 shape; the next start goes back to
-WINDOW SIZE. For a size the list does not have, use
-[COMMAND-LINE OPTIONS](launch-options.md#with-the-launcher-command-line-options).
+## Profiles and saves
 
-- The picture stays 16:9: a maximised window, or one set to another shape, shows black bars.
-- An upscaler runs only while the render (1280x720 x RESOLUTION SCALE) fits the window. In a
-  smaller window the picture is [downscaled without it](upscalers.md). With WINDOWED on, the
-  RESOLUTION SCALE and UPSCALER rows in GRAPHICS go by WINDOW SIZE instead of your screen: turning
-  WINDOWED on or picking a smaller size lowers a scale the upscaler cannot run at.
-- A version before 0.3.1 (after [GO BACK TO](#updates), or while an update builds) always starts fullscreen.
-
-## A career from Xenia Canary
-
-1. Close Xenia.
-2. **PROFILE → IMPORT SAVE**, and choose Xenia's `content` folder: the one beside
-   `xenia_canary.exe`, or `Documents\xenia\content`. If several Xenia profiles have FM4 saves,
-   open `content` and choose the folder of yours instead (16 letters and digits, such as
-   `E030000047B76145`).
-3. Answer **VANILLA SAVE** (or **PFP4 SAVE** for a Project Forza Plus 4 career) and name the
-   profile.
-
-The game accepts a save only from the Xbox profile it was made with, so the new profile plays as
-that Xenia profile. Xenia's copy is not changed. Install your Disc 2 and DLC in **CONTENT**.
-Only Xenia Canary saves are supported.
-
-A Xenia save imported with version 0.3.0 or older did not load (the game started a new career instead).
-The launcher repairs it once, at its first start after the update: the profile then loads the Xenia
-career, or, if you played a new career in that profile meanwhile, the Xenia career gets a profile of its
-own, named like the old one with `(Xenia)` after it, and the new career stays where it is. Pick the
-new profile in the list beside PLAY. A profile that held saves of several Xenia profiles gets one new
-profile for each, named with that Xenia profile's 16 letters and digits.
-
-The car pictures in the garage come with the save: the game draws each one once, when the car
-arrives, and keeps it. A picture Xenia drew wrong (noise, no shadow under the car) stays wrong
-here too. Repaint that car once and the game draws its picture again.
+Each profile is a separate save. **PROFILE** adds, renames, imports and deletes them; **IMPORT
+SAVE** also takes a career from Xenia Canary, and SETTINGS → ADVANCED → **SAVES FOLDER** keeps the
+saves outside `data\`. All of it: [Profiles and saves](saves.md).
 
 ## Unicorn cars
 
@@ -114,11 +85,12 @@ an unknown profile name, when the game does not start, and after a crash (REPORT
 
 Everything lives in `data\` beside the launcher: the extracted disc, the build tools, the
 builds, your saves and settings. Move or back up the folder as a whole, or keep the saves in a
-folder of your own (below).
+[folder of your own](saves.md#the-saves-folder).
 
 - A first setup with Disc 2 takes about **13 GB** there (Disc 1 7.7 GB, Disc 2 2.8 GB, the
   build tools 1.4 GB, and the game's source and build 1 GB), and setup asks for a 2 GB margin
-  on top while it works.
+  on top while it works. A [Project Forza Plus 4](project-forza-plus.md) install takes about
+  **20 GB**, with the mod's content in place of Disc 2's.
 - An update builds the new version beside the old one, about 1 GB more until the older one
   is removed.
 
@@ -127,31 +99,6 @@ folder of your own (below).
 > characters, may not hold `[` or `]`, and may not hold parentheses together with
 > non-English letters. The launcher checks this at start and names the folder if it cannot
 > use it.
-
-### The saves folder
-
-SETTINGS → ADVANCED → **SAVES FOLDER** keeps your saves outside `data\`, for example in a folder
-you back up or sync, or one that stays when you delete the launcher's folder. **CHOOSE…** a
-folder, then **SAVE**: the launcher moves its profiles, their backups and deleted profiles there
-(as `profiles\`, `backups\` and `deleted\`). **DEFAULT** moves them back into `data\`. Disc 2 and
-DLC stay in `data\`.
-
-- **After a reinstall**, choose the saves folder you used before: its profiles appear again. The
-  new install's own profiles are added beside them; one of the same name gets a number, "Main (2)",
-  and an empty one that setup just made (no save yet) goes to `deleted\` instead. If your saves
-  were in the old install's `data\` folder, that folder is refused (it belongs to the old
-  launcher): bring each profile over with **PROFILE → IMPORT SAVE**.
-- The folder must be on a drive inside this PC: a network drive or a USB stick formatted
-  FAT32 or exFAT cannot hold the saves.
-- Choose the folder that holds `profiles\`, not `profiles\` itself.
-- Moving the saves away from a folder removes them there, also from a synced folder on your other
-  PCs.
-- If the saves folder is missing when the launcher starts (its drive not connected, or the folder
-  renamed), the launcher says so and makes no new profile until it is back or you choose another.
-- **Vanilla and Project Forza Plus 4 saves don't mix.** If the folder holds saves of the other kind
-  of install, the launcher warns first: they are not guaranteed to work there
-  ([why](project-forza-plus.md#its-own-install)), and starting a fresh career is recommended. To
-  play both, give each install its own saves folder.
 
 ## Updates
 

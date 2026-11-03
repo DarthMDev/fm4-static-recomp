@@ -6,7 +6,7 @@ The keyboard plays beside a gamepad, with a layout after Forza Horizon 6's. Whil
 keyboard is the last device you used, the game's button prompts show keycaps of the bound
 keys, and English prompt sentences ("PRESS THE BACK BUTTON...") name them too; touching the
 pad brings the controller buttons back. **Alt+Enter** switches between a window and fullscreen
-at any moment.
+at any moment ([Playing in a window](windowed.md)).
 
 ## Driving
 

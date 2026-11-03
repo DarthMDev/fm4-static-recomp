@@ -7,6 +7,14 @@ races, menus and the showroom at one frame rate from 60 up to your display's ref
 most 240), with the cars, the camera and the menus still moving at their real speed. This page
 says how to pick a rate, and what the port changes in the game to get there.
 
+> [!WARNING]
+> **Pick a FRAME RATE your PC can hold in a full race with AI cars.** The game keeps ticking at
+> the rate you set even when the PC draws fewer frames, so a rate it cannot hold **stutters**
+> instead of slowing down evenly: a high rate the PC often misses looks worse than a lower one it
+> always holds. If races stutter, lower FRAME RATE (on a display without G-Sync or FreeSync, to a
+> whole fraction of the refresh rate) or RESOLUTION SCALE until they are smooth. Why:
+> [Limits](#limits).
+
 ## Picking a rate
 
 **FRAME RATE** on the GRAPHICS page (**BACK + START** or **F6**) or in the launcher's GRAPHICS;
@@ -18,9 +26,7 @@ slower display. It applies as soon as you SAVE & APPLY, mid-race too.
 | G-Sync or FreeSync | Any rate your PC holds, up to the refresh rate | Off |
 | Fixed refresh rate | The refresh rate, or a whole fraction of it (144 Hz: 144 or 72) | On, if you see tearing |
 
-Pick a rate your PC holds in a full race, not on an empty track: a rate it cannot hold
-stutters (see [Limits](#limits)). [Benchmarks](performance.md#benchmarks) show what one PC
-holds at each resolution scale.
+[Benchmarks](performance.md#benchmarks) show what one PC holds at each resolution scale.
 
 ### Testing a slow processor
 

@@ -4,11 +4,27 @@
 
 ## Tested
 
-- Offline modes: World Tour (played up to the Expert Division), Event List (about 30 races
+- Offline modes: World Tour (played up to the Professional Division), Event List (about 70 races
   without an issue), Free Play (Quick Race, Hot Lap), Test Drive, Autovista and photo mode.
 - The garage (upgrades, tuning presets, paint and decals), replays and saving.
-- Intel GPUs: a player's test confirmed the flickering lights fixed in 0.3.0.
+- All four Disc 1 releases (1.0 PAL and USA, Rev 1 Europe and USA), and
+  [Project Forza Plus 4](project-forza-plus-internals.md#testing) on 1.0 and Rev 1 discs.
+- Careers imported from Xenia Canary, liveries made in Xenia included.
+- Playing in a window: every upscaler in a window, and window sizes from 200x113 to fullscreen.
 - Not tested: Xbox LIVE modes, split screen, racing wheels, and most AMD and Intel GPUs.
+
+### Players' hardware
+
+What players' reports settled about their PCs:
+
+| Hardware | Result | Issue |
+|---|---|---|
+| Intel Arc B580 | Lights flickered in races; fixed in 0.3.0. | [#6](https://github.com/i2kiselev/fm4-static-recomp/issues/6) |
+| Intel Iris integrated graphics | Plays without bugs or crashes in 0.3.0 after lowering the graphics settings, also with shadows on. | [#6](https://github.com/i2kiselev/fm4-static-recomp/issues/6) |
+| Laptops with AMD integrated and NVIDIA graphics (RTX 3060 Laptop GPU) | Up to 0.3.0 the game found no GPU and closed before its window opened; starts from 0.3.1. | [#28](https://github.com/i2kiselev/fm4-static-recomp/issues/28) |
+| Intel Xeon E5-2690 v1 (2012) with an RTX 3060 | The picture runs, but the sound in races is slow and dragged out: most likely each core is too slow for the game's sound. A Xeon E5-1650 v2 with an RX 570 does the same. Use [30 FPS (DIAGNOSTIC)](high-frame-rate.md#testing-a-slow-processor) to check whether half the frame rate helps; more in [Common problems](troubleshooting.md#sound-is-slow-late-or-crackles-on-an-older-cpu). | [#30](https://github.com/i2kiselev/fm4-static-recomp/issues/30) |
+| NVIDIA GeForce GTX 980 | Crashed twice at the end of the World Tour's Top Gear pin challenge. The same crash was reproduced only on an overclocked or undervolted card (below); the reporter's answer is pending. | [#32](https://github.com/i2kiselev/fm4-static-recomp/issues/32) |
+| Overclocked or undervolted GPUs | Crashes in busy moments, a different spot each time; none at stock settings. | [Common problems](troubleshooting.md#the-game-crashes-in-a-busy-moment-a-different-spot-each-time) |
 
 ## Test bench
 

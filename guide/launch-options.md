@@ -20,7 +20,7 @@ or in the launcher's SETTINGS.
 | `--fm4_language=<code>` | The game's language (see [Languages](#languages)) |
 | `--fm4_config_root=<folder>` | Where `graphics.toml` and `controls.toml` live (default: the state folder's `config`) |
 | `--fh1_async_readbacks=false` | Turn off asynchronous readbacks, if you ever see a corrupted texture |
-| `--fullscreen=false` | Start in a window; **Alt+Enter** switches while you play. In the launcher: [WINDOWED](launcher.md#playing-in-a-window) |
+| `--fullscreen=false` | Start in a window; **Alt+Enter** switches while you play. In the launcher: [WINDOWED](windowed.md) |
 | `--window_width=<n>`, `--window_height=<n>` | The window's size, multiplied by Windows' display scale (at 150 %, 1600 opens 2400 pixels wide). In the launcher, WINDOW SIZE is in real pixels |
 | `--window_aspect_ratio=16:9` | The shape the window keeps while resized and at its start (the default); `free` leaves it free, with black bars around the 16:9 picture |
 | `--vulkan_present_via_dxgi=true` | Present through DXGI, for [frame generation tools](#frame-generation) |
