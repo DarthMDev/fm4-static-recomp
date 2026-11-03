@@ -25,7 +25,7 @@ public partial class MainWindow
 
     private GraphicsSettings? _graphics;
     private string? _graphicsProblem;
-    private bool _skipIntro, _asyncReadbacks, _presentViaDxgi, _compat, _windowed;
+    private bool _skipIntro, _asyncReadbacks, _presentViaDxgi, _compat, _diagnostic30Fps, _windowed;
     private (int Width, int Height) _windowSize = WindowSizes.Default;
     private int _buildJobs;
     private string _language = GameLanguages.Default.Code;
@@ -64,6 +64,7 @@ public partial class MainWindow
         (_skipIntro, _asyncReadbacks, _presentViaDxgi, _compat, _buildJobs, _language) =
             (settings.SkipIntro, settings.AsyncReadbacks, settings.PresentViaDxgi, settings.Compat, settings.BuildJobs, settings.Language);
         (_windowed, _windowSize) = (settings.Windowed, settings.WindowSize);
+        _diagnostic30Fps = settings.Diagnostic30Fps;
         _commandLineOptions = settings.CommandLineOptions;
         (_savesFolder, _savesNote) = (settings.SavesFolder, null);
         (_pfp4Mode, _pfp4HarderAi) = (host.Setup.Pfp4Mode ?? DefaultMode, host.Setup.Pfp4HarderAi);
@@ -142,6 +143,7 @@ public partial class MainWindow
                != (settings.SkipIntro, settings.AsyncReadbacks, settings.PresentViaDxgi, settings.Compat, settings.BuildJobs,
                    settings.Language, settings.CommandLineOptions)
                || (_windowed, _windowSize) != (settings.Windowed, settings.WindowSize)
+               || _diagnostic30Fps != settings.Diagnostic30Fps
                || !string.Equals(_savesFolder, settings.SavesFolder, StringComparison.OrdinalIgnoreCase)
                || (Pfp4Install && (_pfp4Mode != (host.Setup.Pfp4Mode ?? DefaultMode) || _pfp4HarderAi != host.Setup.Pfp4HarderAi));
     }
@@ -235,6 +237,9 @@ public partial class MainWindow
                 v => _presentViaDxgi = v));
         SettingsBody.Children.Add(Option("COMPAT MODE",
             "Every rendering shortcut off: tells a rendering bug of ours from the game's own look.", _compat, v => _compat = v));
+        SettingsBody.Children.Add(Option("30 FPS (DIAGNOSTIC)",
+            "For testing slow processors: the game runs at 30 frames per second, whatever GRAPHICS says. Not for normal play.",
+            _diagnostic30Fps, v => _diagnostic30Fps = v));
         var commandLine = new TextBox { Text = _commandLineOptions, Watermark = "--name=value --other=value", Width = 420,
             HorizontalAlignment = HorizontalAlignment.Left };
         commandLine.TextChanged += (_, _) => _commandLineOptions = commandLine.Text ?? "";
@@ -480,6 +485,7 @@ public partial class MainWindow
             (settings.SkipIntro, settings.AsyncReadbacks, settings.PresentViaDxgi, settings.Compat, settings.BuildJobs, settings.Language) =
                 (_skipIntro, _asyncReadbacks, _presentViaDxgi, _compat, _buildJobs, _language);
             (settings.Windowed, settings.WindowSize) = (_windowed, _windowSize);
+            settings.Diagnostic30Fps = _diagnostic30Fps;
             settings.CommandLineOptions = _commandLineOptions.Trim();
             settings.Save();
             if (_settingsStatus is not null) _settingsStatus.Text = leftover ?? "Saved. Applies at the next start.";

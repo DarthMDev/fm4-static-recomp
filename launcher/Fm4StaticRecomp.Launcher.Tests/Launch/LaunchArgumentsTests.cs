@@ -155,6 +155,28 @@ public class LaunchArgumentsTests
     }
 
     [Fact]
+    public void The_30_fps_diagnostic_sets_the_frame_rate_only_when_on()
+    {
+        var (layout, profile, settings, temp) = Setup();
+        using var _ = temp;
+        Assert.DoesNotContain(LaunchArguments.ForPlay(layout, "0.3.1", profile, settings, new WindowsPlatform()),
+            a => a.StartsWith("--fm4_frame_rate"));
+        settings.Diagnostic30Fps = true;
+        Assert.Contains("--fm4_frame_rate=30", LaunchArguments.ForPlay(layout, "0.3.1", profile, settings, new WindowsPlatform()));
+    }
+
+    [Fact]
+    public void A_command_line_frame_rate_replaces_the_30_fps_diagnostic()
+    {
+        var (layout, profile, settings, temp) = Setup();
+        using var _ = temp;
+        settings.Diagnostic30Fps = true;
+        settings.CommandLineOptions = "--fm4_frame_rate=45";
+        var args = LaunchArguments.ForPlay(layout, "0.3.1", profile, settings, new WindowsPlatform());
+        Assert.Equal(["--fm4_frame_rate=45"], args.Where(a => a.StartsWith("--fm4_frame_rate")));
+    }
+
+    [Fact]
     public void Play_signs_in_with_the_xuid_of_an_imported_xenia_save()
     {
         var (layout, profile, settings, temp) = Setup();

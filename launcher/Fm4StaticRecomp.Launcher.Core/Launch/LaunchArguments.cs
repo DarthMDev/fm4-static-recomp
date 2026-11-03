@@ -44,6 +44,7 @@ public static class LaunchArguments
         if (settings.Compat) foreach (var (name, value) in CompatOptions) options[name] = value;
         if (!settings.AsyncReadbacks) options["fh1_async_readbacks"] = "false";
         if (settings.PresentViaDxgi && platform.SupportsDxgiPresentation) options["vulkan_present_via_dxgi"] = "true";
+        if (settings.Diagnostic30Fps) options["fm4_frame_rate"] = "30";
         if (settings.Windowed) options["fullscreen"] = "false";
         // In fullscreen too: Alt+Enter leaves to this size.
         if (settings.Windowed || !PredatesWindowSizeApart(version))

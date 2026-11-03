@@ -17,6 +17,7 @@ public class LauncherSettingsTests
         Assert.False(settings.Windowed);
         Assert.Equal((1280, 720), settings.WindowSize);
         Assert.False(settings.Compat);
+        Assert.False(settings.Diagnostic30Fps);
         Assert.False(settings.UseVisualStudioInstaller);
         Assert.Equal(0, settings.BuildJobs);
         Assert.Null(settings.ActiveProfile);
@@ -84,6 +85,7 @@ public class LauncherSettingsTests
         settings.AsyncReadbacks = false;
         settings.PresentViaDxgi = true;
         settings.Compat = true;
+        settings.Diagnostic30Fps = true;
         settings.BuildJobs = 6;
         settings.AcceptedMicrosoftLicence = "https://a https://b";
         settings.UseVisualStudioInstaller = true;
@@ -96,6 +98,7 @@ public class LauncherSettingsTests
         Assert.Equal(("main", "0.2.0", "0.1.3"), (read.ActiveProfile, read.ActiveVersion, read.PreviousVersion));
         Assert.Equal((false, false, true, true, true), (read.SkipIntro, read.AsyncReadbacks, read.PresentViaDxgi, read.Compat,
             read.UseVisualStudioInstaller));
+        Assert.True(read.Diagnostic30Fps);
         Assert.Equal(6, read.BuildJobs);
         Assert.Equal("https://a https://b", read.AcceptedMicrosoftLicence);
         Assert.Equal("ru", read.Language);

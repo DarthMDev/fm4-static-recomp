@@ -129,7 +129,7 @@ try {
     # The GRAPHICS page's keys and the launcher's own options; no names, paths or licences.
     $runtimeDirectory = Split-Path $resolvedExecutable -Parent
     $allowedSettings = @('fh1_async_readbacks', 'vulkan_present_via_dxgi', 'skip_intro', 'async_readbacks',
-        'present_via_dxgi', 'compat', 'build_jobs', 'toolchain_source')
+        'present_via_dxgi', 'compat', 'diagnostic_30fps', 'build_jobs', 'toolchain_source')
     $schemaPath = Join-Path $runtimeDirectory 'graphics-settings.json'
     if (Test-Path -LiteralPath $schemaPath) {
         $schema = Get-Content -LiteralPath $schemaPath -Raw | ConvertFrom-Json

@@ -56,9 +56,10 @@ REXCVAR_DEFINE_BOOL(fm4_upscaler_replay_blur, false, "Forza Motorsport 4",
                     "FSR 2/3) runs; off by default: the upscaler turns its smear around the "
                     "car's mirrors and exhaust pipes into ghosting");
 REXCVAR_DEFINE_INT32(fm4_frame_rate, 120, "Forza Motorsport 4",
-                     "Frame rate, 60 (the console's races) to 240: the guest vblank rate "
-                     "(fh1_guest_vblank_hz) in races, menus and the showroom")
-    .range(60, 240);
+                     "Frame rate, 60 (the console's races) to 240, or down to 30 to test slow "
+                     "processors: the guest vblank rate (fh1_guest_vblank_hz) in races, "
+                     "menus and the showroom")
+    .range(30, 240);
 REXCVAR_DEFINE_INT32(fm4_menu_vblank_hz, 0, "Forza Motorsport 4",
                      "Diagnostics: vblanks per second the game's main loop sees outside races, "
                      "the nearest whole fraction of the guest vblank (0 = every vblank)");

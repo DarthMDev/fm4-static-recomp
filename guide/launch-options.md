@@ -8,7 +8,7 @@ or in the launcher's SETTINGS.
 | Option | Meaning |
 |---|---|
 | `--resolution_scale=1..4` | Internal resolution, a multiple of 1280x720 |
-| `--fm4_frame_rate=60..240` | Frame rate of races, menus and the showroom |
+| `--fm4_frame_rate=60..240` | Frame rate of races, menus and the showroom (down to 30 for [testing a slow processor](high-frame-rate.md#testing-a-slow-processor)) |
 | `--vulkan_present_mode=immediate\|fifo` | VSYNC off or on |
 | `--swap_post_effect=none\|fxaa\|fxaa_extreme` | Post-process anti-aliasing |
 | `--present_effect=bilinear\|fsr\|fsr2\|fsr3\|dlss` | UPSCALER: off, FSR 1, FSR 2, FSR 3 or DLSS |

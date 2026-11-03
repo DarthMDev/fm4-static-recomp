@@ -22,6 +22,14 @@ Pick a rate your PC holds in a full race, not on an empty track: a rate it canno
 stutters (see [Limits](#limits)). [Benchmarks](performance.md#benchmarks) show what one PC
 holds at each resolution scale.
 
+### Testing a slow processor
+
+SETTINGS → ADVANCED → **30 FPS (DIAGNOSTIC)** in the launcher runs the game at 30 fps, whatever
+FRAME RATE says (`--fm4_frame_rate=30`; the GRAPHICS page shows "Set by a launch option"). It is
+for finding out whether a processor too slow for 60 holds the game at half the rate, with its sound.
+Cars still drive at their real speed: the game steps each car twice a tick, each step as long as one
+at 60 fps.
+
 ## How the console paces the game
 
 The game's main loop waits for the GPU's **vertical blank** (vblank), 60 times a second on the
@@ -32,7 +40,7 @@ pre-race screen and Autovista show a frame on every second one (30 fps).
 ## What the port changes
 
 **The vblank runs at FRAME RATE.** Races and menus tick and show a frame on every vblank, as
-on the console, but the vblank comes 60 to 240 times a second. A change applies from the next
+on the console, but the vblank comes 60 to 240 times a second (30 with the diagnostic). A change applies from the next
 vblank. The rate is the vblank itself, not every second vblank of
 a faster one: a frame is shown on the first vblank after it is finished, so frames finished near
 the vblank in between would alternate between half and one and a half frame periods.

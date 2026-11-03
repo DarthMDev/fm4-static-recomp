@@ -42,7 +42,9 @@ More in [High frame rates](high-frame-rate.md#picking-a-rate).
 The game's sound needs CPU time next to the race; an older or slower CPU that is busy on every
 core falls behind. Set **FRAME RATE** to 60, and in Windows **Settings → System → Power &
 sleep → Additional power settings** choose **High performance**. Close other programs while
-playing.
+playing. If the sound still crackles, turn on SETTINGS → ADVANCED → **30 FPS (DIAGNOSTIC)** in
+the launcher, press SAVE and play a race: say in your report whether the sound is clean at 30 fps.
+Then turn it off again and press SAVE.
 
 ## DLSS or FSR does not turn on (`DLSS (OFF AT 3X)`)
 
