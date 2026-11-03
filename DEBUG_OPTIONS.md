@@ -34,6 +34,7 @@ Switches of the fixes that give the upscaler correct motion. Turn one off to see
 | `--present_dlss_runtime` | empty | Folder holding `nvngx_dlss.dll`; empty uses the newest one next to the executable |
 | `--present_fsr_quality_mode` | `auto` | FSR mode: `auto`, `nativeaa`, `quality`, `balanced`, `performance`, `ultra_performance` |
 | `--present_fsr_sharpness_reduction` | set by SHARPNESS | FSR 1's RCAS sharpening reduction, in stops: SHARPNESS sets it to `2 × (1 − sharpness)` (`1.4` at 30 %); given on the command line, it stays as given |
+| `--present_upscaler_supersample_temp` | `false` | With the render larger than the output (supersampling), the temporal upscaler runs 1:1 at the render size and a bilinear pass brings it down to the output (`false`: the upscaler scales straight to the output) |
 
 Views and measurements:
 
