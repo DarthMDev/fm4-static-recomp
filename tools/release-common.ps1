@@ -239,7 +239,16 @@ function Expand-Fm4TarXz {
         # tools, MSYS2) reads "C:\..." as a remote host and fails to extract.
         $tarExe = Join-Path ([Environment]::SystemDirectory) 'tar.exe'
         if (-not (Test-Path -LiteralPath $tarExe -PathType Leaf)) { $tarExe = 'tar.exe' }
-        & $tarExe -xf $tarArchive -C $destination
+        # bsdtar gets its arguments in the ANSI code page, so a character of the install path
+        # outside it arrives as '?' or a look-alike. It gets only a relative name and runs inside
+        # the destination, whose path PowerShell hands the child as Unicode.
+        $innerName = '.fm4-unpacking.tar'
+        $innerTar = Join-Path $destination $innerName
+        Move-Item -LiteralPath $tarArchive -Destination $innerTar -Force
+        $tarArchive = $innerTar
+        Push-Location -LiteralPath $destination
+        try { & $tarExe -xf $innerName }
+        finally { Pop-Location }
         if ($LASTEXITCODE -ne 0) { throw "Unable to extract $archive." }
     }
     finally {

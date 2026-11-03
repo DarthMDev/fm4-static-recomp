@@ -78,6 +78,27 @@ class EnvironmentTest(unittest.TestCase):
             self.assertTrue((temp / "out" / "llvm" / "clang.exe").is_file())
             self.assertFalse((temp / "llvm.tar.xz").exists())
 
+    def test_a_tar_xz_unpacks_in_a_folder_outside_the_ansi_code_page(self):
+        # The pinned xz, found as setup finds it: Git's reads its arguments in the ANSI code page too.
+        pinned = json.loads((TOOLS.parent / "config" / "release-toolchain.json").read_text(encoding="utf-8"))["xz"]
+        xz = Path(ps(f"Join-Path (Resolve-Fm4ToolchainPath -RelativePath '{pinned['install_path']}') "
+                     f"'{pinned['executable']}'"))
+        if not xz.is_file():
+            self.skipTest("no pinned xz in the toolchain")
+        with tempfile.TemporaryDirectory() as temp:
+            # No single ANSI code page holds both characters.
+            temp = Path(temp).resolve() / "ț测"
+            (temp / "src" / "llvm").mkdir(parents=True)
+            (temp / "src" / "llvm" / "clang.exe").write_bytes(b"MZ")
+            with tarfile.open(temp / "llvm.tar.xz", "w:xz") as archive:
+                archive.add(temp / "src" / "llvm", arcname="llvm")
+            (temp / "out").mkdir()
+            ps(f"Expand-Fm4TarXz -Archive '{temp / 'llvm.tar.xz'}' -Destination '{temp / 'out'}' -XzPath '{xz}'; 'done'")
+            self.assertTrue((temp / "out" / "llvm" / "clang.exe").is_file())
+            self.assertEqual(os.listdir(temp / "out"), ["llvm"])
+            self.assertFalse((temp / "llvm.tar.xz").exists())
+            self.assertFalse((temp / "llvm.tar").exists())
+
     def test_scripts_quote_game_arguments_through_the_helper(self):
         found = [f"{script.name}:{number}" for script in sorted(TOOLS.glob("*.ps1"))
                  for number, line in enumerate(script.read_text(encoding="utf-8-sig").splitlines(), 1)
