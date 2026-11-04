@@ -27,7 +27,7 @@ public partial class MainWindow
     private string? _graphicsProblem;
     private bool _skipIntro, _asyncReadbacks, _presentViaDxgi, _compat, _diagnostic30Fps, _windowed;
     private (int Width, int Height) _windowSize = WindowSizes.Default;
-    private int _buildJobs;
+    private int _buildJobs, _vibrationStrength = LauncherSettings.GameVibrationStrength;
     private string _language = GameLanguages.Default.Code;
     private string _commandLineOptions = "";
     private string? _savesFolder, _savesNote;
@@ -65,6 +65,7 @@ public partial class MainWindow
             (settings.SkipIntro, settings.AsyncReadbacks, settings.PresentViaDxgi, settings.Compat, settings.BuildJobs, settings.Language);
         (_windowed, _windowSize) = (settings.Windowed, settings.WindowSize);
         _diagnostic30Fps = settings.Diagnostic30Fps;
+        _vibrationStrength = settings.VibrationStrength;
         _commandLineOptions = settings.CommandLineOptions;
         (_savesFolder, _savesNote) = (settings.SavesFolder, null);
         (_pfp4Mode, _pfp4HarderAi) = (host.Setup.Pfp4Mode ?? DefaultMode, host.Setup.Pfp4HarderAi);
@@ -144,6 +145,7 @@ public partial class MainWindow
                    settings.Language, settings.CommandLineOptions)
                || (_windowed, _windowSize) != (settings.Windowed, settings.WindowSize)
                || _diagnostic30Fps != settings.Diagnostic30Fps
+               || _vibrationStrength != settings.VibrationStrength
                || !string.Equals(_savesFolder, settings.SavesFolder, StringComparison.OrdinalIgnoreCase)
                || (Pfp4Install && (_pfp4Mode != (host.Setup.Pfp4Mode ?? DefaultMode) || _pfp4HarderAi != host.Setup.Pfp4HarderAi));
     }
@@ -227,6 +229,23 @@ public partial class MainWindow
             "The game's text and voice-over. Korean, Chinese, Portuguese, Czech, Hungarian and Dutch keep the English voice-over.",
             alwaysHelp: true));
         SettingsBody.Children.Add(Option("SKIP INTRO VIDEOS", "The game starts at its title screen.", _skipIntro, v => _skipIntro = v));
+        var vibration = new Slider
+        {
+            Minimum = 0, Maximum = LauncherSettings.MaximumVibrationStrength, Value = _vibrationStrength, SmallChange = 1,
+            LargeChange = 10, IsSnapToTickEnabled = true, TickFrequency = 1, Width = 320,
+        };
+        var vibrationValue = new TextBlock { Text = $"{_vibrationStrength}%", Width = 48, VerticalAlignment = VerticalAlignment.Center,
+            Foreground = Brush("ValueBrush") };
+        vibration.ValueChanged += (_, e) =>
+        {
+            _vibrationStrength = (int)Math.Round(e.NewValue);
+            vibrationValue.Text = $"{_vibrationStrength}%";
+        };
+        AutomationProperties.SetName(vibration, "VIBRATION STRENGTH");
+        SettingsBody.Children.Add(Labelled("VIBRATION STRENGTH",
+            new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Children = { vibration, vibrationValue } },
+            "100% is the game's own strength. Above 100% the controller's motors run stronger, 0% turns vibration off. "
+            + "Versions before 0.3.2 always use 100%.", alwaysHelp: true, focus: vibration));
 
         SettingsBody.Children.Add(Header("ADVANCED"));
         SettingsBody.Children.Add(Help("These are the recommended defaults. Don't change them unless you're sure what a setting does."));
@@ -486,6 +505,7 @@ public partial class MainWindow
                 (_skipIntro, _asyncReadbacks, _presentViaDxgi, _compat, _buildJobs, _language);
             (settings.Windowed, settings.WindowSize) = (_windowed, _windowSize);
             settings.Diagnostic30Fps = _diagnostic30Fps;
+            settings.VibrationStrength = _vibrationStrength;
             settings.CommandLineOptions = _commandLineOptions.Trim();
             settings.Save();
             if (_settingsStatus is not null) _settingsStatus.Text = leftover ?? "Saved. Applies at the next start.";

@@ -5,6 +5,8 @@ namespace Fm4StaticRecomp.Launcher.Core.Settings;
 public sealed class LauncherSettings
 {
     public const int MaximumBuildJobs = 32;
+    public const int GameVibrationStrength = 100;
+    public const int MaximumVibrationStrength = 200;
     private readonly string _path;
     private readonly TomlFile _file;
 
@@ -23,6 +25,8 @@ public sealed class LauncherSettings
         Windowed = _file.Get("windowed") == "true";
         WindowSize = WindowSizes.Parse(_file.Get("window_size"));
         BuildJobs = int.TryParse(_file.Get("build_jobs"), out var jobs) && jobs is >= 0 and <= MaximumBuildJobs ? jobs : 0;
+        VibrationStrength = int.TryParse(_file.Get("vibration_strength"), out var vibration)
+                            && vibration is >= 0 and <= MaximumVibrationStrength ? vibration : GameVibrationStrength;
         AcceptedMicrosoftLicence = _file.Get("accepted_microsoft_licence");
         UseVisualStudioInstaller = _file.Get("toolchain_source") == "VisualStudio";
         Language = (GameLanguages.Find(_file.Get("language")) ?? GameLanguages.Default).Code;
@@ -41,6 +45,7 @@ public sealed class LauncherSettings
     public bool Windowed { get; set; }
     public (int Width, int Height) WindowSize { get; set; }
     public int BuildJobs { get; set; }
+    public int VibrationStrength { get; set; }
     public string? AcceptedMicrosoftLicence { get; set; }
     public bool UseVisualStudioInstaller { get; set; }
     public string Language { get; set; }
@@ -69,6 +74,7 @@ public sealed class LauncherSettings
         Flag("windowed", Windowed);
         Text("window_size", WindowSizes.Label(WindowSize));
         _file.Set("build_jobs", BuildJobs.ToString(System.Globalization.CultureInfo.InvariantCulture), quoted: false);
+        _file.Set("vibration_strength", VibrationStrength.ToString(System.Globalization.CultureInfo.InvariantCulture), quoted: false);
         Text("accepted_microsoft_licence", AcceptedMicrosoftLicence);
         _file.Set("toolchain_source", UseVisualStudioInstaller ? "VisualStudio" : "Feed", quoted: true);
         Text("language", Language);

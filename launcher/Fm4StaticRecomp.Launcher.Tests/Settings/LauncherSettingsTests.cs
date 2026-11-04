@@ -20,6 +20,7 @@ public class LauncherSettingsTests
         Assert.False(settings.Diagnostic30Fps);
         Assert.False(settings.UseVisualStudioInstaller);
         Assert.Equal(0, settings.BuildJobs);
+        Assert.Equal(100, settings.VibrationStrength);
         Assert.Null(settings.ActiveProfile);
         Assert.Null(settings.ActiveVersion);
         Assert.Null(settings.PreviousVersion);
@@ -87,6 +88,7 @@ public class LauncherSettingsTests
         settings.Compat = true;
         settings.Diagnostic30Fps = true;
         settings.BuildJobs = 6;
+        settings.VibrationStrength = 160;
         settings.AcceptedMicrosoftLicence = "https://a https://b";
         settings.UseVisualStudioInstaller = true;
         settings.Language = "ru";
@@ -100,6 +102,7 @@ public class LauncherSettingsTests
             read.UseVisualStudioInstaller));
         Assert.True(read.Diagnostic30Fps);
         Assert.Equal(6, read.BuildJobs);
+        Assert.Equal(160, read.VibrationStrength);
         Assert.Equal("https://a https://b", read.AcceptedMicrosoftLicence);
         Assert.Equal("ru", read.Language);
         Assert.Equal(@"D:\FM4 Saves", read.SavesFolder);
@@ -136,6 +139,17 @@ public class LauncherSettingsTests
         using var temp = new TempDir();
         var settings = LauncherSettings.Load(temp.File("launcher.toml", "build_jobs = 99\n"u8.ToArray()));
         Assert.Equal(0, settings.BuildJobs);
+    }
+
+    [Theory]
+    [InlineData("vibration_strength = 201\n")]
+    [InlineData("vibration_strength = -1\n")]
+    [InlineData("vibration_strength = \"strong\"\n")]
+    public void A_vibration_strength_out_of_range_reads_as_the_games_own(string written)
+    {
+        using var temp = new TempDir();
+        var settings = LauncherSettings.Load(temp.File("launcher.toml", System.Text.Encoding.UTF8.GetBytes(written)));
+        Assert.Equal(100, settings.VibrationStrength);
     }
 
     [Fact]
