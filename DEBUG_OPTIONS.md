@@ -111,6 +111,8 @@ Resolves and visibility:
 | `--fh1_visibility_census=<n>` | Every `n` frames, an occlusion query around each draw, logging how many draw nothing |
 | `--fh1_visibility_census_no_depth` | Census frames draw without the depth test |
 | `--fh1_visibility_oracle_skip`, `--fh1_visibility_oracle_late_only` | Drop draws that drew nothing at their last census (wrong image) |
+| `--vulkan_verify_draw_fetches` | Live. While a car thumbnail renders (until it is saved), copy back the GPU's copy of every vertex buffer and index range each draw reads, at the draw, and log the ranges that differ from the game's memory at record time, with their page state; index buffers converted on the CPU (16-bit strips with a reset index, the cars') are compared with the game's indices too; a summary per thumbnail. Slow during the thumbnail only |
+| `--vulkan_verify_draw_fetches_list` | With the option above, also write every draw of each thumbnail window (shaders, index type and count, each vertex range with its page state) to `fetch-window-<n>.txt` beside the log file, to compare two thumbnails' renders draw by draw |
 
 GPU crashes (device lost, `Failed to submit a Vulkan command buffer: -4`):
 
