@@ -170,6 +170,10 @@ public sealed class LauncherHost
         return new GraphicsSettings(GraphicsSchema.Load(Layout.GraphicsSchema(version)), Layout.GraphicsToml, Layout.ConfigBackups);
     }
 
+    // Null while no version is active or the active one predates controls.toml.
+    public ControlsSettings? Controls() =>
+        Settings.ActiveVersion is { } version && ControlsSettings.Supports(version) ? new ControlsSettings(Layout.ControlsToml) : null;
+
     public static void Open(string target)
     {
         try { Process.Start(new ProcessStartInfo(target) { UseShellExecute = true }); }

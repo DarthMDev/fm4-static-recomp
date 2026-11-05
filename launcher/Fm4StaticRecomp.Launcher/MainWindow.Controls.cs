@@ -1,0 +1,366 @@
+// Copyright (c) 2026, i2kiselev
+// BSD 3-Clause License: see LICENSE in the repository root.
+using System.Globalization;
+using Avalonia;
+using Avalonia.Automation;
+using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Layout;
+using Avalonia.Media;
+using Fm4StaticRecomp.Launcher.Controls;
+using Fm4StaticRecomp.Launcher.Core.Settings;
+
+namespace Fm4StaticRecomp.Launcher;
+
+// The CONTROLS panel: the keyboard's keys (driving and menu sets) and the ramp times of
+// controls.toml. Its own SAVE; applies at the next start. A click on a key waits for the next key
+// press (CaptureKeyDown / CaptureKeyUp); conflicts are shown on the rows, never refused.
+public partial class MainWindow
+{
+    private readonly record struct Capture(ControlSet Set, string Id, int Index);
+
+    private ControlsSettings? _controls;
+    private ControlSet _controlSet = ControlSet.Driving;
+    private Capture? _capture;
+    private string? _pendingModifier, _controlsProblem;
+    private Action? _captureUndo;
+    private bool _controlsOtherOpen, _controlsKeysHooked;
+    private Button? _saveControlsButton;
+    private TextBlock? _controlsUnsaved, _controlsStatus;
+
+    private static readonly Dictionary<string, string> KeyCaps = new()
+    {
+        ["Return"] = "ENTER", ["Escape"] = "ESC", ["Control"] = "CTRL", ["Backspace"] = "BACKSPACE", ["PageUp"] = "PG UP",
+        ["PageDown"] = "PG DN", ["Backtick"] = "`", ["Minus"] = "-", ["Plus"] = "+", ["Comma"] = ",", ["Period"] = ".",
+        ["Semicolon"] = ";", ["Slash"] = "/", ["Backslash"] = "\\", ["LBracket"] = "[", ["RBracket"] = "]", ["Quote"] = "'",
+        ["NumpadPlus"] = "NUM +", ["NumpadMinus"] = "NUM -", ["NumpadStar"] = "NUM *", ["NumpadSlash"] = "NUM /",
+        ["NumpadEnter"] = "NUM ENTER",
+    };
+
+    private static string KeyCap(string bind) =>
+        string.Join("+", bind.Split('+').Select(part =>
+            KeyCaps.TryGetValue(part, out var cap) ? cap
+            : part.StartsWith("Numpad", StringComparison.Ordinal) ? "NUM " + part[6..]
+            : part.ToUpperInvariant()));
+
+    private void LoadControlsPanel()
+    {
+        if (!_controlsKeysHooked)
+        {
+            AddHandler(KeyDownEvent, CaptureKeyDown, RoutingStrategies.Tunnel);
+            AddHandler(KeyUpEvent, CaptureKeyUp, RoutingStrategies.Tunnel);
+            AddHandler(PointerPressedEvent, (_, _) => AbandonCapture(), RoutingStrategies.Tunnel);
+            _controlsKeysHooked = true;
+        }
+        // Edits made earlier survive switching panels; a saved panel reads the file again.
+        if (_controls?.Changed != true)
+        {
+            try
+            {
+                _controls = _host?.Controls();
+                _controlsProblem = null;
+            }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+            {
+                _controls = null;
+                _controlsProblem = $"controls.toml could not be read: {error.Message}";
+            }
+        }
+        BuildControlsPanel("");
+    }
+
+    private void EndControlsCapture()
+    {
+        _capture = null;
+        _pendingModifier = null;
+    }
+
+    // Capture swallows every key press, so it must not outlive "PRESS A KEY…" on screen: any click, or
+    // the panel turning read-only, ends it and puts the row's own text back without a rebuild (a rebuild
+    // would replace the control under the pointer before its click lands).
+    private void AbandonCapture()
+    {
+        if (_capture is null) return;
+        _captureUndo?.Invoke();
+        _captureUndo = null;
+        EndControlsCapture();
+        if (_controlsStatus is not null) _controlsStatus.Text = "";
+    }
+
+    private void BuildControlsPanel(string status)
+    {
+        ControlsBody.Children.Clear();
+        _captureUndo = null;
+        ControlsBody.Children.Add(new VectorHeading { Text = "CONTROLS", FontSize = 24, Foreground = Brush("LabelBrush") });
+        _saveControlsButton = null;
+        _controlsUnsaved = null;
+        _controlsStatus = Help(status);
+
+        if (_host is null || _controls is null)
+        {
+            ControlsBody.Children.Add(Help(_controlsProblem
+                ?? (_host?.Settings.ActiveVersion is null
+                    ? "Build the game first."
+                    : "This version of the game does not read the keyboard controls file. Update the game to change keys.")));
+            return;
+        }
+        if (_controls.FileIsMalformed)
+        {
+            ControlsBody.Children.Add(Help("controls.toml is not a list of key = value lines, so the keys cannot be shown. "
+                                           + "Edit or delete the file, then open this panel again."));
+            return;
+        }
+
+        _controlsUnsaved = new TextBlock { Text = "*", Foreground = Brush("AccentBrush"), FontWeight = FontWeight.Bold,
+            IsVisible = _controls.Changed };
+        _saveControlsButton = new Button
+        {
+            Content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6, Children = { new TextBlock { Text = "SAVE" }, _controlsUnsaved } },
+            MinWidth = 120, HorizontalContentAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 10, 0), Classes = { "quiet" },
+        };
+        AutomationProperties.SetName(_saveControlsButton, "SAVE");
+        _saveControlsButton.Click += (_, _) => SaveControls();
+        var resetAll = new Button { Content = "RESET ALL", Classes = { "quiet" } };
+        resetAll.Click += (_, _) =>
+        {
+            EndControlsCapture();
+            _controls.ResetAll(_controlSet);
+            BuildControlsPanel("Defaults shown for this list; SAVE writes them.");
+        };
+        ControlsBody.Children.Add(new WrapPanel { Children = { _saveControlsButton, resetAll } });
+        ControlsBody.Children.Add(_controlsStatus);
+
+        var tabs = new WrapPanel();
+        foreach (var (set, label) in new[] { (ControlSet.Driving, "DRIVING"), (ControlSet.Menu, "MENUS") })
+        {
+            var tab = new Button { Content = label, Classes = { "quiet", "nav" } };
+            tab.Classes.Set("selected", set == _controlSet);
+            tab.Click += (_, _) =>
+            {
+                EndControlsCapture();
+                _controlSet = set;
+                BuildControlsPanel("");
+            };
+            tabs.Children.Add(tab);
+        }
+        ControlsBody.Children.Add(tabs);
+        ControlsBody.Children.Add(Help(_controlSet == ControlSet.Driving
+            ? "Used while the car is on the track and the game is not paused."
+            : "Used in menus, the pre-race screen, the pause menu, replays and results."));
+
+        var rows = ControlsCatalog.Rows(_controlSet);
+        foreach (var row in rows.Where(r => !r.Other)) ControlsBody.Children.Add(ControlRowView(row));
+        var other = rows.Where(r => r.Other).ToList();
+        var toggle = new Button { Content = (_controlsOtherOpen ? "HIDE" : "SHOW") + $" OTHER BUTTONS ({other.Count})", Classes = { "link" },
+            HorizontalAlignment = HorizontalAlignment.Left };
+        toggle.Click += (_, _) =>
+        {
+            _controlsOtherOpen = !_controlsOtherOpen;
+            BuildControlsPanel("");
+        };
+        ControlsBody.Children.Add(toggle);
+        if (_controlsOtherOpen)
+            foreach (var row in other) ControlsBody.Children.Add(ControlRowView(row));
+
+        AddRampRows();
+        UpdateControlsActions();
+    }
+
+    private Control ControlRowView(ControlRow row)
+    {
+        var set = _controlSet;
+        var keys = _controls!.Keys(set, row.Id);
+        var line = new Grid { ColumnDefinitions = new ColumnDefinitions("260,*,Auto") };
+        line.Children.Add(new StackPanel
+        {
+            VerticalAlignment = VerticalAlignment.Center,
+            Children = { new TextBlock { Text = row.Label }, new TextBlock { Text = row.Pad, Classes = { "help" } } },
+        });
+
+        var caps = new WrapPanel { VerticalAlignment = VerticalAlignment.Center };
+        Grid.SetColumn(caps, 1);
+        for (var i = 0; i < keys.Count; i++)
+        {
+            var index = i;
+            var capturing = _capture == new Capture(set, row.Id, index);
+            var cap = new Button
+            {
+                Content = capturing ? "PRESS A KEY…" : KeyCap(keys[i]), MinWidth = 64, Margin = new Thickness(0, 0, 4, 4), Classes = { "quiet" },
+            };
+            if (capturing)
+            {
+                cap.Foreground = Brush("AccentBrush");
+                _captureUndo += () =>
+                {
+                    cap.Content = KeyCap(keys[index]);
+                    cap.ClearValue(TemplatedControl.ForegroundProperty);
+                };
+            }
+            AutomationProperties.SetName(cap, $"{row.Label}: {KeyCap(keys[i])}");
+            cap.Click += (_, _) => StartCapture(new Capture(set, row.Id, index));
+            caps.Children.Add(cap);
+            if (keys.Count > 1 && !capturing)
+            {
+                var remove = new Button { Content = "×", Classes = { "link" }, Margin = new Thickness(-2, 0, 8, 4), VerticalAlignment = VerticalAlignment.Center };
+                AutomationProperties.SetName(remove, $"Remove {KeyCap(keys[i])} from {row.Label}");
+                remove.Click += (_, _) =>
+                {
+                    EndControlsCapture();
+                    _controls.RemoveKey(set, row.Id, index);
+                    BuildControlsPanel("");
+                };
+                caps.Children.Add(remove);
+            }
+        }
+        var adding = _capture == new Capture(set, row.Id, -1);
+        var add = new Button { Content = adding ? "PRESS A KEY…" : "+ ADD", Classes = { "link" }, VerticalAlignment = VerticalAlignment.Center };
+        if (adding)
+        {
+            add.Foreground = Brush("AccentBrush");
+            _captureUndo += () =>
+            {
+                add.Content = "+ ADD";
+                add.ClearValue(TemplatedControl.ForegroundProperty);
+            };
+        }
+        AutomationProperties.SetName(add, $"Add a key to {row.Label}");
+        add.Click += (_, _) => StartCapture(new Capture(set, row.Id, -1));
+        caps.Children.Add(add);
+        if (_capture is { } active && active.Set == set && active.Id == row.Id)
+        {
+            var cancel = new Button { Content = "CANCEL", Classes = { "link" }, VerticalAlignment = VerticalAlignment.Center };
+            cancel.Click += (_, _) =>
+            {
+                EndControlsCapture();
+                BuildControlsPanel("");
+            };
+            caps.Children.Add(cancel);
+            _captureUndo += () => cancel.IsVisible = false;
+        }
+        line.Children.Add(caps);
+
+        var reset = new Button { Content = "RESET", Classes = { "link" }, VerticalAlignment = VerticalAlignment.Center,
+            IsEnabled = !_controls.IsDefault(set, row.Id) };
+        AutomationProperties.SetName(reset, $"Reset {row.Label}");
+        reset.Click += (_, _) =>
+        {
+            EndControlsCapture();
+            _controls.Reset(set, row.Id);
+            BuildControlsPanel("");
+        };
+        Grid.SetColumn(reset, 2);
+        line.Children.Add(reset);
+
+        var column = new StackPanel { Spacing = 0, Children = { line } };
+        if (_controls.ConflictsWith(set, row.Id) is { Count: > 0 } conflicts)
+            column.Children.Add(new TextBlock { Text = "Also used by: " + string.Join(", ", conflicts), Foreground = Brush("AccentBrush"),
+                FontSize = 13, Margin = new Thickness(260, 0, 0, 2), TextWrapping = TextWrapping.Wrap });
+        return column;
+    }
+
+    private void AddRampRows()
+    {
+        ControlsBody.Children.Add(new TextBlock { Text = "SMOOTHING", Classes = { "header" }, Margin = new Thickness(0, 12, 0, 0) });
+        ControlsBody.Children.Add(Help("Seconds a key takes to move steering, the pedals and looking around to full, and back to rest "
+                                       + "when released. Lower is snappier."));
+        foreach (var ramp in ControlsCatalog.Ramps)
+        {
+            var slider = new Slider
+            {
+                Minimum = ControlsSettings.RampLow, Maximum = ControlsSettings.RampHigh, Value = _controls!.Ramp(ramp.Key),
+                SmallChange = 0.01, LargeChange = 0.05, IsSnapToTickEnabled = true, TickFrequency = 0.01, Width = 320,
+            };
+            var value = new TextBlock { Width = 64, VerticalAlignment = VerticalAlignment.Center, Foreground = Brush("ValueBrush") };
+            var reset = new Button { Content = "RESET", Classes = { "link" }, VerticalAlignment = VerticalAlignment.Center };
+            void Show()
+            {
+                value.Text = _controls.Ramp(ramp.Key).ToString("0.00", CultureInfo.InvariantCulture) + " s";
+                reset.IsEnabled = !_controls.RampIsDefault(ramp.Key);
+                if (_controlsUnsaved is not null) _controlsUnsaved.IsVisible = _controls.Changed;
+            }
+            slider.ValueChanged += (_, e) =>
+            {
+                _controls.SetRamp(ramp.Key, e.NewValue);
+                Show();
+            };
+            reset.Click += (_, _) =>
+            {
+                _controls.ResetRamp(ramp.Key);
+                slider.Value = _controls.Ramp(ramp.Key);
+                Show();
+            };
+            AutomationProperties.SetName(slider, ramp.Label);
+            Show();
+            var line = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Children = { slider, value, reset } };
+            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("260,*") };
+            grid.Children.Add(new TextBlock { Text = ramp.Label, VerticalAlignment = VerticalAlignment.Center });
+            Grid.SetColumn(line, 1);
+            grid.Children.Add(line);
+            ControlsBody.Children.Add(grid);
+        }
+    }
+
+    private void StartCapture(Capture target)
+    {
+        _capture = target;
+        _pendingModifier = null;
+        BuildControlsPanel("Press the key you want. Esc is a key like any other; CANCEL backs out.");
+    }
+
+    private void CaptureKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (_capture is null) return;
+        e.Handled = true;
+        var name = KeyNames.FromAvalonia(e.Key.ToString());
+        if (name is null)
+        {
+            if (_controlsStatus is not null) _controlsStatus.Text = "The game cannot use that key. Press another.";
+            return;
+        }
+        // A modifier is held before the key it modifies, so it binds on its own release if no other key came meanwhile.
+        if (KeyNames.IsModifier(name)) _pendingModifier = name;
+        else BindCaptured(name);
+    }
+
+    private void CaptureKeyUp(object? sender, KeyEventArgs e)
+    {
+        if (_capture is null || _pendingModifier is not { } modifier) return;
+        e.Handled = true;
+        BindCaptured(modifier);
+    }
+
+    private void BindCaptured(string key)
+    {
+        if (_capture is not { } target || _controls is null) return;
+        EndControlsCapture();
+        if (target.Index < 0) _controls.AddKey(target.Set, target.Id, key);
+        else _controls.SetKey(target.Set, target.Id, target.Index, key);
+        BuildControlsPanel("");
+    }
+
+    private void SaveControls()
+    {
+        if (_host is not { GameRunning: false } || _controls is null) return;
+        string status;
+        try
+        {
+            _controls.Save();
+            status = "Saved. Applies at the next start.";
+            AppendLog("Controls saved.");
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            status = $"Not saved: {error.Message}";
+        }
+        EndControlsCapture();
+        BuildControlsPanel(status);
+    }
+
+    private void UpdateControlsActions()
+    {
+        ControlsBody.IsEnabled = _host is { GameRunning: false } && !_busy;
+        if (!ControlsBody.IsEnabled) AbandonCapture();
+    }
+}

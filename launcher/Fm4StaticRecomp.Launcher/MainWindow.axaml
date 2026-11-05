@@ -159,6 +159,8 @@
                             ToolTip.Tip="The game's graphics settings."/>
                     <Button x:Name="SettingsButton" Classes="quiet nav" Content="SETTINGS" Click="SettingsButton_Click"
                             ToolTip.Tip="Language, launch options and advanced options."/>
+                    <Button x:Name="ControlsButton" Classes="quiet nav" Content="CONTROLS" Click="ControlsButton_Click"
+                            ToolTip.Tip="The keyboard's keys and how fast they ramp."/>
                 </WrapPanel>
 
                 <TextBlock x:Name="StatusText" Margin="0,12,0,0" FontSize="15" TextWrapping="Wrap"
@@ -218,6 +220,10 @@
 
                 <Border x:Name="SettingsPanel" Classes="strip" IsVisible="False">
                     <StackPanel x:Name="SettingsBody" Spacing="12"/>
+                </Border>
+
+                <Border x:Name="ControlsPanel" Classes="strip" IsVisible="False">
+                    <StackPanel x:Name="ControlsBody" Spacing="10"/>
                 </Border>
 
                 <!-- Progress and the log. -->

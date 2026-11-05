@@ -267,6 +267,7 @@ public partial class MainWindow : Window
         NavPanel.IsEnabled = !_busy;
         ProfileCombo.IsEnabled = ProfileButton.IsEnabled = !_busy && !running;
         UpdateSettingsActions();
+        UpdateControlsActions();
         UpdateUpdateActions();
         Disc2AddButtons.IsEnabled = DlcAddButtons.IsEnabled = ChooseModAgainButton.IsEnabled = UnlockUnicornsButton.IsEnabled = ContentOpen;
         UpdateSetupActions();

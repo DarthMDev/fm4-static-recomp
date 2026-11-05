@@ -47,8 +47,25 @@ The mouse is not used.
 
 ## Rebinding keys
 
-Create `config\controls.toml` in the state folder and add `menu_<button>` or
-`driving_<button>` lines. A value lists keys separated by commas:
+### In the launcher
+
+1. Open the launcher and click **CONTROLS** under Play.
+2. Choose **DRIVING** (on the track) or **MENUS**.
+3. Click the key you want to change, then press the new key. **+ ADD** gives an action a
+   second key; the **×** beside a key removes it. **RESET** puts one action back to its
+   default, **RESET ALL** the whole list.
+4. If two actions use the same key, both show "Also used by". Nothing stops you: change one
+   of them if that is not what you meant.
+5. Click **SAVE** and start the game. Changes apply at the next launch.
+
+**SMOOTHING** sets how many seconds steering, the pedals and looking around take to reach
+full and to return to rest; lower is snappier.
+
+### In the file
+
+Or create `config\controls.toml` in the state folder and add `menu_<button>` or
+`driving_<button>` lines. The launcher reads and keeps what you wrote there. A value lists
+keys separated by commas:
 
 ```toml
 driving_x = "Q,Numpad1"

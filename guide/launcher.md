@@ -41,6 +41,7 @@ instead, see the [manual install](manual-install.md).
 | **CONTENT** | Installs Disc 2 and DLC. Install them only here: the game's own Disc 2 install waits for a disc change that never comes. Also [unlocks the unicorn cars](#unicorn-cars). |
 | **GRAPHICS** | [Playing in a window](windowed.md) and the [GRAPHICS page's settings](graphics.md). **SAVE** on top writes this page and SETTINGS together. |
 | **SETTINGS** | The game's language, launch options (among them VIBRATION STRENGTH, 0-200 %, for a controller that vibrates too weakly, and AUDIO POP FIX, on by default, which smooths the pops in the engine sounds), advanced options (among them the [saves folder](saves.md#the-saves-folder), [PRESENT THROUGH DXGI](launch-options.md#frame-generation) and [30 FPS (DIAGNOSTIC)](high-frame-rate.md#testing-a-slow-processor)) and [command-line options](launch-options.md#with-the-launcher-command-line-options) for debugging. On a Project Forza Plus 4 install also its [career mode](project-forza-plus.md#career-modes-and-harder-ai). |
+| **CONTROLS** | The keyboard's keys and how fast steering and pedals ramp: [Rebinding keys](controls.md#rebinding-keys). Has its own **SAVE**. |
 
 ## Playing in a window
 

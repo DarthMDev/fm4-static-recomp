@@ -11,7 +11,7 @@ namespace Fm4StaticRecomp.Launcher;
 // closes it.
 public partial class MainWindow
 {
-    private enum Panel { None, Content, Graphics, Settings }
+    private enum Panel { None, Content, Graphics, Settings, Controls }
 
     private Panel _panel = Panel.None;
 
@@ -22,8 +22,11 @@ public partial class MainWindow
         _panel = panel;
         ContentPanel.IsVisible = panel == Panel.Content;
         SettingsPanel.IsVisible = IsSettings(panel);
+        ControlsPanel.IsVisible = panel == Panel.Controls;
+        if (panel != Panel.Controls) EndControlsCapture();
         foreach (var (button, owner) in new (Button, Panel)[]
-                     { (ContentButton, Panel.Content), (GraphicsButton, Panel.Graphics), (SettingsButton, Panel.Settings) })
+                     { (ContentButton, Panel.Content), (GraphicsButton, Panel.Graphics), (SettingsButton, Panel.Settings),
+                       (ControlsButton, Panel.Controls) })
             button.Classes.Set("selected", owner == panel);
     }
 
@@ -46,6 +49,7 @@ public partial class MainWindow
             ContentLines.Children.Clear();
             LoadContentPanel();
         }
+        else if (panel == Panel.Controls) LoadControlsPanel();
         else if (fromSettings) BuildSettingsPanel(_settingsStatus?.Text ?? "");
         else LoadSettingsPanel();
     }
@@ -54,15 +58,17 @@ public partial class MainWindow
     {
         Panel.Content => ContentPanel,
         Panel.Graphics or Panel.Settings => SettingsPanel,
+        Panel.Controls => ControlsPanel,
         _ => null,
     };
 
     private void ContentButton_Click(object? sender, RoutedEventArgs e) => OpenPanel(Panel.Content);
     private void GraphicsButton_Click(object? sender, RoutedEventArgs e) => OpenPanel(Panel.Graphics);
     private void SettingsButton_Click(object? sender, RoutedEventArgs e) => OpenPanel(Panel.Settings);
+    private void ControlsButton_Click(object? sender, RoutedEventArgs e) => OpenPanel(Panel.Controls);
 
     /// <summary>--snapshot FILE [STATE] [WIDTHxHEIGHT]: render the window to a PNG and exit, to
-    /// check a layout without clicking. STATE is setup, building, ready, content, graphics, settings,
+    /// check a layout without clicking. STATE is setup, building, ready, content, graphics, settings, controls,
     /// crash, failure or playing; each fills its panel with sample data where the backend has
     /// none.</summary>
     public void Snapshot(string path, string? state, string? size)
@@ -103,7 +109,7 @@ public partial class MainWindow
             case "playing":
                 ShowMode(Mode.Playing);
                 break;
-            case "content" or "graphics" or "settings":
+            case "content" or "graphics" or "settings" or "controls":
                 ShowMode(Mode.Ready);
                 var panel = Enum.Parse<Panel>(state, ignoreCase: true);
                 OpenPanel(panel);

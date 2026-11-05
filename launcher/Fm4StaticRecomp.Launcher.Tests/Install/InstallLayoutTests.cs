@@ -20,6 +20,13 @@ public class InstallLayoutTests
     }
 
     [Fact]
+    public void Keeps_the_keyboard_controls_beside_the_graphics_settings()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        Assert.Equal(@"C:\G\data\config\controls.toml", new InstallLayout(@"C:\G\data").ControlsToml);
+    }
+
+    [Fact]
     public void Names_every_folder_of_the_spec()
     {
         if (!OperatingSystem.IsWindows()) return;
