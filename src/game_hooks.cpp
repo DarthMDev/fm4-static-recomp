@@ -1249,3 +1249,121 @@ bool Fm4OpenGraphicsOption(PPCRegister& r4) {
   }
   return true;
 }
+
+// FMOD mixes in 256-sample blocks and starts, stops and re-seeks voices between them without a
+// fade, so wherever that happens to a loud voice the mix steps at the block's first samples: the
+// clicks while revving at the limiter and shifting, where the top engine layers and the turbo are
+// restarted every few blocks (the same on a console). The render thread lays each mixed block out
+// as 6 channels of 256 big-endian floats and hands it to sub_82C56B78 before submitting it; there,
+// a step at a block's start well above the channel's own sample-to-sample movement is taken out:
+// its first samples are bridged from the block before, and the offset that is left fades out over
+// the next 128 samples. AUDIO POP FIX on the F6 page switches this and the decoder's loop
+// crossfade (xma_loop_end_crossfade, see InstallAudioPopFix) together.
+REXCVAR_DEFINE_BOOL(fm4_audio_pop_fix, false, "Forza Motorsport 4",
+                    "Smooth the pops of the game's audio, heard on a console too: crossfade each "
+                    "loop of a sound into its start, and the steps FMOD leaves at the start of a "
+                    "mix block when it starts, stops or re-seeks a voice while revving and shifting")
+    .lifecycle(rex::cvar::Lifecycle::kHotReload);
+
+namespace {
+constexpr uint32_t kMixChannels = 6, kMixBlock = 256;
+
+struct MixEdgeState {
+  float y1 = 0, y2 = 0;  // the last two samples of the block before
+  float rough = 0;       // the RMS second difference of the block before
+  bool valid = false;
+};
+std::array<MixEdgeState, kMixChannels> g_mix_edges;
+
+void DeclickBlockStart(float* x, MixEdgeState& state) {
+  constexpr uint32_t kBridge = 4, kFade = 128;
+  constexpr float kThreshold = 6.0f, kFloor = 0.003f;
+  if (state.valid) {
+    float prev2 = state.y2, prev1 = state.y1, peak = 0;
+    for (uint32_t i = 0; i <= kBridge; i++) {
+      peak = std::max(peak, std::fabs(x[i] - 2.0f * prev1 + prev2));
+      prev2 = prev1;
+      prev1 = x[i];
+    }
+    if (peak > kThreshold * state.rough && peak > kFloor) {
+      // The step: where the block is once past the bridge, against where the block before was
+      // heading (the trend of both sides averaged across the gap).
+      constexpr float span = float(kBridge + 1);
+      const float slope_before = state.y1 - state.y2, slope_after = x[kBridge + 1] - x[kBridge];
+      const float step = x[kBridge] - state.y1 - span * 0.5f * (slope_before + slope_after);
+      const float end = x[kBridge] - step;
+      for (uint32_t i = 0; i < kBridge; i++) {
+        const float u = float(i + 1) / span, u2 = u * u, u3 = u2 * u;
+        x[i] = (2 * u3 - 3 * u2 + 1) * state.y1 + (u3 - 2 * u2 + u) * span * slope_before +
+               (-2 * u3 + 3 * u2) * end + (u3 - u2) * span * slope_after;
+      }
+      for (uint32_t i = 0; i < kFade; i++) {
+        const float t = float(i) / float(kFade);
+        x[kBridge + i] -= step * (2 * t * t * t - 3 * t * t + 1);
+      }
+    }
+  }
+  float sum = 0;
+  for (uint32_t i = 2; i < kMixBlock; i++) {
+    const float e = x[i] - 2.0f * x[i - 1] + x[i - 2];
+    sum += e * e;
+  }
+  state.rough = std::sqrt(sum / float(kMixBlock - 2));
+  state.y1 = x[kMixBlock - 1];
+  state.y2 = x[kMixBlock - 2];
+  state.valid = true;
+}
+}  // namespace
+
+extern "C" void __imp__sub_82C56B78(PPCContext& __restrict ctx, uint8_t* base);
+
+extern "C" void sub_82C56B78(PPCContext& __restrict ctx, uint8_t* base) {
+  // Only a call from the render thread's loop (not an entry at the return from its copy).
+  const uint32_t entry = ctx.dispatch_address, frame = ctx.r4.u32;
+  if (REXCVAR_GET(fm4_audio_pop_fix) && (entry == 0 || entry == 0x82C56B78u) && frame) {
+    for (uint32_t c = 0; c < kMixChannels; c++) {
+      uint8_t* const samples = base + frame + c * kMixBlock * 4;
+      std::array<float, kMixBlock> x;
+      for (uint32_t i = 0; i < kMixBlock; i++) {
+        x[i] = std::bit_cast<float>(LoadGuestWord(samples + 4 * i));
+      }
+      DeclickBlockStart(x.data(), g_mix_edges[c]);
+      for (uint32_t i = 0; i < kMixBlock; i++) {
+        StoreGuestWord(samples + 4 * i, std::bit_cast<uint32_t>(x[i]));
+      }
+    }
+  } else {
+    for (MixEdgeState& state : g_mix_edges) state.valid = false;
+  }
+  __imp__sub_82C56B78(ctx, base);
+}
+
+namespace fm4_static_recomp {
+
+void InstallAudioPopFix() {
+  // A launch option for the crossfade is a diagnostic and wins over AUDIO POP FIX.
+  constexpr const char* kCrossfade = "xma_loop_end_crossfade";
+  if (!rex::cvar::GetFlagInfo(kCrossfade)) {
+    REXLOG_WARN("Audio pop fix: the runtime has no {}; AUDIO POP FIX smooths the mix blocks only",
+                kCrossfade);
+    return;
+  }
+  if (rex::cvar::GetFlagSource(kCrossfade) == rex::cvar::Source::kCommandLine) {
+    REXLOG_INFO("Audio pop fix: {} comes from the command line", kCrossfade);
+    return;
+  }
+  const auto follow = [kCrossfade](std::string_view value) {
+    if (!rex::cvar::SetFlagByName(kCrossfade, std::string(value))) {
+      REXLOG_ERROR("Audio pop fix: {} refused {}", kCrossfade, value);
+    }
+  };
+  follow(rex::cvar::GetFlagByName("fm4_audio_pop_fix"));
+  REXLOG_INFO("Audio pop fix: {}", rex::cvar::GetFlagByName("fm4_audio_pop_fix"));
+  rex::cvar::RegisterChangeCallback("fm4_audio_pop_fix",
+                                    [follow](std::string_view, std::string_view value) {
+                                      follow(value);
+                                      REXLOG_INFO("Audio pop fix: {}", value);
+                                    });
+}
+
+}  // namespace fm4_static_recomp

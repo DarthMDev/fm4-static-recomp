@@ -137,6 +137,7 @@ class Fm4App final : public rex::ReXApp {
       REXLOG_ERROR("Graphics settings: cannot read {}", graphics_config_->path().string());
     }
     fm4_static_recomp::InstallPixelShaderSwitches();
+    fm4_static_recomp::InstallAudioPopFix();
     rex::kernel::xboxkrnl::SetGuestFileOpenObserver([](std::string_view guest_path) {
       fm4_static_recomp::NoteGuestFileOpen(guest_path);
       fm4_static_recomp::LogFileOpen(guest_path);

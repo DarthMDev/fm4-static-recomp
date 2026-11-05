@@ -62,6 +62,9 @@ Views and measurements:
 | `--fm4_runtime_replacement_probe` | empty | Replace the texture with this 16-digit hash by a magenta test image |
 | `--debug_guest_thread_start_delay` | empty | `<hex start address>:<ms>`: every guest thread starting there waits that long before it runs. `82926250:500` holds back the studio tracks' streaming thread, as the host now and then does on its own; a bought car's thumbnail must still come out lit (the `thumbnail-late-streaming` render test) |
 | `--xnet_random_constant` | `false` | The game's random bytes (`XNetRandom`) all `0xBB` again, as before 0.3.2: the race music then starts with the same song every time (#57), and garage car GUIDs, AI player IDs and save encryption IVs are constant too |
+| `--xma_loop_end_crossfade` | set by AUDIO POP FIX | Crossfade the end of each pass of an XMA stream into the 384 samples FMOD skips when it restarts the stream (#37); AUDIO POP FIX sets it, and given on the command line it stays as given |
+| `--xma_stream_start_resets_carry` | `true` | A stream's first frame drops the samples the decoder kept from the stream before, as the hardware does; `false` joins them to the new stream (#37) |
+| `--xma_frameless_end_of_stream` | `true` | The packets after a stream's last frame that start no frame end the input, as on the hardware; `false` flags error 4 and decodes the buffer again from its start (#37) |
 | `--xma_decode_kicks_inline` | `true` | Decode game audio on the game thread that starts it; `false` decodes it on the XMA decoder thread instead; the mixer then now and then reads a block before it is decoded, heard as crackle (#37) |
 
 ## The renderer

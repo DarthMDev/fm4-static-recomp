@@ -58,6 +58,12 @@ playing. If the sound still crackles, turn on SETTINGS → ADVANCED → **30 FPS
 the launcher, press SAVE and play a race: say in your report whether the sound is clean at 30 fps.
 Then turn it off again and press SAVE.
 
+## Engine sounds pop or click
+
+FM4's engine loops pop where they start over, and click when revving at the limiter and
+shifting, on a console too. Turn on **AUDIO POP FIX** on the GRAPHICS page (**F6**) to smooth
+them ([#37](https://github.com/i2kiselev/fm4-static-recomp/issues/37)).
+
 ## DLSS or FSR does not turn on (`DLSS (OFF AT 3X)`)
 
 The upscalers only upscale: the render must not be larger than the game's window or screen.
