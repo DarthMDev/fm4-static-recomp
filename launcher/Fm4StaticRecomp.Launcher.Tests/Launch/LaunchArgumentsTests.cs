@@ -215,6 +215,36 @@ public class LaunchArgumentsTests
     }
 
     [Fact]
+    public void The_audio_pop_fix_on_by_default_passes_no_option()
+    {
+        var (layout, profile, settings, temp) = Setup();
+        using var _ = temp;
+        Assert.DoesNotContain(LaunchArguments.ForPlay(layout, "0.3.2", profile, settings, new WindowsPlatform()),
+            a => a.StartsWith("--fm4_audio_pop_fix"));
+    }
+
+    [Fact]
+    public void The_audio_pop_fix_turned_off_passes_it_off()
+    {
+        var (layout, profile, settings, temp) = Setup();
+        using var _ = temp;
+        settings.AudioPopFix = false;
+        Assert.Contains("--fm4_audio_pop_fix=false",
+            LaunchArguments.ForPlay(layout, "0.3.2", profile, settings, new WindowsPlatform()));
+    }
+
+    // An older version has no AUDIO POP FIX and plays the audio as it shipped.
+    [Fact]
+    public void An_older_version_gets_no_audio_pop_fix_option()
+    {
+        var (layout, profile, settings, temp) = Setup();
+        using var _ = temp;
+        settings.AudioPopFix = false;
+        Assert.DoesNotContain(LaunchArguments.ForPlay(layout, "0.3.1", profile, settings, new WindowsPlatform()),
+            a => a.StartsWith("--fm4_audio_pop_fix"));
+    }
+
+    [Fact]
     public void Play_signs_in_with_the_xuid_of_an_imported_xenia_save()
     {
         var (layout, profile, settings, temp) = Setup();

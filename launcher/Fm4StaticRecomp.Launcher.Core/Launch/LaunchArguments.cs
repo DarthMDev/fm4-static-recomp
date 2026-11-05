@@ -47,6 +47,7 @@ public static class LaunchArguments
         if (settings.Diagnostic30Fps) options["fm4_frame_rate"] = "30";
         if (settings.VibrationStrength != LauncherSettings.GameVibrationStrength && !Predates(version, new Version(0, 3, 2)))
             options["pad_rumble_strength"] = settings.VibrationStrength.ToString(CultureInfo.InvariantCulture);
+        if (!settings.AudioPopFix && !Predates(version, new Version(0, 3, 2))) options["fm4_audio_pop_fix"] = "false";
         // In fullscreen too: Alt+Enter leaves to this size. An older version (GO BACK TO, or while an update
         // builds) starts fullscreen: it takes the window's size for the guest's video mode, and below 1280x720,
         // on a scaled display, the game changes its text layout.

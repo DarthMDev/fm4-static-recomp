@@ -29,8 +29,8 @@ void SetPromptTextSource(
 // plugin has registered them.
 void InstallPixelShaderSwitches();
 
-// Makes fm4_audio_pop_fix (AUDIO POP FIX on the F6 page) switch the decoder's loop crossfade
-// with the mix de-click, now and on each change; call once the saved settings are applied.
+// Makes fm4_audio_pop_fix (AUDIO POP FIX in the launcher's SETTINGS) switch the decoder's loop
+// crossfade with the mix de-click; call once the command line is parsed.
 void InstallAudioPopFix();
 
 // Every guest file open, on the opening guest thread: the game's saving of a car

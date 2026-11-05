@@ -61,8 +61,9 @@ Then turn it off again and press SAVE.
 ## Engine sounds pop or click
 
 FM4's engine loops pop where they start over, and click when revving at the limiter and
-shifting, on a console too. Turn on **AUDIO POP FIX** on the GRAPHICS page (**F6**) to smooth
-them ([#37](https://github.com/i2kiselev/fm4-static-recomp/issues/37)).
+shifting, on a console too. From 0.3.2, **AUDIO POP FIX** in the launcher's SETTINGS smooths them
+([#37](https://github.com/i2kiselev/fm4-static-recomp/issues/37)). It is on by default: check that
+it is still ticked.
 
 ## DLSS or FSR does not turn on (`DLSS (OFF AT 3X)`)
 

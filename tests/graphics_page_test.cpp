@@ -22,7 +22,6 @@ REXCVAR_DEFINE_INT32(fm4_frame_rate, 120, "Forza Motorsport 4", "Test stand-in")
 REXCVAR_DEFINE_STRING(swap_post_effect, "none", "GPU", "Test stand-in");
 REXCVAR_DEFINE_STRING(fm4_showroom_msaa, "4x", "Forza Motorsport 4", "Test stand-in");
 REXCVAR_DEFINE_STRING(fm4_race_msaa, "2x", "Forza Motorsport 4", "Test stand-in");
-REXCVAR_DEFINE_BOOL(fm4_audio_pop_fix, false, "Forza Motorsport 4", "Test stand-in");
 
 namespace {
 
@@ -165,37 +164,6 @@ TEST_CASE("The launcher's schema offers the upscaler, its sharpness and the DLSS
   CHECK(preset.find("\"default\":\"auto\"") != std::string::npos);
   CHECK(preset.find("\"shown_when\":{\"present_effect\":\"dlss\"}") != std::string::npos);
   CHECK(schema.find("shown_when") == schema.rfind("shown_when"));
-  std::filesystem::remove(path);
-}
-
-TEST_CASE("AUDIO POP FIX comes last, in a block of its own, and saves like the other rows",
-          "[graphics_page]") {
-  const auto schema_path = TempFile("audio_schema.json");
-  REQUIRE(ui::WriteGraphicsSchema(schema_path));
-  std::stringstream text;
-  text << std::ifstream(schema_path).rdbuf();
-  const std::string schema = text.str();
-  const size_t row = schema.find("{\"label\":\"AUDIO POP FIX\"");
-  REQUIRE(row != std::string::npos);
-  CHECK(schema.find("{\"label\":\"CAR DIRT\"") < row);
-  CHECK(schema.rfind("]},{\"rows\":[", row) > schema.find("{\"label\":\"CAR DIRT\""));
-  CHECK(schema.find("\"key\":\"fm4_audio_pop_fix\"", row) != std::string::npos);
-  CHECK(schema.find("\"default\":\"false\"", row) != std::string::npos);
-  std::filesystem::remove(schema_path);
-
-  const auto path = TempFile("audio.toml");
-  std::filesystem::remove(path);
-  config::HostConfig config(path);
-  const CvarsRestored restored({"fm4_audio_pop_fix"});
-  const auto page = ui::CreateGraphicsPage(config, Services());
-  const MenuRow& pop_fix = *Find(*page, "AUDIO POP FIX");
-  CHECK(page->rows().back().label == "AUDIO POP FIX");
-  CHECK(pop_fix.value() == "OFF");
-  Choose(pop_fix, "ON");
-  page->Handle(NavCommand::kApply);
-  CHECK(config.Get("fm4_audio_pop_fix").value_or("") == "true");
-  Settle(*page);
-  CHECK(rex::cvar::GetFlagByName("fm4_audio_pop_fix") == "true");
   std::filesystem::remove(path);
 }
 

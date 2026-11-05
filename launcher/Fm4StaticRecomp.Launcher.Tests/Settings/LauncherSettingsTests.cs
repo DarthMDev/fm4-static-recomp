@@ -21,6 +21,7 @@ public class LauncherSettingsTests
         Assert.False(settings.UseVisualStudioInstaller);
         Assert.Equal(0, settings.BuildJobs);
         Assert.Equal(100, settings.VibrationStrength);
+        Assert.True(settings.AudioPopFix);
         Assert.Null(settings.ActiveProfile);
         Assert.Null(settings.ActiveVersion);
         Assert.Null(settings.PreviousVersion);
@@ -89,6 +90,7 @@ public class LauncherSettingsTests
         settings.Diagnostic30Fps = true;
         settings.BuildJobs = 6;
         settings.VibrationStrength = 160;
+        settings.AudioPopFix = false;
         settings.AcceptedMicrosoftLicence = "https://a https://b";
         settings.UseVisualStudioInstaller = true;
         settings.Language = "ru";
@@ -103,6 +105,7 @@ public class LauncherSettingsTests
         Assert.True(read.Diagnostic30Fps);
         Assert.Equal(6, read.BuildJobs);
         Assert.Equal(160, read.VibrationStrength);
+        Assert.False(read.AudioPopFix);
         Assert.Equal("https://a https://b", read.AcceptedMicrosoftLicence);
         Assert.Equal("ru", read.Language);
         Assert.Equal(@"D:\FM4 Saves", read.SavesFolder);

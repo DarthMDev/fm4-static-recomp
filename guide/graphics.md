@@ -82,9 +82,3 @@ FRAME RATE, RESOLUTION SCALE, UPSCALER and SHARPNESS are not part of a preset.
 | BLOOM | Full rate updates the glow every frame, where the console skips every second one in 16-car races. |
 | MOTION BLUR | The speed blur on the road surface. |
 | DEPTH OF FIELD | The focus blur of the showroom, pre-race and replay cameras and photo mode. |
-
-### Audio
-
-| Setting | Effect |
-|---|---|
-| AUDIO POP FIX | Smooths the pops in the engine sounds, which a console has too ([#37](https://github.com/i2kiselev/fm4-static-recomp/issues/37)). It does two things. Each loop of a sound is crossfaded into its start: FMOD ends every pass of a loop 128 to 512 samples early. And where the game restarts sounds between FMOD's mix blocks, as at the rev limiter and when shifting, the step at the block's start is smoothed. Off, the default, plays the audio as the console does. Applies at once. |

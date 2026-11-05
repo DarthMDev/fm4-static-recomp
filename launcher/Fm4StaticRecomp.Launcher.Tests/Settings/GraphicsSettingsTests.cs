@@ -251,15 +251,14 @@ public class GraphicsSettingsTests
             @"..\..\..\..\..\out\build\win-amd64-release\graphics-settings.json"));
         if (!File.Exists(real)) return;
         var schema = GraphicsSchema.Load(real);
-        Assert.Equal(4, schema.Blocks.Count);
-        Assert.Equal(21, schema.SettingRows.Count());
+        Assert.Equal(3, schema.Blocks.Count);
+        Assert.Equal(20, schema.SettingRows.Count());
         Assert.Equal(new Dictionary<string, string> { ["present_effect"] = "dlss" },
             schema.SettingRows.Single(r => r.Label == "DLSS PRESET").ShownWhen);
         Assert.Equal(["CONSOLE", "HIGH", "ULTRA", "EXPERIMENTAL"], schema.Presets.Select(p => p.Label));
         var labels = schema.Blocks.SelectMany(b => b.Rows).Select(r => r.Label).ToList();
         Assert.Contains("VSYNC", labels);
         Assert.Contains("CAR DIRT", labels);
-        Assert.Equal("AUDIO POP FIX", labels[^1]);
         Assert.DoesNotContain("CAR SHADOWS", labels);
     }
 }

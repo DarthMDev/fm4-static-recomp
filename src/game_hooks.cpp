@@ -1257,13 +1257,12 @@ bool Fm4OpenGraphicsOption(PPCRegister& r4) {
 // as 6 channels of 256 big-endian floats and hands it to 0x82C56B78 before submitting it; there,
 // a step at a block's start well above the channel's own sample-to-sample movement is taken out:
 // its first samples are bridged from the block before, and the offset that is left fades out over
-// the next 128 samples. AUDIO POP FIX on the F6 page switches this and the decoder's loop
-// crossfade (xma_loop_end_crossfade, see InstallAudioPopFix) together.
-REXCVAR_DEFINE_BOOL(fm4_audio_pop_fix, false, "Forza Motorsport 4",
+// the next 128 samples. AUDIO POP FIX in the launcher's SETTINGS switches this and the decoder's
+// loop crossfade (xma_loop_end_crossfade, see InstallAudioPopFix) together.
+REXCVAR_DEFINE_BOOL(fm4_audio_pop_fix, true, "Forza Motorsport 4",
                     "Smooth the pops of the game's audio, heard on a console too: crossfade each "
                     "loop of a sound into its start, and the steps FMOD leaves at the start of a "
-                    "mix block when it starts, stops or re-seeks a voice while revving and shifting")
-    .lifecycle(rex::cvar::Lifecycle::kHotReload);
+                    "mix block when it starts, stops or re-seeks a voice while revving and shifting");
 
 namespace {
 constexpr uint32_t kMixChannels = 6, kMixBlock = 256;
@@ -1349,18 +1348,11 @@ void InstallAudioPopFix() {
     REXLOG_INFO("Audio pop fix: {} comes from the command line", kCrossfade);
     return;
   }
-  const auto follow = [kCrossfade](std::string_view value) {
-    if (!rex::cvar::SetFlagByName(kCrossfade, std::string(value))) {
-      REXLOG_ERROR("Audio pop fix: {} refused {}", kCrossfade, value);
-    }
-  };
-  follow(rex::cvar::GetFlagByName("fm4_audio_pop_fix"));
-  REXLOG_INFO("Audio pop fix: {}", rex::cvar::GetFlagByName("fm4_audio_pop_fix"));
-  rex::cvar::RegisterChangeCallback("fm4_audio_pop_fix",
-                                    [follow](std::string_view, std::string_view value) {
-                                      follow(value);
-                                      REXLOG_INFO("Audio pop fix: {}", value);
-                                    });
+  const std::string value = rex::cvar::GetFlagByName("fm4_audio_pop_fix");
+  if (!rex::cvar::SetFlagByName(kCrossfade, value)) {
+    REXLOG_ERROR("Audio pop fix: {} refused {}", kCrossfade, value);
+  }
+  REXLOG_INFO("Audio pop fix: {}", value);
 }
 
 }  // namespace fm4_static_recomp
