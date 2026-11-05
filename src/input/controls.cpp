@@ -226,20 +226,22 @@ Controls DefaultControls() {
   menu.keys[size_t(PadControl::kRightShoulder)] = "E";
   menu.keys[size_t(PadControl::kLeftTrigger)] = "Z";
   menu.keys[size_t(PadControl::kRightTrigger)] = "C";
-  menu.keys[size_t(PadControl::kLStickUp)] = "W";
-  menu.keys[size_t(PadControl::kLStickDown)] = "S";
-  menu.keys[size_t(PadControl::kLStickLeft)] = "A";
-  menu.keys[size_t(PadControl::kLStickRight)] = "D";
+  // FM4's sliders ignore a short push of the stick and, while it is pushed, the
+  // D-pad too, so WASD move like the arrows and the stick has keys of its own.
+  menu.keys[size_t(PadControl::kLStickUp)] = "Numpad8";
+  menu.keys[size_t(PadControl::kLStickDown)] = "Numpad2";
+  menu.keys[size_t(PadControl::kLStickLeft)] = "Numpad4";
+  menu.keys[size_t(PadControl::kLStickRight)] = "Numpad6";
   menu.keys[size_t(PadControl::kLStickPress)] = "F";
   menu.keys[size_t(PadControl::kRStickUp)] = "I";
   menu.keys[size_t(PadControl::kRStickDown)] = "K";
   menu.keys[size_t(PadControl::kRStickLeft)] = "J";
   menu.keys[size_t(PadControl::kRStickRight)] = "L";
   menu.keys[size_t(PadControl::kRStickPress)] = "G";
-  menu.keys[size_t(PadControl::kDpadUp)] = "Up";
-  menu.keys[size_t(PadControl::kDpadDown)] = "Down";
-  menu.keys[size_t(PadControl::kDpadLeft)] = "Left";
-  menu.keys[size_t(PadControl::kDpadRight)] = "Right";
+  menu.keys[size_t(PadControl::kDpadUp)] = "Up,W";
+  menu.keys[size_t(PadControl::kDpadDown)] = "Down,S";
+  menu.keys[size_t(PadControl::kDpadLeft)] = "Left,A";
+  menu.keys[size_t(PadControl::kDpadRight)] = "Right,D";
   menu.keys[size_t(PadControl::kBack)] = "Tab";
   menu.keys[size_t(PadControl::kStart)] = "P";
 

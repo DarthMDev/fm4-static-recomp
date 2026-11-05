@@ -40,7 +40,7 @@ TEST_CASE("A button phrase becomes the bound key", "[prompt_strings]") {
         "x PRESS TAB y");
   CHECK(Ascii(KeyboardText(kInteract, U16("x press the A button or pull the RIGHT TRIGGER."),
                            controls)) == "x press ENTER or C.");
-  CHECK(Ascii(KeyboardText(kMove, U16("Use the LEFT STICK to y"), controls)) == "Use WASD to y");
+  CHECK(Ascii(KeyboardText(kMove, U16("Use the LEFT STICK to y"), controls)) == "Use NUM 8/NUM 4/NUM 2/NUM 6 to y");
   CHECK(Ascii(KeyboardText(kTelemetryExit, U16("PRESS D-PAD DOWN TO EXIT"), controls)) ==
         "PRESS G TO EXIT");
 }

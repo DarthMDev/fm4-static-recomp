@@ -39,6 +39,7 @@ The pre-race screen, pause menu, replays and results use these keys too.
 | X / Y | X / Y |
 | LB / RB | Q / E |
 | LT / RT | Z / C |
+| Left stick | Numpad 8 4 2 6 |
 | Right stick | I J K L |
 | BACK / START | Tab / P |
 

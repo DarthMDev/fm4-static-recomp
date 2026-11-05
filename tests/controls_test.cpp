@@ -64,8 +64,11 @@ TEST_CASE("The default keys follow the Forza Horizon 6 layout on FM4's pad layou
   const BindingSet& menu = controls.menu;
   CHECK(Keys(menu, PadControl::kA).starts_with("Return"));
   CHECK(Keys(menu, PadControl::kB) == "Escape,Backspace");
-  CHECK(Contains(Keys(menu, PadControl::kLStickUp), "W"));
-  CHECK(Contains(Keys(menu, PadControl::kDpadUp), "Up"));
+  // WASD press the D-pad like the arrows: FM4's sliders step on a D-pad tap but
+  // not on a short push of the stick.
+  CHECK(Keys(menu, PadControl::kDpadUp) == "Up,W");
+  CHECK(Keys(menu, PadControl::kDpadLeft) == "Left,A");
+  CHECK(Keys(menu, PadControl::kLStickUp) == "Numpad8");
 }
 
 TEST_CASE("Every pad control has a key in both sets", "[controls]") {

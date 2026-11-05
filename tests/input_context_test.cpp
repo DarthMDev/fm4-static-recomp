@@ -42,7 +42,7 @@ TEST_CASE("A key held across a switch releases with the key", "[input_context]")
   CHECK(pressed() == std::vector<size_t>{size_t(PadControl::kRightTrigger)});
   // The pause menu opens with W still held: W moves the selection now.
   switcher.Update(InputContext::kMenu);
-  CHECK(pressed() == std::vector<size_t>{size_t(PadControl::kLStickUp)});
+  CHECK(pressed() == std::vector<size_t>{size_t(PadControl::kDpadUp)});
   key_down[static_cast<uint16_t>(rex::ui::VirtualKey::kW)] = false;
   CHECK(pressed().empty());
 }
