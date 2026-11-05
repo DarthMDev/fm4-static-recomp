@@ -24,6 +24,8 @@ class InputContextState {
  public:
   void SetRaceSession(bool race);
   void RaceMenuSceneCreated(uint32_t scene);
+  // Screens that replace a race menu (AUDIO, HUD, TUNE...) also open from the front end.
+  void RaceSubmenuSceneCreated(uint32_t scene);
   void RaceMenuSceneDestroyed(uint32_t scene);
   InputContext Current() const;
 

@@ -1071,6 +1071,12 @@ void Fm4RaceMenuSceneCreated(PPCRegister& r3) {
   REXLOG_INFO("Race menu scene created {:08X}", r3.u32);
 }
 
+void Fm4RaceSubmenuSceneCreated(PPCRegister& r3) {
+  FM4_HOOK_CENSUS();
+  fm4_static_recomp::input::GameInputContext().RaceSubmenuSceneCreated(r3.u32);
+  REXLOG_INFO("Race submenu scene created {:08X}", r3.u32);
+}
+
 void Fm4RaceMenuSceneDestroyed(PPCRegister& r3) {
   FM4_HOOK_CENSUS();
   fm4_static_recomp::input::GameInputContext().RaceMenuSceneDestroyed(r3.u32);

@@ -31,11 +31,11 @@ image = "rev1"
 0x824360D8 = { at = 0x824399E0, fingerprint = "797c0ed40b91b069" }
 # hook Fm4ScenarioPush: changed function, aligned
 0x82450DE0 = { at = 0x82454260, fingerprint = "80213be67f0bf474", changed = "reviewed: a vtable call +0x124 became +0x128 further in; the hook is the entry and reads only r4" }
-# hook Fm4RaceMenuSceneCreated: identical function
+# hook Fm4RaceSubmenuSceneCreated: identical function
 0x824AFCA0 = { at = 0x824B38E0, fingerprint = "6b4589107dcc75a4" }
 # hook Fm4RaceMenuSceneDestroyed: identical function through its vtables
 0x824AFD60 = { at = 0x824B39A0, fingerprint = "59e63f9ae9a5584c" }
-# hook Fm4RaceMenuSceneCreated: most similar function, aligned
+# hook Fm4RaceSubmenuSceneCreated: most similar function, aligned
 0x824B0008 = { at = 0x824B3C48, fingerprint = "1acdb4bc6de2dff7", changed = "reviewed: only relocated addresses differ (base constructor, the CHudOptions vtable 0x820255CC from RTTI, a string, calls); the hook is the entry and reads only r3" }
 # hook Fm4RaceMenuSceneDestroyed: identical function through its vtables
 0x824B0100 = { at = 0x824B3D40, fingerprint = "59e63f9ae9a5584c" }
@@ -43,7 +43,7 @@ image = "rev1"
 0x824B9D84 = { at = 0x824BDCE4, fingerprint = "66a87f7000537c3f" }
 # hook Fm4AutovistaCameraUpdate: identical function
 0x824C7308 = { at = 0x824CB4E8, fingerprint = "09c697f081670e17" }
-# hook Fm4RaceMenuSceneCreated: identical function
+# hook Fm4RaceSubmenuSceneCreated: identical function
 0x824CAAB0 = { at = 0x824CED18, fingerprint = "c19484aecd0e229b" }
 # hook Fm4RaceMenuSceneDestroyed: identical function through its vtables
 0x824CBD90 = { at = 0x824D0070, fingerprint = "59e63f9ae9a5584c" }
@@ -55,7 +55,7 @@ image = "rev1"
 0x8259A1A8 = { at = 0x825A05A0, fingerprint = "1acdb4bc6de2dff7" }
 # hook Fm4RaceMenuSceneDestroyed: identical function through its vtables
 0x8259BE00 = { at = 0x825A2210, fingerprint = "59e63f9ae9a5584c" }
-# hook Fm4RaceMenuSceneCreated: identical function
+# hook Fm4RaceSubmenuSceneCreated: identical function
 0x825A90A8 = { at = 0x825AF638, fingerprint = "53f6a43c2f460734" }
 # hook Fm4RaceMenuSceneDestroyed: identical function
 0x825A9100 = { at = 0x825AF690, fingerprint = "477c4ecd604792d3" }
@@ -93,7 +93,7 @@ image = "rev1"
 0x825CABD0 = { at = 0x825D13D0, fingerprint = "f28f874512aba5ad", changed = "reviewed: only a field after the switch moved (0x2F5C became 0x2F6C at 0x825CAC48); the switch, its byte table and labels are unchanged" }
 # switch 0x825CAB50 label: most similar function, aligned
 0x825CAC20 = { at = 0x825D1420, fingerprint = "66e6cf096313d72d", changed = "reviewed: only a field after the switch moved (0x2F5C became 0x2F6C at 0x825CAC48); the switch, its byte table and labels are unchanged" }
-# hook Fm4RaceMenuSceneCreated: identical function
+# hook Fm4RaceSubmenuSceneCreated: identical function
 0x825DB968 = { at = 0x825E2268, fingerprint = "6b4589107dcc75a4" }
 # hook Fm4RaceMenuSceneDestroyed: identical function through its vtables
 0x825DE0F0 = { at = 0x825E4818, fingerprint = "59e63f9ae9a5584c" }

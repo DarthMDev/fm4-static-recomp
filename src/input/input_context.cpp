@@ -19,6 +19,13 @@ void InputContextState::RaceMenuSceneCreated(uint32_t scene) {
   scenes_.insert(scene);
 }
 
+void InputContextState::RaceSubmenuSceneCreated(uint32_t scene) {
+  const std::lock_guard lock(mutex_);
+  if (race_) {
+    scenes_.insert(scene);
+  }
+}
+
 void InputContextState::RaceMenuSceneDestroyed(uint32_t scene) {
   const std::lock_guard lock(mutex_);
   scenes_.erase(scene);
