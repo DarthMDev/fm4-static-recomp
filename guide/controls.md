@@ -55,6 +55,12 @@ driving_x = "Q,Numpad1"
 
 Changes apply at the next launch.
 
+A key you bind leaves the button it had by default, so it does not do two things (unless you
+bind it to two buttons yourself; `Shift+C` counts as C). A button left with no key gets a new
+one: the old key of the button you moved there, or else a free key. The button prompts in the
+game show where it went, and `runtime.log` lists every move
+(`Controls: driving_right_shoulder C -> F`). Bind it yourself to pick a different key.
+
 **Buttons:** `a`, `b`, `x`, `y`, `left_shoulder`, `right_shoulder`, `left_trigger`,
 `right_trigger`, `lstick_up`, `lstick_down`, `lstick_left`, `lstick_right`, `lstick_press`,
 the same five for `rstick_`, `dpad_up`, `dpad_down`, `dpad_left`, `dpad_right`, `back`,

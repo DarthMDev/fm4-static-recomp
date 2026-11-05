@@ -2,9 +2,11 @@
 // BSD 3-Clause License: see LICENSE in the repository root.
 #include "input/controls.h"
 
+#include <algorithm>
 #include <charconv>
 #include <memory>
 #include <string_view>
+#include <vector>
 
 #include <rex/input/mnk/mnk_bind.h>
 #include <rex/logging.h>
@@ -78,13 +80,118 @@ std::string KnownKeys(std::string_view name, std::string_view bind) {
   return kept;
 }
 
+// No host bind uses these.
+constexpr std::array<std::string_view, 25> kSpareKeys = {
+    "F", "Z", "X", "B", "N", "M", "Y", "U", "O", "H", "V", "R", "T",
+    "G", "J", "K", "L", "I", "P", "1", "2", "3", "4", "5", "6"};
+
+std::vector<std::string_view> Tokens(std::string_view bind) {
+  std::vector<std::string_view> tokens;
+  while (!bind.empty()) {
+    const size_t comma = bind.find(',');
+    tokens.push_back(bind.substr(0, comma));
+    bind = comma == std::string_view::npos ? std::string_view() : bind.substr(comma + 1);
+  }
+  return tokens;
+}
+
+// With mnk_exact_modifiers off a plain bind fires under any modifiers, so "Ctrl+C" and "C"
+// press the same key.
+std::string_view BareKey(std::string_view token) {
+  const size_t plus = token.rfind('+');
+  return plus == std::string_view::npos || plus + 1 == token.size() ? token
+                                                                     : token.substr(plus + 1);
+}
+
+bool Binds(std::string_view bind, std::string_view key) {
+  return std::ranges::any_of(Tokens(bind), [&](std::string_view token) {
+    return BareKey(token) == BareKey(key);
+  });
+}
+
+bool BoundInSet(const BindingSet& set, std::string_view key) {
+  return std::ranges::any_of(set.keys, [&](const std::string& bind) { return Binds(bind, key); });
+}
+
+// One key doing two things surprises the player, and every control must keep a key: a
+// player's key leaves the default controls, and a control left with none takes the old key of
+// the line that took its key, else a spare key, else shares its default as a last resort.
 void LoadSet(const config::HostConfig& config, std::string_view prefix, BindingSet& set) {
+  const BindingSet defaults = set;
+  std::array<bool, size_t(PadControl::kCount)> player{};
+  const auto name_of = [&](size_t i) { return std::string(prefix) + kNames[i].file; };
+  const auto taker_of = [&](std::string_view key) {
+    size_t t = 0;
+    while (t < kNames.size() && !(player[t] && Binds(set.keys[t], key)))
+      ++t;
+    return t;
+  };
   for (size_t i = 0; i < kNames.size(); ++i) {
-    const std::string name = std::string(prefix) + kNames[i].file;
+    const std::string name = name_of(i);
     if (auto value = config.Get(name)) {
       if (std::string keys = KnownKeys(name, *value); !keys.empty()) {
+        for (const std::string_view key : Tokens(keys)) {
+          if (const size_t t = taker_of(key); t < kNames.size()) {
+            REXLOG_WARN("Controls: {} and {} both use {}", name_of(t), name, BareKey(key));
+          }
+        }
         set.keys[i] = std::move(keys);
+        player[i] = true;
       }
+    }
+  }
+  std::array<std::string, size_t(PadControl::kCount)> why;
+  for (size_t i = 0; i < kNames.size(); ++i) {
+    if (player[i])
+      continue;
+    std::string kept;
+    for (const std::string_view key : Tokens(defaults.keys[i])) {
+      if (const size_t t = taker_of(key); t < kNames.size()) {
+        if (why[i].empty()) {
+          why[i] = std::string(key) + " went to " + name_of(t);
+        }
+      } else {
+        kept += kept.empty() ? "" : ",";
+        kept += key;
+      }
+    }
+    if (!kept.empty() && kept != defaults.keys[i]) {
+      REXLOG_INFO("Controls: {} {} -> {} ({})", name_of(i), defaults.keys[i], kept, why[i]);
+    }
+    set.keys[i] = std::move(kept);
+  }
+  for (size_t i = 0; i < kNames.size(); ++i) {
+    if (player[i] || !set.keys[i].empty())
+      continue;
+    for (const std::string_view lost : Tokens(defaults.keys[i])) {
+      const size_t t = taker_of(lost);
+      for (const std::string_view key : Tokens(defaults.keys[t])) {
+        if (!BoundInSet(set, key)) {
+          set.keys[i] = key;
+          REXLOG_INFO("Controls: {} {} -> {} ({} went to {})", name_of(i), defaults.keys[i], key,
+                      lost, name_of(t));
+          break;
+        }
+      }
+      if (!set.keys[i].empty())
+        break;
+    }
+  }
+  for (size_t i = 0; i < kNames.size(); ++i) {
+    if (player[i] || !set.keys[i].empty())
+      continue;
+    for (const std::string_view key : kSpareKeys) {
+      if (!BoundInSet(set, key)) {
+        set.keys[i] = key;
+        REXLOG_INFO("Controls: {} {} -> {} ({}, whose old keys are taken)", name_of(i),
+                    defaults.keys[i], key, why[i]);
+        break;
+      }
+    }
+    if (set.keys[i].empty()) {
+      set.keys[i] = defaults.keys[i];
+      REXLOG_WARN("Controls: {} keeps {} ({}): every spare key is taken", name_of(i),
+                  defaults.keys[i], why[i]);
     }
   }
 }
