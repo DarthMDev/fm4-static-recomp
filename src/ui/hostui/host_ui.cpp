@@ -165,19 +165,6 @@ std::vector<std::string_view> BindTokens(std::string_view bind) {
   return tokens;
 }
 
-// Whether `key` is the key of one of the bind's tokens, modifiers aside.
-bool BindHasKey(std::string_view bind, VirtualKey key) {
-  for (std::string_view token : BindTokens(bind)) {
-    const size_t plus = token.rfind('+');
-    if (rex::ui::ParseVirtualKey(plus == std::string_view::npos || plus + 1 == token.size()
-                                     ? token
-                                     : token.substr(plus + 1)) == key) {
-      return true;
-    }
-  }
-  return false;
-}
-
 }  // namespace
 
 HostUi::HostUi(rex::ReXApp& app, rex::ui::Presenter& presenter, rex::ui::ImmediateDrawer& drawer,
@@ -1181,49 +1168,8 @@ void HostUi::OnKeyDown(rex::ui::KeyEvent& e) {
   if (int(key) == captured_key_) {
     return;
   }
-  switch (key) {
-    case VirtualKey::kUp:
-    case VirtualKey::kNumpad8:
-      Apply(NavCommand::kUp);
-      break;
-    case VirtualKey::kDown:
-    case VirtualKey::kNumpad2:
-      Apply(NavCommand::kDown);
-      break;
-    case VirtualKey::kLeft:
-    case VirtualKey::kNumpad4:
-      Apply(NavCommand::kLeft);
-      break;
-    case VirtualKey::kRight:
-    case VirtualKey::kNumpad6:
-      Apply(NavCommand::kRight);
-      break;
-    case VirtualKey::kSpace:
-    case VirtualKey::kReturn:
-      if (!e.prev_state()) {
-        Apply(NavCommand::kAccept);
-      }
-      break;
-    case VirtualKey::kBack:
-    case VirtualKey::kEscape:
-      if (!e.prev_state()) {
-        Apply(NavCommand::kBack);
-      }
-      break;
-    default:
-      if (e.prev_state()) {
-        break;
-      }
-      if (BindHasKey(keys_.apply, key)) {
-        Apply(NavCommand::kApply);
-      } else if (BindHasKey(keys_.clear, key)) {
-        Apply(NavCommand::kClear);
-      } else if (BindHasKey(keys_.previous_tab, key)) {
-        Apply(NavCommand::kPreviousTab);
-      } else if (BindHasKey(keys_.next_tab, key)) {
-        Apply(NavCommand::kNextTab);
-      }
-      break;
+  if (const auto command = KeyCommand(keys_, key, e.prev_state())) {
+    Apply(*command);
   }
 }
 

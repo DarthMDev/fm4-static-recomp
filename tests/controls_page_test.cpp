@@ -299,6 +299,39 @@ TEST_CASE("The pad's X, LB and RB clear and switch tabs", "[controls_page]") {
   CHECK(pad.Poll(PadNavigator::kRightShoulder, 0, 0, 30) == std::vector{NavCommand::kNextTab});
 }
 
+TEST_CASE("The page's keys follow the menu binds and keep the arrows, Enter and Esc",
+          "[menu]") {
+  using fm4_static_recomp::hostui::KeyCommand;
+  using fm4_static_recomp::hostui::MenuKeys;
+  using rex::ui::VirtualKey;
+  MenuKeys keys{.up = "Up,W", .down = "Down,S", .left = "Left,A", .right = "Right,D",
+                .accept = "Return,Space", .back = "Escape,Backspace", .apply = "Y", .clear = "X",
+                .previous_tab = "Q", .next_tab = "E"};
+  CHECK(KeyCommand(keys, VirtualKey::kW, false) == NavCommand::kUp);
+  CHECK(KeyCommand(keys, VirtualKey::kA, false) == NavCommand::kLeft);
+  CHECK(KeyCommand(keys, VirtualKey::kS, true) == NavCommand::kDown);
+  CHECK(KeyCommand(keys, VirtualKey::kD, false) == NavCommand::kRight);
+  CHECK(KeyCommand(keys, VirtualKey::kNumpad8, false) == NavCommand::kUp);
+  CHECK(KeyCommand(keys, VirtualKey::kY, false) == NavCommand::kApply);
+  CHECK(KeyCommand(keys, VirtualKey::kX, false) == NavCommand::kClear);
+  CHECK(KeyCommand(keys, VirtualKey::kE, false) == NavCommand::kNextTab);
+  CHECK(KeyCommand(keys, VirtualKey::kZ, false) == std::nullopt);
+  // Buttons fire once per press; directions repeat.
+  CHECK(KeyCommand(keys, VirtualKey::kSpace, true) == std::nullopt);
+
+  // Rebound menu keys: the new ones work, the fixed ones still do.
+  keys.up = "I";
+  keys.accept = "F";
+  keys.back = "G";
+  CHECK(KeyCommand(keys, VirtualKey::kI, false) == NavCommand::kUp);
+  CHECK(KeyCommand(keys, VirtualKey::kW, false) == std::nullopt);
+  CHECK(KeyCommand(keys, VirtualKey::kUp, false) == NavCommand::kUp);
+  CHECK(KeyCommand(keys, VirtualKey::kF, false) == NavCommand::kAccept);
+  CHECK(KeyCommand(keys, VirtualKey::kReturn, false) == NavCommand::kAccept);
+  CHECK(KeyCommand(keys, VirtualKey::kG, false) == NavCommand::kBack);
+  CHECK(KeyCommand(keys, VirtualKey::kEscape, false) == NavCommand::kBack);
+}
+
 TEST_CASE("Pressed keys get their bind names; function keys and mouse buttons none",
           "[controls_page]") {
   using fm4_static_recomp::input::BindKeyName;

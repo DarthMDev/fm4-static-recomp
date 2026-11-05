@@ -4,9 +4,95 @@
 
 #include <algorithm>
 #include <cmath>
+#include <string_view>
 #include <utility>
 
+#include <rex/ui/keybinds.h>
+
 namespace fm4_static_recomp::hostui {
+namespace {
+
+// Whether `key` is the key of one of the bind's tokens, modifiers aside.
+bool BindHasKey(std::string_view bind, rex::ui::VirtualKey key) {
+  while (!bind.empty()) {
+    const size_t comma = bind.find(',');
+    std::string_view token = bind.substr(0, comma);
+    bind = comma == std::string_view::npos ? std::string_view() : bind.substr(comma + 1);
+    while (token.starts_with(' '))
+      token.remove_prefix(1);
+    while (token.ends_with(' '))
+      token.remove_suffix(1);
+    const size_t plus = token.rfind('+');
+    if (!token.empty() &&
+        rex::ui::ParseVirtualKey(plus == std::string_view::npos || plus + 1 == token.size()
+                                     ? token
+                                     : token.substr(plus + 1)) == key) {
+      return true;
+    }
+  }
+  return false;
+}
+
+}  // namespace
+
+std::optional<NavCommand> KeyCommand(const MenuKeys& keys, rex::ui::VirtualKey key, bool repeat) {
+  using rex::ui::VirtualKey;
+  std::optional<NavCommand> direction;
+  std::optional<NavCommand> button;
+  switch (key) {
+    case VirtualKey::kUp:
+    case VirtualKey::kNumpad8:
+      direction = NavCommand::kUp;
+      break;
+    case VirtualKey::kDown:
+    case VirtualKey::kNumpad2:
+      direction = NavCommand::kDown;
+      break;
+    case VirtualKey::kLeft:
+    case VirtualKey::kNumpad4:
+      direction = NavCommand::kLeft;
+      break;
+    case VirtualKey::kRight:
+    case VirtualKey::kNumpad6:
+      direction = NavCommand::kRight;
+      break;
+    case VirtualKey::kSpace:
+    case VirtualKey::kReturn:
+      button = NavCommand::kAccept;
+      break;
+    case VirtualKey::kBack:
+    case VirtualKey::kEscape:
+      button = NavCommand::kBack;
+      break;
+    default:
+      if (BindHasKey(keys.up, key)) {
+        direction = NavCommand::kUp;
+      } else if (BindHasKey(keys.down, key)) {
+        direction = NavCommand::kDown;
+      } else if (BindHasKey(keys.left, key)) {
+        direction = NavCommand::kLeft;
+      } else if (BindHasKey(keys.right, key)) {
+        direction = NavCommand::kRight;
+      } else if (BindHasKey(keys.accept, key)) {
+        button = NavCommand::kAccept;
+      } else if (BindHasKey(keys.back, key)) {
+        button = NavCommand::kBack;
+      } else if (BindHasKey(keys.apply, key)) {
+        button = NavCommand::kApply;
+      } else if (BindHasKey(keys.clear, key)) {
+        button = NavCommand::kClear;
+      } else if (BindHasKey(keys.previous_tab, key)) {
+        button = NavCommand::kPreviousTab;
+      } else if (BindHasKey(keys.next_tab, key)) {
+        button = NavCommand::kNextTab;
+      }
+      break;
+  }
+  if (direction) {
+    return direction;
+  }
+  return repeat ? std::nullopt : button;
+}
 
 MenuScreen::MenuScreen(std::string title, std::vector<MenuRow> rows)
     : title_(std::move(title)), rows_(std::move(rows)) {

@@ -53,6 +53,8 @@ The mouse is not used.
    Career → My Profile → Options → GRAPHICS) and press **RB** (the menu's RB key on the
    keyboard, **E** by default) to reach **KEYBOARD**; **LB** goes back, and clicking a tab's
    name works too. The list has a **DRIVING** section (on the track) and a **MENUS** section.
+   The page moves with your menu keys (**W A S D** by default), and always with the arrow keys,
+   Enter and Esc.
 2. Each row is one controller button with its primary and secondary key. In DRIVING the row
    says what the button does in the controller layout chosen in the game's options, so another
    layout renames the rows.

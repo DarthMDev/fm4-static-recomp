@@ -38,15 +38,6 @@ struct MenuTab {
   std::function<std::unique_ptr<MenuScreen>()> create;
 };
 
-// The keyboard's keys for the menu buttons Y (apply), X (clear), LB and RB (tabs), in the
-// keyboard driver's bind syntax ("Y", "Y,P").
-struct MenuKeys {
-  std::string apply;
-  std::string clear;
-  std::string previous_tab;
-  std::string next_tab;
-};
-
 // A host-drawn menu screen over the title, after FM4's HUD Options screen:
 // drawn with the title's own vector fonts and UI textures, rasterized at load
 // from the game data, and laid out in the title's 1280x720 space inside the

@@ -367,7 +367,13 @@ class Fm4App final : public rex::ReXApp {
   fm4_static_recomp::hostui::MenuKeys CurrentMenuKeys() const {
     using fm4_static_recomp::input::PadControl;
     const auto& menu = controls_.menu.keys;
-    return {.apply = menu[size_t(PadControl::kY)],
+    return {.up = menu[size_t(PadControl::kDpadUp)],
+            .down = menu[size_t(PadControl::kDpadDown)],
+            .left = menu[size_t(PadControl::kDpadLeft)],
+            .right = menu[size_t(PadControl::kDpadRight)],
+            .accept = menu[size_t(PadControl::kA)],
+            .back = menu[size_t(PadControl::kB)],
+            .apply = menu[size_t(PadControl::kY)],
             .clear = menu[size_t(PadControl::kX)],
             .previous_tab = menu[size_t(PadControl::kLeftShoulder)],
             .next_tab = menu[size_t(PadControl::kRightShoulder)]};

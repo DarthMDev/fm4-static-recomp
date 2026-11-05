@@ -10,6 +10,8 @@
 #include <utility>
 #include <vector>
 
+#include <rex/ui/virtual_key.h>
+
 namespace fm4_static_recomp::hostui {
 
 enum class NavCommand {
@@ -25,6 +27,26 @@ enum class NavCommand {
   kPreviousTab,  // LB
   kNextTab,      // RB
 };
+
+// The keyboard's keys for the menu's pad buttons, in the keyboard driver's bind syntax
+// ("Up,W", "Y").
+struct MenuKeys {
+  std::string up;
+  std::string down;
+  std::string left;
+  std::string right;
+  std::string accept;
+  std::string back;
+  std::string apply;
+  std::string clear;
+  std::string previous_tab;
+  std::string next_tab;
+};
+
+// The command a key press gives: the arrows, Numpad 8 4 2 6, Enter, Space, Esc and
+// Backspace always (so no rebinding locks the page), then the menu binds. Directions repeat
+// with the key; the others act once per press.
+std::optional<NavCommand> KeyCommand(const MenuKeys& keys, rex::ui::VirtualKey key, bool repeat);
 
 // A whole number in an inclusive range, drawn as the game's tuning slider.
 struct MenuSlider {
