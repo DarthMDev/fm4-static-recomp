@@ -1254,7 +1254,7 @@ bool Fm4OpenGraphicsOption(PPCRegister& r4) {
 // fade, so wherever that happens to a loud voice the mix steps at the block's first samples: the
 // clicks while revving at the limiter and shifting, where the top engine layers and the turbo are
 // restarted every few blocks (the same on a console). The render thread lays each mixed block out
-// as 6 channels of 256 big-endian floats and hands it to sub_82C56B78 before submitting it; there,
+// as 6 channels of 256 big-endian floats and hands it to 0x82C56B78 before submitting it; there,
 // a step at a block's start well above the channel's own sample-to-sample movement is taken out:
 // its first samples are bridged from the block before, and the offset that is left fades out over
 // the next 128 samples. AUDIO POP FIX on the F6 page switches this and the decoder's loop
@@ -1315,12 +1315,10 @@ void DeclickBlockStart(float* x, MixEdgeState& state) {
 }
 }  // namespace
 
-extern "C" void __imp__sub_82C56B78(PPCContext& __restrict ctx, uint8_t* base);
-
-extern "C" void sub_82C56B78(PPCContext& __restrict ctx, uint8_t* base) {
-  // Only a call from the render thread's loop (not an entry at the return from its copy).
-  const uint32_t entry = ctx.dispatch_address, frame = ctx.r4.u32;
-  if (REXCVAR_GET(fm4_audio_pop_fix) && (entry == 0 || entry == 0x82C56B78u) && frame) {
+void Fm4AudioMixBlock(PPCContext&, uint8_t* base, PPCRegister& r4) {
+  FM4_HOOK_CENSUS();
+  const uint32_t frame = r4.u32;
+  if (REXCVAR_GET(fm4_audio_pop_fix) && frame) {
     for (uint32_t c = 0; c < kMixChannels; c++) {
       uint8_t* const samples = base + frame + c * kMixBlock * 4;
       std::array<float, kMixBlock> x;
@@ -1335,7 +1333,6 @@ extern "C" void sub_82C56B78(PPCContext& __restrict ctx, uint8_t* base) {
   } else {
     for (MixEdgeState& state : g_mix_edges) state.valid = false;
   }
-  __imp__sub_82C56B78(ctx, base);
 }
 
 namespace fm4_static_recomp {

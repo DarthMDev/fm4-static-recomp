@@ -300,3 +300,11 @@ registers = ["r3"]
 address = 0x825BFAC0
 name = "Fm4RaceMenuSceneDestroyed"
 registers = ["r3"]
+
+# The audio render thread hands each mixed block (r4: 6 channels of 256 big-endian floats) to
+# this function before submitting it: AUDIO POP FIX smooths the steps at the block's start.
+[[midasm_hook]]
+address = 0x82C56B78
+name = "Fm4AudioMixBlock"
+context = true
+registers = ["r4"]
