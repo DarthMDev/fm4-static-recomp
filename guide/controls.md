@@ -55,7 +55,9 @@ The mouse is not used.
    and an optional secondary key (**NOT SET** until you click it); the **✕** beside a
    secondary key clears it. **RESET** puts one action back to its default, **RESET ALL** the
    whole list.
-4. If two actions use the same key, both show "Also used by". Nothing stops you: change one
+4. If you give an action a key that another action has by default, the game moves that other
+   action to a different key when it starts, and the panel says so under it. If you set two
+   actions to the same key yourself, both show "Also used by". Nothing stops you: change one
    of them if that is not what you meant.
 5. Esc is a key like any other, so it does not back out of a rebind: click **CANCEL** or
    anywhere else instead.

@@ -160,12 +160,20 @@ public class ControlsSettingsTests
     }
 
     [Fact]
-    public void Conflicts_name_the_other_rows()
+    public void The_defaults_do_not_conflict_with_each_other()
     {
         using var temp = new TempDir();
         var settings = new ControlsSettings(temp.File("controls.toml"));
-        Assert.Empty(settings.ConflictsWith(Driving, "x"));
-        settings.SetKey(Driving, "x", 0, "S");
+        foreach (var set in Enum.GetValues<ControlSet>())
+            foreach (var row in ControlsCatalog.Rows(set))
+                Assert.True(settings.ConflictsWith(set, row.Id).Count == 0, $"{set} {row.Label}: {string.Join(", ", settings.ConflictsWith(set, row.Id))}");
+    }
+
+    [Fact]
+    public void Conflicts_name_the_other_rows()
+    {
+        using var temp = new TempDir();
+        var settings = new ControlsSettings(Write(temp, "driving_x = \"S\"\ndriving_left_trigger = \"S\"\n"));
         Assert.Equal(["Brake"], settings.ConflictsWith(Driving, "x"));
         Assert.Equal(["Gear down"], settings.ConflictsWith(Driving, "left_trigger"));
         Assert.Empty(settings.ConflictsWith(Menu, "left_trigger"));
@@ -174,13 +182,56 @@ public class ControlsSettingsTests
     }
 
     [Fact]
-    public void A_combination_conflicts_with_its_bare_key_and_its_modifier_key()
+    public void A_key_you_bind_leaves_the_default_action_that_had_it()
+    {
+        using var temp = new TempDir();
+        var settings = new ControlsSettings(Write(temp, "driving_x = \"S\"\n"));
+        Assert.Empty(settings.ConflictsWith(Driving, "x"));
+        Assert.Empty(settings.ConflictsWith(Driving, "left_trigger"));
+        Assert.Equal(["Gear down"], settings.TakenBy(Driving, "left_trigger"));
+        Assert.Empty(settings.TakenBy(Driving, "x"));
+    }
+
+    [Fact]
+    public void An_edit_made_in_the_panel_counts_as_yours_before_it_is_saved()
+    {
+        using var temp = new TempDir();
+        var settings = new ControlsSettings(temp.File("controls.toml"));
+        Assert.Empty(settings.TakenBy(Driving, "left_trigger"));
+        settings.SetKey(Driving, "x", 0, "S");
+        Assert.Equal(["Gear down"], settings.TakenBy(Driving, "left_trigger"));
+        Assert.Empty(settings.ConflictsWith(Driving, "left_trigger"));
+        settings.Reset(Driving, "x");
+        Assert.Empty(settings.TakenBy(Driving, "left_trigger"));
+        Assert.False(settings.IsExplicit(Driving, "x"));
+    }
+
+    [Fact]
+    public void A_line_equal_to_the_default_is_still_yours_as_the_game_reads_it()
+    {
+        using var temp = new TempDir();
+        var settings = new ControlsSettings(Write(temp, "driving_x = \"Q\"\n"));
+        Assert.True(settings.IsExplicit(Driving, "x"));
+        Assert.False(settings.IsExplicit(Driving, "y"));
+    }
+
+    [Fact]
+    public void A_partly_taken_default_is_named_too()
+    {
+        using var temp = new TempDir();
+        var settings = new ControlsSettings(Write(temp, "menu_x = \"W\"\n"));
+        Assert.Equal(["X button"], settings.TakenBy(Menu, "dpad_up"));
+        Assert.Empty(settings.ConflictsWith(Menu, "dpad_up"));
+    }
+
+    [Fact]
+    public void A_combination_conflicts_with_its_modifier_key_and_takes_its_bare_key_from_the_default()
     {
         using var temp = new TempDir();
         var settings = new ControlsSettings(Write(temp, "driving_x = \"Shift+W\"\ndriving_y = \"Ctrl+Q\"\n"));
-        Assert.Equal(["Throttle", "Clutch"], settings.ConflictsWith(Driving, "x"));
-        Assert.Contains("Gear down", settings.ConflictsWith(Driving, "right_trigger"));
-        Assert.Contains("Gear down", settings.ConflictsWith(Driving, "left_shoulder"));
+        Assert.Equal(["Clutch"], settings.ConflictsWith(Driving, "x"));
+        Assert.Equal(["Gear down"], settings.ConflictsWith(Driving, "left_shoulder"));
+        Assert.Equal(["Gear down"], settings.TakenBy(Driving, "right_trigger"));
         Assert.DoesNotContain("Rewind", settings.ConflictsWith(Driving, "x"));
     }
 
@@ -223,20 +274,19 @@ public class ControlsSettingsTests
     public void Two_equal_keys_in_one_row_conflict_only_with_other_rows()
     {
         using var temp = new TempDir();
-        var settings = new ControlsSettings(Write(temp, "driving_x = \"W,W\"\n"));
+        var settings = new ControlsSettings(Write(temp, "driving_x = \"W,W\"\ndriving_right_trigger = \"W\"\n"));
         Assert.Equal(["Throttle"], settings.ConflictsWith(Driving, "x"));
-        Assert.DoesNotContain("Gear down", settings.ConflictsWith(Driving, "x"));
     }
 
     [Fact]
-    public void Resetting_a_row_onto_a_key_another_row_holds_warns_on_both()
+    public void Resetting_a_row_onto_a_key_another_row_holds_hands_it_to_that_row()
     {
         using var temp = new TempDir();
         var settings = new ControlsSettings(Write(temp, "driving_b = \"Z\"\ndriving_left_trigger = \"E\"\n"));
         Assert.Empty(settings.ConflictsWith(Driving, "b"));
         settings.Reset(Driving, "b");
-        Assert.Equal(["Brake"], settings.ConflictsWith(Driving, "b"));
-        Assert.Equal(["Gear up"], settings.ConflictsWith(Driving, "left_trigger"));
+        Assert.Empty(settings.ConflictsWith(Driving, "b"));
+        Assert.Equal(["Brake"], settings.TakenBy(Driving, "b"));
     }
 
     [Fact]

@@ -256,6 +256,9 @@ public partial class MainWindow
                     !_controlsOtherOpen && ControlsCatalog.Rows(set).Any(r => r.Other && r.Label == label) ? $"{label} (under OTHER BUTTONS)" : label)),
                 Foreground = Brush("AccentBrush"),
                 FontSize = 13, Margin = new Thickness(260, 0, 0, 2), TextWrapping = TextWrapping.Wrap });
+        if (_controls.TakenBy(set, row.Id) is { Count: > 0 } takers)
+            column.Children.Add(new TextBlock { Text = $"{string.Join(", ", takers)} uses a key of this action, so the game moves it to another key when it starts.",
+                Foreground = Brush("HelpBrush"), FontSize = 13, Margin = new Thickness(260, 0, 0, 2), TextWrapping = TextWrapping.Wrap });
         return column;
     }
 

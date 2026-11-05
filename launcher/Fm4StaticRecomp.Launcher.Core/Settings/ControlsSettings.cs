@@ -65,15 +65,32 @@ public sealed class ControlsSettings(string tomlPath)
     public bool IsDefault(ControlSet set, string id) =>
         string.Join(",", Keys(set, id)) == ControlsCatalog.DefaultKeys(set, id);
 
-    // Labels of the other rows of the set that one key press can fire together with this one. The
-    // game does not match modifiers exactly (mnk_exact_modifiers is off), so a bind fires whenever
-    // its keys are held: Shift+W also fires W and a bare Shift.
+    // Whether the game reads this row as the player's own (src\input\controls.cpp LoadSet): a line it
+    // can use, or an edit here that is not simply the default again.
+    public bool IsExplicit(ControlSet set, string id) =>
+        _edited.TryGetValue(ControlsCatalog.FileKey(set, id), out var edit) ? edit.Value != edit.Default : StoredKeys(set, id).Count > 0;
+
+    // Labels of the other rows that one key press fires together with this one, which the game leaves
+    // alone: two rows you set on the same key, or a key held as a modifier (Shift+W also fires a bare
+    // Shift). It does not match modifiers exactly (mnk_exact_modifiers is off), so a bind fires whenever
+    // its keys are held. A default row that has a key you gave another row is not listed: the game takes
+    // that key off it at start (see TakenBy).
     public IReadOnlyList<string> ConflictsWith(ControlSet set, string id)
     {
-        var mine = Keys(set, id).Select(Pressed).ToList();
+        var mine = Keys(set, id);
+        var mineExplicit = IsExplicit(set, id);
         return ControlsCatalog.Rows(set)
-            .Where(r => r.Id != id && Keys(set, r.Id).Select(Pressed).Any(other => mine.Any(m => m.IsSubsetOf(other) || other.IsSubsetOf(m))))
+            .Where(r => r.Id != id && Conflict(mine, mineExplicit, Keys(set, r.Id), IsExplicit(set, r.Id)))
             .Select(r => r.Label).ToList();
+    }
+
+    // For a default row: labels of the rows you set that have one of its keys. The game takes those keys
+    // off this row when it starts and, if none is left, gives it another one.
+    public IReadOnlyList<string> TakenBy(ControlSet set, string id)
+    {
+        if (IsExplicit(set, id)) return [];
+        var mine = Keys(set, id);
+        return ControlsCatalog.Rows(set).Where(r => r.Id != id && IsExplicit(set, r.Id) && SameKey(mine, Keys(set, r.Id))).Select(r => r.Label).ToList();
     }
 
     public double Ramp(string key) =>
@@ -112,12 +129,11 @@ public sealed class ControlsSettings(string tomlPath)
     // an unreadable version is assumed to.
     public static bool Supports(string version) => !Version.TryParse(version, out var parsed) || parsed >= new Version(0, 2, 0);
 
-    private List<string> SavedKeys(ControlSet set, string id)
-    {
-        var stored = _file.Get(ControlsCatalog.FileKey(set, id));
-        var keys = stored is null ? [] : KeyNames.Split(stored).Where(KeyNames.IsBind).ToList();
-        return keys.Count > 0 ? keys : KeyNames.Split(ControlsCatalog.DefaultKeys(set, id));
-    }
+    private List<string> StoredKeys(ControlSet set, string id) =>
+        _file.Get(ControlsCatalog.FileKey(set, id)) is { } stored ? KeyNames.Split(stored).Where(KeyNames.IsBind).ToList() : [];
+
+    private List<string> SavedKeys(ControlSet set, string id) =>
+        StoredKeys(set, id) is { Count: > 0 } keys ? keys : KeyNames.Split(ControlsCatalog.DefaultKeys(set, id));
 
     private void Store(ControlSet set, string id, List<string> keys)
     {
@@ -136,6 +152,25 @@ public sealed class ControlsSettings(string tomlPath)
 
     private double SavedRamp(string key) =>
         _file.Get(key) is { } stored && ParseRamp(stored) is { } seconds ? seconds : RampRowOf(key).Default;
+
+    private static bool Conflict(IReadOnlyList<string> mine, bool mineExplicit, IReadOnlyList<string> other, bool otherExplicit)
+    {
+        if (!mineExplicit && !otherExplicit) return false;
+        var sameKey = SameKey(mine, other);
+        if (mineExplicit && otherExplicit && sameKey) return true;
+        if (sameKey) return false;
+        var held = mine.Select(Pressed).ToList();
+        return other.Select(Pressed).Any(o => held.Any(m => m.IsSubsetOf(o) || o.IsSubsetOf(m)));
+    }
+
+    // The game's own test (BareKey in LoadSet): the same key once modifiers are ignored.
+    private static bool SameKey(IReadOnlyList<string> a, IReadOnlyList<string> b) => a.Any(x => b.Any(y => BareKey(x) == BareKey(y)));
+
+    private static string BareKey(string token)
+    {
+        var plus = token.LastIndexOf('+');
+        return plus < 0 || plus + 1 == token.Length ? token : token[(plus + 1)..];
+    }
 
     // The keys held down to fire a bind, as the game names them once: Ctrl is Control, NumpadEnter is Return.
     private static HashSet<string> Pressed(string bind) =>
