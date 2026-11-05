@@ -188,8 +188,10 @@ public class ControlsSettingsTests
         var settings = new ControlsSettings(Write(temp, "driving_x = \"S\"\n"));
         Assert.Empty(settings.ConflictsWith(Driving, "x"));
         Assert.Empty(settings.ConflictsWith(Driving, "left_trigger"));
-        Assert.Equal(["Gear down"], settings.TakenBy(Driving, "left_trigger"));
-        Assert.Empty(settings.TakenBy(Driving, "x"));
+        Assert.Equal(["Gear down"], settings.TakenFrom(Driving, "left_trigger").By);
+        Assert.Equal(["S"], settings.TakenFrom(Driving, "left_trigger").Lost);
+        Assert.Empty(settings.TakenFrom(Driving, "left_trigger").Kept);
+        Assert.Empty(settings.TakenFrom(Driving, "x").By);
     }
 
     [Fact]
@@ -197,12 +199,12 @@ public class ControlsSettingsTests
     {
         using var temp = new TempDir();
         var settings = new ControlsSettings(temp.File("controls.toml"));
-        Assert.Empty(settings.TakenBy(Driving, "left_trigger"));
+        Assert.Empty(settings.TakenFrom(Driving, "left_trigger").By);
         settings.SetKey(Driving, "x", 0, "S");
-        Assert.Equal(["Gear down"], settings.TakenBy(Driving, "left_trigger"));
+        Assert.Equal(["Gear down"], settings.TakenFrom(Driving, "left_trigger").By);
         Assert.Empty(settings.ConflictsWith(Driving, "left_trigger"));
         settings.Reset(Driving, "x");
-        Assert.Empty(settings.TakenBy(Driving, "left_trigger"));
+        Assert.Empty(settings.TakenFrom(Driving, "left_trigger").By);
         Assert.False(settings.IsExplicit(Driving, "x"));
     }
 
@@ -220,7 +222,10 @@ public class ControlsSettingsTests
     {
         using var temp = new TempDir();
         var settings = new ControlsSettings(Write(temp, "menu_x = \"W\"\n"));
-        Assert.Equal(["X button"], settings.TakenBy(Menu, "dpad_up"));
+        var taken = settings.TakenFrom(Menu, "dpad_up");
+        Assert.Equal(["X button"], taken.By);
+        Assert.Equal(["W"], taken.Lost);
+        Assert.Equal(["Up"], taken.Kept);
         Assert.Empty(settings.ConflictsWith(Menu, "dpad_up"));
     }
 
@@ -231,7 +236,7 @@ public class ControlsSettingsTests
         var settings = new ControlsSettings(Write(temp, "driving_x = \"Shift+W\"\ndriving_y = \"Ctrl+Q\"\n"));
         Assert.Equal(["Clutch"], settings.ConflictsWith(Driving, "x"));
         Assert.Equal(["Gear down"], settings.ConflictsWith(Driving, "left_shoulder"));
-        Assert.Equal(["Gear down"], settings.TakenBy(Driving, "right_trigger"));
+        Assert.Equal(["Gear down"], settings.TakenFrom(Driving, "right_trigger").By);
         Assert.DoesNotContain("Rewind", settings.ConflictsWith(Driving, "x"));
     }
 
@@ -286,7 +291,7 @@ public class ControlsSettingsTests
         Assert.Empty(settings.ConflictsWith(Driving, "b"));
         settings.Reset(Driving, "b");
         Assert.Empty(settings.ConflictsWith(Driving, "b"));
-        Assert.Equal(["Brake"], settings.TakenBy(Driving, "b"));
+        Assert.Equal(["Brake"], settings.TakenFrom(Driving, "b").By);
     }
 
     [Fact]
@@ -332,9 +337,10 @@ public class ControlsSettingsTests
 
     [Theory]
     [InlineData("0.1.3", false)]
-    [InlineData("0.2.0", true)]
-    [InlineData("0.2.2", true)]
-    [InlineData("0.3.0", true)]
+    [InlineData("0.2.2", false)]
+    [InlineData("0.3.1", false)]
+    [InlineData("0.3.2", true)]
+    [InlineData("0.4.0", true)]
     [InlineData("1.0.0", true)]
     [InlineData("weird", true)]
     public void Supports_by_version(string version, bool expected) => Assert.Equal(expected, ControlsSettings.Supports(version));

@@ -17,6 +17,8 @@ public sealed class ControlsSettings(string tomlPath)
 
     private sealed record Edit(string Value, string Default);
 
+    public sealed record KeysTaken(IReadOnlyList<string> By, IReadOnlyList<string> Lost, IReadOnlyList<string> Kept);
+
     private readonly Dictionary<string, Edit> _edited = [];
     private TomlFile _file = TomlFile.Load(tomlPath);
 
@@ -84,13 +86,17 @@ public sealed class ControlsSettings(string tomlPath)
             .Select(r => r.Label).ToList();
     }
 
-    // For a default row: labels of the rows you set that have one of its keys. The game takes those keys
-    // off this row when it starts and, if none is left, gives it another one.
-    public IReadOnlyList<string> TakenBy(ControlSet set, string id)
+    // For a default row: the rows you set that have one of its keys (By), the keys of this row they take
+    // (Lost) and the keys it keeps. The game takes the lost keys off this row when it starts and, if none
+    // is left, gives it another one.
+    public KeysTaken TakenFrom(ControlSet set, string id)
     {
-        if (IsExplicit(set, id)) return [];
+        if (IsExplicit(set, id)) return new([], [], Keys(set, id));
         var mine = Keys(set, id);
-        return ControlsCatalog.Rows(set).Where(r => r.Id != id && IsExplicit(set, r.Id) && SameKey(mine, Keys(set, r.Id))).Select(r => r.Label).ToList();
+        var takers = ControlsCatalog.Rows(set).Where(r => r.Id != id && IsExplicit(set, r.Id)).ToList();
+        var lost = mine.Where(k => takers.Any(r => SameKey([k], Keys(set, r.Id)))).ToList();
+        var by = takers.Where(r => SameKey(lost, Keys(set, r.Id))).Select(r => r.Label).ToList();
+        return new(by, lost, mine.Except(lost).ToList());
     }
 
     public double Ramp(string key) =>
@@ -125,9 +131,9 @@ public sealed class ControlsSettings(string tomlPath)
         _edited.Clear();
     }
 
-    // 0.2.0 is the first release with the defaults the panel shows (0.1.3 read the file with other ramps);
-    // an unreadable version is assumed to.
-    public static bool Supports(string version) => !Version.TryParse(version, out var parsed) || parsed >= new Version(0, 2, 0);
+    // 0.3.2 is the first release with the menu defaults the panel shows and the game's own moving of a
+    // default key you bind elsewhere (#59); an unreadable version is assumed to.
+    public static bool Supports(string version) => !Version.TryParse(version, out var parsed) || parsed >= new Version(0, 3, 2);
 
     private List<string> StoredKeys(ControlSet set, string id) =>
         _file.Get(ControlsCatalog.FileKey(set, id)) is { } stored ? KeyNames.Split(stored).Where(KeyNames.IsBind).ToList() : [];

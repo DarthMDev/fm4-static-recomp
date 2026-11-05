@@ -55,8 +55,9 @@ The mouse is not used.
    and an optional secondary key (**NOT SET** until you click it); the **✕** beside a
    secondary key clears it. **RESET** puts one action back to its default, **RESET ALL** the
    whole list.
-4. If you give an action a key that another action has by default, the game moves that other
-   action to a different key when it starts, and the panel says so under it. If you set two
+4. If you give an action a key that another action has by default, the game takes that key
+   off the other action when it starts (it keeps its other key if it has one, otherwise it gets
+   a new key), and the panel says so under it, with the lost key dimmed. If you set two
    actions to the same key yourself, both show "Also used by". Nothing stops you: change one
    of them if that is not what you meant.
 5. Esc is a key like any other, so it does not back out of a rebind: click **CANCEL** or
@@ -73,8 +74,8 @@ full and to return to rest; lower is snappier.
 
 Or create `config\controls.toml` in the state folder and add `menu_<button>` or
 `driving_<button>` lines. The launcher reads it and leaves the lines of actions you do not
-change as they are; changing an action rewrites its line. A value lists keys separated by
-commas:
+change as they are; changing an action rewrites its line (or removes it when you put the
+keys back to the default). A value lists keys separated by commas:
 
 ```toml
 driving_x = "Q,Numpad1"

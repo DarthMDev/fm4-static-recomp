@@ -102,7 +102,7 @@ public partial class MainWindow
             ControlsBody.Children.Add(Help(_controlsProblem
                 ?? (_host?.Settings.ActiveVersion is null
                     ? "Build the game first."
-                    : "This version of the game does not read the keyboard controls file. Update the game to change keys.")));
+                    : "CONTROLS needs game version 0.3.2 or later. Update the game to change keys.")));
             return;
         }
         if (_controls.FileIsMalformed)
@@ -174,6 +174,7 @@ public partial class MainWindow
     {
         var set = _controlSet;
         var keys = _controls!.Keys(set, row.Id);
+        var taken = _controls.TakenFrom(set, row.Id);
         var line = new Grid { ColumnDefinitions = new ColumnDefinitions("260,*,Auto") };
         line.Children.Add(new StackPanel
         {
@@ -189,7 +190,7 @@ public partial class MainWindow
             var index = slot;
             var empty = slot >= keys.Count;
             var capturing = _capture == new Capture(set, row.Id, empty ? -1 : slot);
-            var idle = empty ? Brush("HelpBrush") : null;
+            var idle = empty || taken.Lost.Contains(keys[slot]) ? Brush("HelpBrush") : null;
             var text = empty ? "NOT SET" : KeyCap(keys[slot]);
             var cap = new Button { Content = capturing ? "PRESS A KEY…" : text, MinWidth = 96, Margin = new Thickness(0, 0, 4, 4), Classes = { "quiet" } };
             if (capturing)
@@ -256,9 +257,13 @@ public partial class MainWindow
                     !_controlsOtherOpen && ControlsCatalog.Rows(set).Any(r => r.Other && r.Label == label) ? $"{label} (under OTHER BUTTONS)" : label)),
                 Foreground = Brush("AccentBrush"),
                 FontSize = 13, Margin = new Thickness(260, 0, 0, 2), TextWrapping = TextWrapping.Wrap });
-        if (_controls.TakenBy(set, row.Id) is { Count: > 0 } takers)
-            column.Children.Add(new TextBlock { Text = $"{string.Join(", ", takers)} uses a key of this action, so the game moves it to another key when it starts.",
-                Foreground = Brush("HelpBrush"), FontSize = 13, Margin = new Thickness(260, 0, 0, 2), TextWrapping = TextWrapping.Wrap });
+        if (taken.By.Count > 0)
+            column.Children.Add(new TextBlock
+            {
+                Text = $"{string.Join(", ", taken.Lost.Select(KeyCap))} taken by {string.Join(", ", taken.By)}; "
+                       + (taken.Kept.Count > 0 ? $"this action keeps {string.Join(", ", taken.Kept.Select(KeyCap))}." : "the game gives this action another key when it starts."),
+                Foreground = Brush("HelpBrush"), FontSize = 13, Margin = new Thickness(260, 0, 0, 2), TextWrapping = TextWrapping.Wrap,
+            });
         return column;
     }
 
