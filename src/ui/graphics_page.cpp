@@ -106,6 +106,8 @@ const Setting kSoftParticles = {"fm4_soft_particles", false, {{"OFF", "false"}, 
 const Setting kCrowds = {
     "fm4_crowds_every_race", false, {{"CONSOLE", "false"}, {"EVERY RACE", "true"}}};
 
+const Setting kAudioPopFix = {"fm4_audio_pop_fix", false, {{"ON", "true"}, {"OFF", "false"}}};
+
 // Every setting but the frame rate, the resolution scale and the upscaler's.
 const Setting* const kPresetSettings[] = {
     &kPostAa, &kShowroomMsaa, &kRaceMsaa, &kAnisotropy, &kSceneryShadows, &kReflectionUpdates,
@@ -117,7 +119,7 @@ const Setting* const kSettings[] = {
     &kFrameRate, &kVsync, &kScale, &kUpscaler, &kDlssPreset, &kSharpness, &kPostAa,
     &kShowroomMsaa, &kRaceMsaa, &kAnisotropy,
     &kSceneryShadows, &kReflectionUpdates, &kDetail, &kMirror, &kBloom, &kSoftParticles, &kCrowds,
-    &kMotionBlur, &kDepthOfField, &kCarDirt};
+    &kMotionBlur, &kDepthOfField, &kCarDirt, &kAudioPopFix};
 
 struct Preset {
   const char* label;
@@ -233,6 +235,11 @@ const RowText kRows[] = {
      "Applies from the next screen."},
     {"CAR DIRT", &kCarDirt,
      "The dirt cars gather in a race. Off leaves cars clean."},
+    {"AUDIO POP FIX", &kAudioPopFix,
+     "Smooths the pops in the engine sounds, which a console has too: where a loop starts over, "
+     "and where the game restarts sounds while revving and shifting. Off plays the audio as the "
+     "console does. Applies at once.",
+     true},
 };
 
 const RowText& Text(const char* label) {
@@ -924,6 +931,9 @@ std::unique_ptr<MenuScreen> CreateGraphicsPage(config::HostConfig& config,
 
   MenuRow car_dirt = Row("CAR DIRT", kCarDirt, draft);
   rows.push_back(std::move(car_dirt));
+
+  MenuRow audio_pop_fix = Row("AUDIO POP FIX", kAudioPopFix, draft);
+  rows.push_back(std::move(audio_pop_fix));
 
   auto screen = std::make_unique<MenuScreen>("GRAPHICS", std::move(rows));
   screen->set_apply([draft, &config] { SaveAndApply(*draft, config); });
