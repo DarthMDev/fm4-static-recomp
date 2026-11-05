@@ -102,15 +102,61 @@ public class ControlsSettingsTests
     {
         using var temp = new TempDir();
         var settings = new ControlsSettings(temp.File("controls.toml"));
-        settings.AddKey(Menu, "a", "Z");
-        Assert.Equal(["Return", "Space", "Z"], settings.Keys(Menu, "a"));
-        settings.AddKey(Menu, "a", "Z");
-        Assert.Equal(["Return", "Space", "Z"], settings.Keys(Menu, "a"));
+        settings.AddKey(Driving, "a", "Z");
+        Assert.Equal(["Space", "Z"], settings.Keys(Driving, "a"));
+        settings.RemoveKey(Driving, "a", 1);
+        Assert.Equal(["Space"], settings.Keys(Driving, "a"));
         settings.RemoveKey(Menu, "a", 0);
-        Assert.Equal(["Space", "Z"], settings.Keys(Menu, "a"));
+        Assert.Equal(["Space"], settings.Keys(Menu, "a"));
         Assert.Throws<InvalidOperationException>(() => settings.RemoveKey(Driving, "a", 0));
         Assert.Throws<ArgumentException>(() => settings.SetKey(Driving, "a", 0, "Shift+W"));
         Assert.Throws<ArgumentException>(() => settings.AddKey(Driving, "a", "Nope"));
+    }
+
+    [Fact]
+    public void A_row_has_a_primary_and_one_optional_secondary_key()
+    {
+        using var temp = new TempDir();
+        var settings = new ControlsSettings(temp.File("controls.toml"));
+        Assert.Throws<InvalidOperationException>(() => settings.AddKey(Menu, "a", "Z"));
+        settings.AddKey(Driving, "a", "Z");
+        Assert.Throws<InvalidOperationException>(() => settings.AddKey(Driving, "a", "X"));
+        Assert.Equal(["Space", "Z"], settings.Keys(Driving, "a"));
+    }
+
+    [Fact]
+    public void Adding_a_key_the_row_already_has_is_a_no_op_even_when_full()
+    {
+        using var temp = new TempDir();
+        var settings = new ControlsSettings(temp.File("controls.toml"));
+        settings.AddKey(Menu, "a", "Space");
+        Assert.Equal(["Return", "Space"], settings.Keys(Menu, "a"));
+        Assert.False(settings.Changed);
+    }
+
+    [Fact]
+    public void A_file_with_more_than_two_keys_is_shown_whole_and_kept()
+    {
+        using var temp = new TempDir();
+        var path = Write(temp, "driving_x = \"Q,Z,X\"\n");
+        var settings = new ControlsSettings(path);
+        Assert.Equal(["Q", "Z", "X"], settings.Keys(Driving, "x"));
+        settings.SetKey(Driving, "x", 1, "C");
+        settings.Save();
+        Assert.Contains("driving_x = \"Q,C,X\"", File.ReadAllText(path));
+    }
+
+    [Fact]
+    public void Giving_a_slot_the_key_of_another_slot_swaps_them()
+    {
+        using var temp = new TempDir();
+        var settings = new ControlsSettings(Write(temp, "driving_right_trigger = \"W,Up\"\ndriving_x = \"Q,Z,X\"\n"));
+        settings.SetKey(Driving, "right_trigger", 0, "Up");
+        Assert.Equal(["Up", "W"], settings.Keys(Driving, "right_trigger"));
+        settings.SetKey(Driving, "right_trigger", 0, "Up");
+        Assert.Equal(["Up", "W"], settings.Keys(Driving, "right_trigger"));
+        settings.SetKey(Driving, "x", 0, "X");
+        Assert.Equal(["X", "Z", "Q"], settings.Keys(Driving, "x"));
     }
 
     [Fact]
@@ -154,9 +200,9 @@ public class ControlsSettingsTests
         var path = Write(temp, "driving_right_trigger = \"W,LMB\"\n");
         var settings = new ControlsSettings(path);
         Assert.Equal(["W", "LMB"], settings.Keys(Driving, "right_trigger"));
-        settings.AddKey(Driving, "right_trigger", "Up");
+        settings.SetKey(Driving, "right_trigger", 0, "Up");
         settings.Save();
-        Assert.Contains("driving_right_trigger = \"W,LMB,Up\"", File.ReadAllText(path));
+        Assert.Contains("driving_right_trigger = \"Up,LMB\"", File.ReadAllText(path));
     }
 
     [Fact]

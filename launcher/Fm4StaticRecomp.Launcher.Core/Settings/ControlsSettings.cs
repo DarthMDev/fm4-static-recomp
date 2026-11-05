@@ -12,6 +12,9 @@ public sealed class ControlsSettings(string tomlPath)
 {
     public const double RampLow = 0.02, RampHigh = 0.60;
 
+    // A primary key and an optional secondary one. A hand-edited file may list more: they are shown and kept, not added.
+    public const int MaxKeys = 2;
+
     private sealed record Edit(string Value, string Default);
 
     private readonly Dictionary<string, Edit> _edited = [];
@@ -28,8 +31,10 @@ public sealed class ControlsSettings(string tomlPath)
     {
         if (!KeyNames.IsKey(key)) throw new ArgumentException($"{key} is not a key the game can bind.", nameof(key));
         var keys = Keys(set, id).ToList();
+        var other = keys.IndexOf(key);
+        if (other >= 0 && other != index) keys[other] = keys[index];
         keys[index] = key;
-        Store(set, id, keys.Distinct().ToList());
+        Store(set, id, keys);
     }
 
     public void AddKey(ControlSet set, string id, string key)
@@ -37,6 +42,7 @@ public sealed class ControlsSettings(string tomlPath)
         if (!KeyNames.IsKey(key)) throw new ArgumentException($"{key} is not a key the game can bind.", nameof(key));
         var keys = Keys(set, id).ToList();
         if (keys.Contains(key)) return;
+        if (keys.Count >= MaxKeys) throw new InvalidOperationException($"A row has at most {MaxKeys} keys.");
         keys.Add(key);
         Store(set, id, keys);
     }

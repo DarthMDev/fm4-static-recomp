@@ -54,19 +54,18 @@ public partial class MainWindow
             AddHandler(PointerPressedEvent, (_, _) => AbandonCapture(), RoutingStrategies.Tunnel);
             _controlsKeysHooked = true;
         }
-        // Edits made earlier survive switching panels; a saved panel reads the file again.
-        if (_controls?.Changed != true)
+        // Edits made earlier survive switching panels; a saved panel reads the file again. A version
+        // that does not read the file (after GO BACK TO) drops them.
+        try
         {
-            try
-            {
-                _controls = _host?.Controls();
-                _controlsProblem = null;
-            }
-            catch (Exception error) when (error is IOException or UnauthorizedAccessException)
-            {
-                _controls = null;
-                _controlsProblem = $"controls.toml could not be read: {error.Message}";
-            }
+            var current = _host?.Controls();
+            if (current is null || _controls?.Changed != true) _controls = current;
+            _controlsProblem = null;
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            _controls = null;
+            _controlsProblem = $"controls.toml could not be read: {error.Message}";
         }
         BuildControlsPanel("");
     }
@@ -147,14 +146,17 @@ public partial class MainWindow
         }
         ControlsBody.Children.Add(tabs);
         ControlsBody.Children.Add(Help(_controlSet == ControlSet.Driving
-            ? "Used while the car is on the track and the game is not paused."
-            : "Used in menus, the pre-race screen, the pause menu, replays and results."));
+            ? "Used while the car is on the track and the game is not paused. Each action has a primary key and an optional secondary key."
+            : "Used in menus, the pre-race screen, the pause menu, replays and results. Each action has a primary key and an optional secondary key."));
+
+        ControlsBody.Children.Add(Help("The small button names (A, RT, …) are the game's default controller layout. "
+                                       + "If you chose another layout in the game's options, an action may be on a different button."));
 
         var rows = ControlsCatalog.Rows(_controlSet);
         foreach (var row in rows.Where(r => !r.Other)) ControlsBody.Children.Add(ControlRowView(row));
         var other = rows.Where(r => r.Other).ToList();
-        var toggle = new Button { Content = (_controlsOtherOpen ? "HIDE" : "SHOW") + $" OTHER BUTTONS ({other.Count})", Classes = { "link" },
-            HorizontalAlignment = HorizontalAlignment.Left };
+        var toggle = new Button { Content = (_controlsOtherOpen ? "HIDE" : "SHOW") + $" OTHER BUTTONS ({other.Count})", Classes = { "link" }, FontSize = 16,
+            Padding = new Thickness(0, 10), HorizontalAlignment = HorizontalAlignment.Left };
         toggle.Click += (_, _) =>
         {
             _controlsOtherOpen = !_controlsOtherOpen;
@@ -179,32 +181,41 @@ public partial class MainWindow
             Children = { new TextBlock { Text = row.Label }, new TextBlock { Text = row.Pad, Classes = { "help" } } },
         });
 
+        // A hand-edited file may list more than two keys: each one is shown.
         var caps = new WrapPanel { VerticalAlignment = VerticalAlignment.Center };
         Grid.SetColumn(caps, 1);
-        for (var i = 0; i < keys.Count; i++)
+        for (var slot = 0; slot < Math.Max(keys.Count, ControlsSettings.MaxKeys); slot++)
         {
-            var index = i;
-            var capturing = _capture == new Capture(set, row.Id, index);
-            var cap = new Button
-            {
-                Content = capturing ? "PRESS A KEY…" : KeyCap(keys[i]), MinWidth = 64, Margin = new Thickness(0, 0, 4, 4), Classes = { "quiet" },
-            };
+            var index = slot;
+            var empty = slot >= keys.Count;
+            var capturing = _capture == new Capture(set, row.Id, empty ? -1 : slot);
+            var idle = empty ? Brush("HelpBrush") : null;
+            var text = empty ? "NOT SET" : KeyCap(keys[slot]);
+            var cap = new Button { Content = capturing ? "PRESS A KEY…" : text, MinWidth = 96, Margin = new Thickness(0, 0, 4, 4), Classes = { "quiet" } };
             if (capturing)
             {
                 cap.Foreground = Brush("AccentBrush");
                 _captureUndo += () =>
                 {
-                    cap.Content = KeyCap(keys[index]);
-                    cap.ClearValue(TemplatedControl.ForegroundProperty);
+                    cap.Content = text;
+                    if (idle is null) cap.ClearValue(TemplatedControl.ForegroundProperty);
+                    else cap.Foreground = idle;
                 };
             }
-            AutomationProperties.SetName(cap, $"{row.Label}: {KeyCap(keys[i])}");
-            cap.Click += (_, _) => StartCapture(new Capture(set, row.Id, index));
+            else if (idle is not null) cap.Foreground = idle;
+            var slotName = slot switch { 0 => "primary", 1 => "secondary", _ => "extra" };
+            AutomationProperties.SetName(cap, capturing ? $"{row.Label}: waiting for a key"
+                : empty ? $"{row.Label}: set the {slotName} key" : $"{row.Label}: {slotName} key {text}");
+            cap.Click += (_, _) => StartCapture(new Capture(set, row.Id, empty ? -1 : index));
             caps.Children.Add(cap);
-            if (keys.Count > 1 && !capturing)
+            if (slot > 0 && !empty)
             {
-                var remove = new Button { Content = "×", Classes = { "link" }, Margin = new Thickness(-2, 0, 8, 4), VerticalAlignment = VerticalAlignment.Center };
-                AutomationProperties.SetName(remove, $"Remove {KeyCap(keys[i])} from {row.Label}");
+                var remove = new Button
+                {
+                    Content = "✕", Classes = { "quiet" }, FontSize = 17, MinWidth = 42, Padding = new Thickness(0, 10),
+                    Margin = new Thickness(0, 0, 10, 4), VerticalAlignment = VerticalAlignment.Top, HorizontalContentAlignment = HorizontalAlignment.Center,
+                };
+                AutomationProperties.SetName(remove, $"Remove {text} from {row.Label}");
                 remove.Click += (_, _) =>
                 {
                     EndControlsCapture();
@@ -214,23 +225,9 @@ public partial class MainWindow
                 caps.Children.Add(remove);
             }
         }
-        var adding = _capture == new Capture(set, row.Id, -1);
-        var add = new Button { Content = adding ? "PRESS A KEY…" : "+ ADD", Classes = { "link" }, VerticalAlignment = VerticalAlignment.Center };
-        if (adding)
-        {
-            add.Foreground = Brush("AccentBrush");
-            _captureUndo += () =>
-            {
-                add.Content = "+ ADD";
-                add.ClearValue(TemplatedControl.ForegroundProperty);
-            };
-        }
-        AutomationProperties.SetName(add, $"Add a key to {row.Label}");
-        add.Click += (_, _) => StartCapture(new Capture(set, row.Id, -1));
-        caps.Children.Add(add);
         if (_capture is { } active && active.Set == set && active.Id == row.Id)
         {
-            var cancel = new Button { Content = "CANCEL", Classes = { "link" }, VerticalAlignment = VerticalAlignment.Center };
+            var cancel = new Button { Content = "CANCEL", Classes = { "quiet" }, Margin = new Thickness(0, 0, 4, 4) };
             cancel.Click += (_, _) =>
             {
                 EndControlsCapture();
@@ -241,7 +238,7 @@ public partial class MainWindow
         }
         line.Children.Add(caps);
 
-        var reset = new Button { Content = "RESET", Classes = { "link" }, VerticalAlignment = VerticalAlignment.Center,
+        var reset = new Button { Content = "RESET", Classes = { "link" }, FontSize = 16, Padding = new Thickness(14, 10), VerticalAlignment = VerticalAlignment.Center,
             IsEnabled = !_controls.IsDefault(set, row.Id) };
         AutomationProperties.SetName(reset, $"Reset {row.Label}");
         reset.Click += (_, _) =>
@@ -255,7 +252,9 @@ public partial class MainWindow
 
         var column = new StackPanel { Spacing = 0, Children = { line } };
         if (_controls.ConflictsWith(set, row.Id) is { Count: > 0 } conflicts)
-            column.Children.Add(new TextBlock { Text = "Also used by: " + string.Join(", ", conflicts), Foreground = Brush("AccentBrush"),
+            column.Children.Add(new TextBlock { Text = "Also used by: " + string.Join(", ", conflicts.Select(label =>
+                    !_controlsOtherOpen && ControlsCatalog.Rows(set).Any(r => r.Other && r.Label == label) ? $"{label} (under OTHER BUTTONS)" : label)),
+                Foreground = Brush("AccentBrush"),
                 FontSize = 13, Margin = new Thickness(260, 0, 0, 2), TextWrapping = TextWrapping.Wrap });
         return column;
     }
@@ -273,7 +272,7 @@ public partial class MainWindow
                 SmallChange = 0.01, LargeChange = 0.05, IsSnapToTickEnabled = true, TickFrequency = 0.01, Width = 320,
             };
             var value = new TextBlock { Width = 64, VerticalAlignment = VerticalAlignment.Center, Foreground = Brush("ValueBrush") };
-            var reset = new Button { Content = "RESET", Classes = { "link" }, VerticalAlignment = VerticalAlignment.Center };
+            var reset = new Button { Content = "RESET", Classes = { "link" }, FontSize = 16, Padding = new Thickness(14, 10), VerticalAlignment = VerticalAlignment.Center };
             void Show()
             {
                 value.Text = _controls.Ramp(ramp.Key).ToString("0.00", CultureInfo.InvariantCulture) + " s";
@@ -335,9 +334,15 @@ public partial class MainWindow
     {
         if (_capture is not { } target || _controls is null) return;
         EndControlsCapture();
-        if (target.Index < 0) _controls.AddKey(target.Set, target.Id, key);
+        var status = "";
+        if (target.Index < 0)
+        {
+            var before = _controls.Keys(target.Set, target.Id).Count;
+            _controls.AddKey(target.Set, target.Id, key);
+            if (_controls.Keys(target.Set, target.Id).Count == before) status = "That key is already on this action.";
+        }
         else _controls.SetKey(target.Set, target.Id, target.Index, key);
-        BuildControlsPanel("");
+        BuildControlsPanel(status);
     }
 
     private void SaveControls()
