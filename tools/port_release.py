@@ -210,6 +210,10 @@ class Port:
         owner = found[0]
         if owner in self.match:
             counterpart = self.match[owner]
+            # Bodies shared by many classes (deleting destructors) can pair with another class's
+            # copy by link order; the vtables pointing at the owner name the right one.
+            if owner in self.same and (via := self._through_vtables(owner)) not in (None, counterpart):
+                return via + a - owner, "identical function through its vtables", None
             if owner in self.same:
                 return counterpart + a - owner, "identical function", None
             b = self._aligned(a, owner, counterpart)

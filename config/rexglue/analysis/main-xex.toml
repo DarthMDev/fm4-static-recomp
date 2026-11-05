@@ -261,9 +261,62 @@ registers = ["f31"]
 # The race's menu scenes (pause, pre-race, post-race, replay) are created by their
 # constructors and destroyed by their deleting destructors (vtable slot 1); while
 # one lives over a race the keys follow the menu bindings (src/input/input_context.*).
+# The pause and pre-race menus are destroyed while AUDIO, HUD, PHOTO MODE, STARTING
+# GRID or TUNE SETUP replaces them, so those scenes count too: CAudioOptionsBasic,
+# CHudOptions, CPhotoModeIngame, CStartingGrid, CTuneMenu (RTTI).
 [[midasm_hook]]
 address = 0x8259A1A8
 name = "Fm4RaceMenuSceneCreated"
+registers = ["r3"]
+
+[[midasm_hook]]
+address = 0x824AFCA0
+name = "Fm4RaceMenuSceneCreated"
+registers = ["r3"]
+
+[[midasm_hook]]
+address = 0x824B0008
+name = "Fm4RaceMenuSceneCreated"
+registers = ["r3"]
+
+[[midasm_hook]]
+address = 0x825A90A8
+name = "Fm4RaceMenuSceneCreated"
+registers = ["r3"]
+
+[[midasm_hook]]
+address = 0x825DB968
+name = "Fm4RaceMenuSceneCreated"
+registers = ["r3"]
+
+[[midasm_hook]]
+address = 0x824CAAB0
+name = "Fm4RaceMenuSceneCreated"
+registers = ["r3"]
+
+[[midasm_hook]]
+address = 0x824AFD60
+name = "Fm4RaceMenuSceneDestroyed"
+registers = ["r3"]
+
+[[midasm_hook]]
+address = 0x824B0100
+name = "Fm4RaceMenuSceneDestroyed"
+registers = ["r3"]
+
+[[midasm_hook]]
+address = 0x825A9100
+name = "Fm4RaceMenuSceneDestroyed"
+registers = ["r3"]
+
+[[midasm_hook]]
+address = 0x825DE0F0
+name = "Fm4RaceMenuSceneDestroyed"
+registers = ["r3"]
+
+[[midasm_hook]]
+address = 0x824CBD90
+name = "Fm4RaceMenuSceneDestroyed"
 registers = ["r3"]
 
 [[midasm_hook]]
