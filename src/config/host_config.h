@@ -25,6 +25,8 @@ namespace fm4_static_recomp::config {
 std::optional<std::string> GetValue(std::string_view text, std::string_view name);
 // `text` with `name = literal`; `literal` is written as given (quote strings).
 std::string SetValue(std::string_view text, std::string_view name, std::string_view literal);
+// `text` without `name`'s line and its line ending.
+std::string RemoveValue(std::string_view text, std::string_view name);
 // A TOML literal for a string value.
 std::string Quote(std::string_view value);
 
@@ -45,6 +47,7 @@ class HostConfig {
   bool Load();
   std::optional<std::string> Get(std::string_view name) const { return GetValue(text_, name); }
   void Set(std::string_view name, std::string_view literal);
+  void Remove(std::string_view name);
   bool dirty() const { return dirty_; }
   // Writes pending changes; true when there was nothing to write. Refuses
   // when the file was never loaded, so a partial file never replaces it.

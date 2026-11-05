@@ -147,6 +147,15 @@ address = 0x82390B94
 name = "Fm4CommandBufferClipRect"
 registers = ["r1"]
 
+# A player's input settings (player r31, index at +0x1C) are applied from the profile: the
+# profile's layout for the player's device (r4; 0 to 12 for a pad), loaded here from
+# gamedb.slt's ControllerLayouts (r5 = 0), WheelLayouts (1) or BristolLayouts (2) by
+# 0x82406C78 (out, layout id, device, ...).
+[[midasm_hook]]
+address = 0x8243136C
+name = "Fm4ControllerLayoutApplied"
+registers = ["r4", "r5", "r31"]
+
 # CCarThumbnailRenderStateMachine (vtable 0x8200DA0C, state table 0x8200D9C8)
 # renders a car's garage thumbnail in states 1 to 3 (load the uithumbnail
 # backdrop, draw, read back and save), twice per new car or paint: uithumbig,

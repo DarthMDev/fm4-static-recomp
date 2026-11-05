@@ -25,6 +25,8 @@ image = "rev1"
 0x823C6AF4 = { at = 0x823C7154, fingerprint = "1a3fff1bd3c8a727" }
 # hook Fm4ThumbnailRenderDone: identical function
 0x823C6BA0 = { at = 0x823C7200, fingerprint = "fdcee8e5a396a703" }
+# hook Fm4ControllerLayoutApplied: identical function
+0x8243136C = { at = 0x82434CC4, fingerprint = "9f78ad3202b6b692" }
 # hook Fm4PresentInterval: fragment, neighbours' shift
 0x82436078 = { at = 0x82439980, fingerprint = "dc1c0e2efabd2763" }
 # hook Fm4DepthOfFieldOption: fragment, neighbours' shift

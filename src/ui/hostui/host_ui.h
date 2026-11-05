@@ -5,6 +5,7 @@
 #include <chrono>
 #include <cstdint>
 #include <filesystem>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -31,6 +32,21 @@ class Window;
 
 namespace fm4_static_recomp::hostui {
 
+// One tab of the host menu: its screen is made each time the tab is shown.
+struct MenuTab {
+  std::string title;
+  std::function<std::unique_ptr<MenuScreen>()> create;
+};
+
+// The keyboard's keys for the menu buttons Y (apply), X (clear), LB and RB (tabs), in the
+// keyboard driver's bind syntax ("Y", "Y,P").
+struct MenuKeys {
+  std::string apply;
+  std::string clear;
+  std::string previous_tab;
+  std::string next_tab;
+};
+
 // A host-drawn menu screen over the title, after FM4's HUD Options screen:
 // drawn with the title's own vector fonts and UI textures, rasterized at load
 // from the game data, and laid out in the title's 1280x720 space inside the
@@ -46,18 +62,18 @@ class HostUi final : public rex::ui::UIDrawer, public rex::ui::WindowInputListen
   // Above the guest's input listeners.
   static constexpr size_t kZOrder = 32;
 
-  // `apply_keys` are the keyboard's keys for Y in menus, in the keyboard
-  // driver's bind syntax ("Y", "Y,P").
   HostUi(rex::ReXApp& app, rex::ui::Presenter& presenter, rex::ui::ImmediateDrawer& drawer,
          rex::ui::Window& window, rex::input::InputSystem* input_system,
-         std::filesystem::path game_data_root, std::string apply_keys);
+         std::filesystem::path game_data_root, MenuKeys keys);
   ~HostUi() override;
 
   bool is_open() const { return bool(screen_); }
   // Closed, but still holding the input until the closing press is released.
   bool is_closing() const { return draining_; }
-  // Fails (and logs) when the title's UI assets cannot be loaded.
-  bool Open(std::unique_ptr<MenuScreen> screen);
+  // Opens on `tab`; LB and RB (or a click on a title) switch tabs, leaving the shown one as
+  // back would. Fails (and logs) when the title's UI assets cannot be loaded.
+  bool Open(std::vector<MenuTab> tabs, size_t tab);
+  void SetMenuKeys(MenuKeys keys);
   // The guest gets its input back only once no pad button or key is held,
   // so the press that closed the menu does not also reach the title.
   void Close();
@@ -96,7 +112,10 @@ class HostUi final : public rex::ui::UIDrawer, public rex::ui::WindowInputListen
   };
 
   bool LoadAssets();
+  void LoadKeycaps();
+  void SwitchTab(size_t tab);
   void DrawMenu(rex::ui::UIDrawContext& context);
+  void DrawTabs();
   // The game's tuning slider section above the list, for a slider first row.
   void DrawSliderSection(const MenuRow& row, bool focused);
   void DrawBackdrop();
@@ -143,8 +162,10 @@ class HostUi final : public rex::ui::UIDrawer, public rex::ui::WindowInputListen
   rex::ui::Window& window_;
   rex::input::InputSystem* input_system_;
   std::filesystem::path game_data_root_;
-  std::string apply_bind_;
+  MenuKeys keys_;
 
+  std::vector<MenuTab> tabs_;
+  size_t tab_ = 0;
   std::unique_ptr<MenuScreen> screen_;
   PadNavigator pad_;
   // Slider steps owed to the stick's deflection, and when it was last polled.
@@ -157,6 +178,8 @@ class HostUi final : public rex::ui::UIDrawer, public rex::ui::WindowInputListen
   bool draining_ = false;
   std::chrono::steady_clock::time_point drain_started_;
   std::vector<int> held_keys_;
+  // The key a capture took, until released.
+  int captured_key_ = -1;
   std::chrono::steady_clock::time_point next_paint_;
   // Expires with this object, for deferred work queued from Draw.
   std::shared_ptr<bool> alive_ = std::make_shared<bool>(true);
@@ -174,11 +197,17 @@ class HostUi final : public rex::ui::UIDrawer, public rex::ui::WindowInputListen
   std::unique_ptr<rex::ui::ImmediateTexture> white_;
   std::unique_ptr<rex::ui::ImmediateTexture> button_a_;
   std::unique_ptr<rex::ui::ImmediateTexture> button_b_;
+  std::unique_ptr<rex::ui::ImmediateTexture> button_x_;
   std::unique_ptr<rex::ui::ImmediateTexture> button_y_;
+  std::unique_ptr<rex::ui::ImmediateTexture> tab_lb_;
+  std::unique_ptr<rex::ui::ImmediateTexture> tab_rb_;
   // Keycaps of the menu's own keys, for the help while the keyboard leads.
   std::unique_ptr<rex::ui::ImmediateTexture> key_accept_;
   std::unique_ptr<rex::ui::ImmediateTexture> key_back_;
   std::unique_ptr<rex::ui::ImmediateTexture> key_apply_;
+  std::unique_ptr<rex::ui::ImmediateTexture> key_clear_;
+  std::unique_ptr<rex::ui::ImmediateTexture> key_previous_tab_;
+  std::unique_ptr<rex::ui::ImmediateTexture> key_next_tab_;
   std::unique_ptr<rex::ui::ImmediateTexture> spinner_;
   std::unique_ptr<rex::ui::ImmediateTexture> selection_bar_;
   std::unique_ptr<rex::ui::ImmediateTexture> arrow_;
@@ -197,6 +226,7 @@ class HostUi final : public rex::ui::UIDrawer, public rex::ui::WindowInputListen
     float x0, y0, x1, y1;
   };
   std::vector<RowRect> row_rects_;
+  std::vector<RowRect> tab_rects_;
   // Screen and output size of the last recorded layout event.
   std::string layout_key_;
 };

@@ -4,7 +4,12 @@
 
 #include <array>
 #include <cstddef>
+#include <functional>
+#include <optional>
 #include <string>
+#include <string_view>
+
+#include <rex/ui/virtual_key.h>
 
 namespace fm4_static_recomp::config {
 class HostConfig;
@@ -68,6 +73,19 @@ Controls DefaultControls();
 // ramp_steer_return_seconds, ramp_pedal_seconds, ramp_pedal_return_seconds,
 // ramp_look_seconds. A missing, empty or unreadable value keeps the default.
 Controls LoadControls(const config::HostConfig& config);
+// The same over any source of those values; `log` writes what LoadControls(config) logs.
+using ControlLookup = std::function<std::optional<std::string>(std::string_view name)>;
+Controls LoadControls(const ControlLookup& lookup, bool log);
+
+// The control's name in controls.toml after menu_ / driving_ ("a", "lstick_up").
+std::string_view ControlFileName(PadControl control);
+
+// The keys of a value the game can use, as LoadControls keeps them ("W,Up"); empty when none.
+std::string UsableKeys(std::string_view bind);
+
+// A pressed key's name in the bind syntax ("W", "Return", "Shift"); empty for the function
+// keys (the app's shortcuts) and the mouse buttons.
+std::string BindKeyName(rex::ui::VirtualKey key);
 
 // Hands the set to the keyboard driver in place of its keybind_* options.
 void ApplyBindings(const BindingSet& set);

@@ -51,7 +51,7 @@ constexpr std::array<ControlNames, size_t(PadControl::kCount)> kNames = {{
 
 // The tokens of a bind the keyboard driver can match ("Return", "Shift+W"); the
 // others are logged and left out.
-std::string KnownKeys(std::string_view name, std::string_view bind) {
+std::string KnownKeys(std::string_view name, std::string_view bind, bool log) {
   std::string kept;
   while (!bind.empty()) {
     const size_t comma = bind.find(',');
@@ -73,7 +73,7 @@ std::string KnownKeys(std::string_view name, std::string_view bind) {
     if (known && rex::ui::ParseVirtualKey(key) != rex::ui::VirtualKey::kNone) {
       kept += kept.empty() ? "" : ",";
       kept += token;
-    } else if (!token.empty()) {
+    } else if (!token.empty() && log) {
       REXLOG_WARN("Controls: {} names a key the keyboard does not have: '{}'", name, token);
     }
   }
@@ -116,7 +116,7 @@ bool BoundInSet(const BindingSet& set, std::string_view key) {
 // One key doing two things surprises the player, and every control must keep a key: a
 // player's key leaves the default controls, and a control left with none takes the old key of
 // the line that took its key, else a spare key, else shares its default as a last resort.
-void LoadSet(const config::HostConfig& config, std::string_view prefix, BindingSet& set) {
+void LoadSet(const ControlLookup& lookup, bool log, std::string_view prefix, BindingSet& set) {
   const BindingSet defaults = set;
   std::array<bool, size_t(PadControl::kCount)> player{};
   const auto name_of = [&](size_t i) { return std::string(prefix) + kNames[i].file; };
@@ -128,10 +128,10 @@ void LoadSet(const config::HostConfig& config, std::string_view prefix, BindingS
   };
   for (size_t i = 0; i < kNames.size(); ++i) {
     const std::string name = name_of(i);
-    if (auto value = config.Get(name)) {
-      if (std::string keys = KnownKeys(name, *value); !keys.empty()) {
+    if (auto value = lookup(name)) {
+      if (std::string keys = KnownKeys(name, *value, log); !keys.empty()) {
         for (const std::string_view key : Tokens(keys)) {
-          if (const size_t t = taker_of(key); t < kNames.size()) {
+          if (const size_t t = taker_of(key); t < kNames.size() && log) {
             REXLOG_WARN("Controls: {} and {} both use {}", name_of(t), name, BareKey(key));
           }
         }
@@ -155,7 +155,7 @@ void LoadSet(const config::HostConfig& config, std::string_view prefix, BindingS
         kept += key;
       }
     }
-    if (!kept.empty() && kept != defaults.keys[i]) {
+    if (!kept.empty() && kept != defaults.keys[i] && log) {
       REXLOG_INFO("Controls: {} {} -> {} ({})", name_of(i), defaults.keys[i], kept, why[i]);
     }
     set.keys[i] = std::move(kept);
@@ -168,8 +168,10 @@ void LoadSet(const config::HostConfig& config, std::string_view prefix, BindingS
       for (const std::string_view key : Tokens(defaults.keys[t])) {
         if (!BoundInSet(set, key)) {
           set.keys[i] = key;
-          REXLOG_INFO("Controls: {} {} -> {} ({} went to {})", name_of(i), defaults.keys[i], key,
-                      lost, name_of(t));
+          if (log) {
+            REXLOG_INFO("Controls: {} {} -> {} ({} went to {})", name_of(i), defaults.keys[i], key,
+                        lost, name_of(t));
+          }
           break;
         }
       }
@@ -183,21 +185,25 @@ void LoadSet(const config::HostConfig& config, std::string_view prefix, BindingS
     for (const std::string_view key : kSpareKeys) {
       if (!BoundInSet(set, key)) {
         set.keys[i] = key;
-        REXLOG_INFO("Controls: {} {} -> {} ({}, whose old keys are taken)", name_of(i),
-                    defaults.keys[i], key, why[i]);
+        if (log) {
+          REXLOG_INFO("Controls: {} {} -> {} ({}, whose old keys are taken)", name_of(i),
+                      defaults.keys[i], key, why[i]);
+        }
         break;
       }
     }
     if (set.keys[i].empty()) {
       set.keys[i] = defaults.keys[i];
-      REXLOG_WARN("Controls: {} keeps {} ({}): every spare key is taken", name_of(i),
-                  defaults.keys[i], why[i]);
+      if (log) {
+        REXLOG_WARN("Controls: {} keeps {} ({}): every spare key is taken", name_of(i),
+                    defaults.keys[i], why[i]);
+      }
     }
   }
 }
 
-void LoadRate(const config::HostConfig& config, std::string_view name, double& rate) {
-  const auto value = config.Get(name);
+void LoadRate(const ControlLookup& lookup, std::string_view name, double& rate) {
+  const auto value = lookup(name);
   if (!value)
     return;
   double parsed = 0.0;
@@ -275,17 +281,38 @@ Controls DefaultControls() {
   return controls;
 }
 
-Controls LoadControls(const config::HostConfig& config) {
+Controls LoadControls(const ControlLookup& lookup, bool log) {
   Controls controls = DefaultControls();
-  LoadSet(config, "menu_", controls.menu);
-  LoadSet(config, "driving_", controls.driving);
+  LoadSet(lookup, log, "menu_", controls.menu);
+  LoadSet(lookup, log, "driving_", controls.driving);
   RampRates& ramp = controls.ramp;
-  LoadRate(config, "ramp_steer_seconds", ramp.steer_seconds);
-  LoadRate(config, "ramp_steer_return_seconds", ramp.steer_return_seconds);
-  LoadRate(config, "ramp_pedal_seconds", ramp.pedal_seconds);
-  LoadRate(config, "ramp_pedal_return_seconds", ramp.pedal_return_seconds);
-  LoadRate(config, "ramp_look_seconds", ramp.look_seconds);
+  LoadRate(lookup, "ramp_steer_seconds", ramp.steer_seconds);
+  LoadRate(lookup, "ramp_steer_return_seconds", ramp.steer_return_seconds);
+  LoadRate(lookup, "ramp_pedal_seconds", ramp.pedal_seconds);
+  LoadRate(lookup, "ramp_pedal_return_seconds", ramp.pedal_return_seconds);
+  LoadRate(lookup, "ramp_look_seconds", ramp.look_seconds);
   return controls;
+}
+
+Controls LoadControls(const config::HostConfig& config) {
+  return LoadControls([&config](std::string_view name) { return config.Get(name); }, true);
+}
+
+std::string_view ControlFileName(PadControl control) { return kNames[size_t(control)].file; }
+
+std::string UsableKeys(std::string_view bind) { return KnownKeys({}, bind, false); }
+
+std::string BindKeyName(rex::ui::VirtualKey key) {
+  using rex::ui::VirtualKey;
+  // NumpadEnter shares the key code: Return is the name the defaults use.
+  if (key == VirtualKey::kReturn) {
+    return "Return";
+  }
+  if ((key >= VirtualKey::kF1 && key <= VirtualKey::kF24) || key == VirtualKey::kLButton ||
+      key == VirtualKey::kRButton || key == VirtualKey::kMButton) {
+    return {};
+  }
+  return rex::ui::VirtualKeyToString(key);
 }
 
 void ApplyBindings(const BindingSet& set) {

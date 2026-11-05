@@ -26,7 +26,25 @@ bool MenuScreen::SetFocus(size_t index) {
   return true;
 }
 
+MenuScreen::Result MenuScreen::CaptureKey(const std::string& key) {
+  if (!capturing()) {
+    return Result::kNone;
+  }
+  capture_.key(key);
+  return Result::kChanged;
+}
+
 MenuScreen::Result MenuScreen::Handle(NavCommand command) {
+  if (capturing()) {
+    if (command != NavCommand::kBack) {
+      return Result::kNone;
+    }
+    capture_.cancel();
+    return Result::kChanged;
+  }
+  if (command == NavCommand::kPreviousTab || command == NavCommand::kNextTab) {
+    return Result::kNone;
+  }
   if (command == NavCommand::kBack || command == NavCommand::kClose) {
     return leave_ && !leave_() ? Result::kChanged : Result::kBack;
   }
@@ -54,6 +72,39 @@ MenuScreen::Result MenuScreen::Handle(NavCommand command) {
     return Result::kNone;
   }
   if (status().busy) {
+    return Result::kNone;
+  }
+  if (MenuRow& row = rows_[focus_]; row.slots && row.is_enabled()) {
+    const size_t last = std::max<size_t>(row.slots().size(), 1) - 1;
+    const size_t slot = std::min(slot_, last);
+    switch (command) {
+      case NavCommand::kLeft:
+      case NavCommand::kRight: {
+        const size_t next =
+            command == NavCommand::kLeft ? (slot ? slot - 1 : 0) : std::min(slot + 1, last);
+        if (next == slot) {
+          return Result::kNone;
+        }
+        slot_ = next;
+        return Result::kChanged;
+      }
+      case NavCommand::kAccept:
+        if (!row.pick) {
+          return Result::kNone;
+        }
+        row.pick(slot);
+        return Result::kChanged;
+      case NavCommand::kClear:
+        if (!row.clear || !row.clear_label || row.clear_label(slot).empty()) {
+          return Result::kNone;
+        }
+        row.clear(slot);
+        return Result::kChanged;
+      default:
+        return Result::kNone;
+    }
+  }
+  if (command == NavCommand::kClear) {
     return Result::kNone;
   }
   const int direction = command == NavCommand::kLeft ? -1 : 1;
@@ -135,8 +186,17 @@ std::vector<NavCommand> PadNavigator::Poll(uint16_t buttons, int16_t thumb_lx, i
   if (pressed & kButtonB) {
     commands.push_back(NavCommand::kBack);
   }
+  if (pressed & kButtonX) {
+    commands.push_back(NavCommand::kClear);
+  }
   if (pressed & kButtonY) {
     commands.push_back(NavCommand::kApply);
+  }
+  if (pressed & kLeftShoulder) {
+    commands.push_back(NavCommand::kPreviousTab);
+  }
+  if (pressed & kRightShoulder) {
+    commands.push_back(NavCommand::kNextTab);
   }
   if ((pressed & kStart) && !(buttons & kBack)) {
     commands.push_back(NavCommand::kClose);

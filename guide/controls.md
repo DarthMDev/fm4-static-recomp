@@ -47,6 +47,29 @@ The mouse is not used.
 
 ## Rebinding keys
 
+### In the game
+
+1. Open the GRAPHICS page (**F6**, **BACK + START** held together on a controller, or Play
+   Career → My Profile → Options → GRAPHICS) and press **RB** (the menu's RB key on the
+   keyboard, **E** by default) to reach **KEYBOARD**; **LB** goes back, and clicking a tab's
+   name works too. The list has a **DRIVING** section (on the track) and a **MENUS** section.
+2. Each row is one controller button with its primary and secondary key. In DRIVING the row
+   says what the button does in the controller layout chosen in the game's options, so another
+   layout renames the rows.
+3. Pick the key with **LEFT** / **RIGHT**, press **A** (Enter, or click it), then press the new
+   key. Esc is a key like any other here: **B** on a controller, a click, or five seconds
+   without a key backs out. The function keys stay shortcuts and cannot be bound. Shift, Ctrl
+   and Alt bind on their own; a combination such as Shift+W only through the file (below).
+4. **X** (the menu's X key) clears a secondary key, or on a primary key you set puts the button
+   back to its default keys. **RESET ALL** at the bottom sets every key and ramp time back.
+5. When you give a button a key another button has by default, the other row shows the key the
+   game gives it instead and says why. Two buttons you set to the same key both say "Also used
+   by".
+6. **SAVE & APPLY** (**Y**) writes `config\controls.toml` and the keys work at once, button
+   prompts included. Leaving with unsaved keys asks once more; leaving again discards them.
+
+DRIVING also has the ramp times (see SMOOTHING below), in steps of 0.01 s.
+
 ### In the launcher
 
 1. Open the launcher and click **CONTROLS** under Play.
@@ -64,7 +87,7 @@ The mouse is not used.
    anywhere else instead.
 6. The small button names under each action (A, RT and so on) are the game's default
    controller layout. If you chose another layout in the game's options, an action may be on
-   a different button than the one named.
+   a different button than the one named; the in-game tabs follow your layout.
 7. Click **SAVE** and start the game. Changes apply at the next launch.
 
 **SMOOTHING** sets how many seconds steering, the pedals and looking around take to reach

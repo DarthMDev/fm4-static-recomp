@@ -29,12 +29,14 @@ add_executable(fm4_static_recomp WIN32
     src/shader_cache/cache_writer.cpp
     src/shader_cache/disc_shaders.cpp
     src/config/host_config.cpp
+    src/input/controller_layout.cpp
     src/input/controls.cpp
     src/input/input_context.cpp
     src/input/keyboard_ramp.cpp
     src/input/keycap.cpp
     src/input/prompt_strings.cpp
     src/input/prompt_swap.cpp
+    src/ui/controls_page.cpp
     src/ui/graphics_page.cpp
     src/ui/hostui/glyph_atlas.cpp
     src/ui/hostui/host_ui.cpp
@@ -72,6 +74,8 @@ if(FM4_BUILD_TESTS)
         tests/string_tables_test.cpp
         tests/ui_fonts_test.cpp
         tests/graphics_page_test.cpp
+        tests/controls_page_test.cpp
+        tests/controller_layout_test.cpp
         src/car_dirt.cpp
         src/code_image_check.cpp
         src/shadow_map.cpp
@@ -79,6 +83,7 @@ if(FM4_BUILD_TESTS)
         src/game_language.cpp
         src/string_log.cpp
         src/config/host_config.cpp
+        src/input/controller_layout.cpp
         src/input/controls.cpp
         src/input/keyboard_ramp.cpp
         src/input/input_context.cpp
@@ -89,6 +94,7 @@ if(FM4_BUILD_TESTS)
         src/ui/hostui/ui_fonts.cpp
         src/ui/hostui/vector_font.cpp
         src/ui/hostui/menu.cpp
+        src/ui/controls_page.cpp
         src/ui/graphics_page.cpp
     )
     # Away from the game's staged runtime, which is only as new as the last game build;

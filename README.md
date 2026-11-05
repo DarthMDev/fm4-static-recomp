@@ -99,7 +99,7 @@ ShiftGlue SDK (without this project's game hooks and renderer changes):
 | Window | - | A launch option | [WINDOWED](guide/windowed.md) in the launcher, **Alt+Enter** while playing |
 | Graphics settings | Fixed | Launch options only | In-game [GRAPHICS page](guide/graphics.md) (**BACK + START** or **F6**) with presets and per-setting switches, saved between sessions |
 | VRAM at 3x | - | About 8 GB | About 2 GB |
-| Input | Controller | XInput gamepad | XInput gamepad and **[keyboard](guide/controls.md)**, with keycap button prompts |
+| Input | Controller | XInput gamepad | XInput gamepad and **[keyboard](guide/controls.md)**, with keycap button prompts and keys rebound in the game or the launcher |
 | Disc 2 and DLC | From the disc and Marketplace | Not wired up | Installed at launch from folders you name |
 | Mods | - | - | [Project Forza Plus 4](guide/project-forza-plus.md) 1.3, set up from its zip |
 | Frame generation tools | - | Not visible to them | [Opt-in](guide/launch-options.md#frame-generation) for Lossless Scaling and NVIDIA Smooth Motion |
@@ -171,7 +171,7 @@ Known problems are tracked as
 
 | Path | What it is |
 |---|---|
-| `src/` | The host app: game hooks, built-in defaults, Disc 2 and DLC install, the GRAPHICS page |
+| `src/` | The host app: game hooks, built-in defaults, Disc 2 and DLC install, the GRAPHICS page and its KEYBOARD tab |
 | `src/input/` | Keyboard play: bindings, driving smoothing, keycap prompts |
 | `tests/` | Unit tests of the host app |
 | `config/rexglue/` | The recompiler's input: function analysis and hooks at their 1.0 addresses, each release's fragment list, the manifest |

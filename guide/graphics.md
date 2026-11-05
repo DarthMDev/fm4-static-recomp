@@ -11,7 +11,8 @@ page then says the settings are applied; a row's change takes effect at once or 
 race or screen, as the row says. Leaving with unapplied changes asks once more; leaving again
 discards them. A
 [launch option](launch-options.md) for one of these settings sets its starting value for that
-session only.
+session only. **RB** and **LB** switch to the KEYBOARD tab, which rebinds the keyboard
+([Keyboard](controls.md#in-the-game)).
 
 ## Presets
 

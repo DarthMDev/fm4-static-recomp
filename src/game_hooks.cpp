@@ -37,6 +37,7 @@
 #include "car_dirt.h"
 #include "game_hooks.h"
 #include "guest_addresses.h"
+#include "input/controller_layout.h"
 #include "input/input_context.h"
 #include "input/prompt_strings.h"
 #include "scripted_input.h"
@@ -964,6 +965,18 @@ void Fm4CommandBufferClipRect(PPCRegister& r1) {
   StoreGuestWord(rect + 4, y);
   StoreGuestWord(rect + 8, x + LoadGuestWord(viewport + 8));
   StoreGuestWord(rect + 12, y + LoadGuestWord(viewport + 12));
+}
+
+// The keys tabs name each pad button by what the first player's pad layout makes it do.
+void Fm4ControllerLayoutApplied(PPCRegister& r4, PPCRegister& r5, PPCRegister& r31) {
+  FM4_HOOK_CENSUS();
+  const uint8_t* const player =
+      rex::system::kernel_state()->memory()->virtual_membase() + r31.u32;
+  const uint32_t index = LoadGuestWord(player + 0x1C);
+  REXLOG_INFO("Controller layout: player {} device {} layout {}", index, r5.u32, r4.u32);
+  if (index == 0 && r5.u32 == 0) {
+    fm4_static_recomp::input::SetControllerLayout(r4.u32);
+  }
 }
 
 namespace {

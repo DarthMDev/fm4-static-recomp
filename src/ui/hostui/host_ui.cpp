@@ -23,6 +23,7 @@
 #include <rex/ui/window.h>
 #include <rex/ui/windowed_app_context.h>
 
+#include "input/controls.h"
 #include "input/keycap.h"
 #include "ui/hostui/ui_archive.h"
 #include "ui/hostui/ui_fonts.h"
@@ -76,6 +77,14 @@ constexpr float kHelpBaseline = 677.0f;
 constexpr float kHelpSize = 13.0f;
 constexpr float kHelpIconSize = 22.0f;
 constexpr size_t kVisibleRows = 13;
+// The tab titles above the list, between the game's tab icons (Tab_Button_LB / _RB).
+constexpr float kTabBaseline = 108.0f;
+constexpr float kTabSize = 18.0f;
+constexpr float kTabGap = 28.0f;
+constexpr float kTabIconWidth = 40.0f;
+constexpr float kTabIconHeight = 20.0f;
+// Columns of a row of key slots, from the value column's left.
+constexpr float kSlotPitch = 200.0f;
 // The AUDIO Options screen's slider section (837_i_audio_options, MASTER GAME
 // VOLUME), measured from a capture: the slider row sits where the list would
 // start, and the list's header, line and rows move down by kSliderSectionHeight.
@@ -173,14 +182,14 @@ bool BindHasKey(std::string_view bind, VirtualKey key) {
 
 HostUi::HostUi(rex::ReXApp& app, rex::ui::Presenter& presenter, rex::ui::ImmediateDrawer& drawer,
                rex::ui::Window& window, rex::input::InputSystem* input_system,
-               std::filesystem::path game_data_root, std::string apply_keys)
+               std::filesystem::path game_data_root, MenuKeys keys)
     : app_(app),
       presenter_(presenter),
       drawer_(drawer),
       window_(window),
       input_system_(input_system),
       game_data_root_(std::move(game_data_root)),
-      apply_bind_(std::move(apply_keys)) {}
+      keys_(std::move(keys)) {}
 
 HostUi::~HostUi() {
   alive_.reset();
@@ -212,23 +221,14 @@ bool HostUi::LoadAssets() {
   }
   const uint8_t white[4] = {255, 255, 255, 255};
   white_ = drawer_.CreateTexture(1, 1, ImmediateTextureFilter::kNearest, false, white);
-  const auto keycap = [&](std::string_view key) {
-    constexpr uint32_t kKeycapSize = 64;
-    const std::string labels[] = {input::KeyLabel(key)};
-    const input::Rgba cap =
-        input::RenderKeycap(labels, kKeycapSize, *fonts_[size_t(Face::kMedium)]);
-    return drawer_.CreateTexture(cap.size, cap.size, ImmediateTextureFilter::kLinear, false,
-                                 cap.pixels.data());
-  };
-  key_accept_ = keycap("Return");
-  key_back_ = keycap("Escape");
-  if (const auto tokens = BindTokens(apply_bind_); !tokens.empty()) {
-    key_apply_ = keycap(tokens.front());
-  }
+  LoadKeycaps();
   if (auto textures = UiArchive::Open(ui_root / "Textures.zip")) {
     button_a_ = LoadTexture(drawer_, *textures, "UI4/A_Button_F3.xds");
     button_b_ = LoadTexture(drawer_, *textures, "UI4/B_Button_F3.xds");
+    button_x_ = LoadTexture(drawer_, *textures, "UI4/X_Button_F3.xds");
     button_y_ = LoadTexture(drawer_, *textures, "UI4/Y_Button_F3.xds");
+    tab_lb_ = LoadTexture(drawer_, *textures, "UI4/Common/Tab_Button_LB.xds");
+    tab_rb_ = LoadTexture(drawer_, *textures, "UI4/Common/Tab_Button_RB.xds");
     spinner_ = LoadTexture(drawer_, *textures, "UI4/Common/LOADING_SPINNER_RGB.xds");
     selection_bar_ = LoadTexture(drawer_, *textures, "UI4/Common/SELECTION_BAR_GRADIENT.xds");
     arrow_ = LoadTexture(drawer_, *textures, "UI4/Common/Arrows_Sm_Front.xds");
@@ -245,10 +245,45 @@ bool HostUi::LoadAssets() {
   return true;
 }
 
-bool HostUi::Open(std::unique_ptr<MenuScreen> screen) {
-  if (!screen || !LoadAssets()) {
+void HostUi::LoadKeycaps() {
+  const auto keycap = [&](std::string_view bind) -> std::unique_ptr<ImmediateTexture> {
+    const auto tokens = BindTokens(bind);
+    if (tokens.empty()) {
+      return nullptr;
+    }
+    constexpr uint32_t kKeycapSize = 64;
+    const std::string labels[] = {input::KeyLabel(tokens.front())};
+    const input::Rgba cap =
+        input::RenderKeycap(labels, kKeycapSize, *fonts_[size_t(Face::kMedium)]);
+    return drawer_.CreateTexture(cap.size, cap.size, ImmediateTextureFilter::kLinear, false,
+                                 cap.pixels.data());
+  };
+  key_accept_ = keycap("Return");
+  key_back_ = keycap("Escape");
+  key_apply_ = keycap(keys_.apply);
+  key_clear_ = keycap(keys_.clear);
+  key_previous_tab_ = keycap(keys_.previous_tab);
+  key_next_tab_ = keycap(keys_.next_tab);
+}
+
+void HostUi::SetMenuKeys(MenuKeys keys) {
+  keys_ = std::move(keys);
+  if (assets_loaded_) {
+    LoadKeycaps();
+  }
+  RequestPaint();
+}
+
+bool HostUi::Open(std::vector<MenuTab> tabs, size_t tab) {
+  if (tab >= tabs.size() || !LoadAssets()) {
     return false;
   }
+  std::unique_ptr<MenuScreen> screen = tabs[tab].create();
+  if (!screen) {
+    return false;
+  }
+  tabs_ = std::move(tabs);
+  tab_ = tab;
   screen_ = std::move(screen);
   opened_at_ = std::chrono::steady_clock::now();
   const auto device = input_system_ ? input_system_->ActiveDevice(0) : std::nullopt;
@@ -278,6 +313,7 @@ void HostUi::Close() {
   }
   screen_.reset();
   row_rects_.clear();
+  tab_rects_.clear();
   if (!registered_) {
     return;
   }
@@ -351,8 +387,35 @@ void HostUi::PacePaint() {
   next_paint_ = std::max(next_paint_ + period, now);
 }
 
+void HostUi::SwitchTab(size_t tab) {
+  if (tab == tab_ || tab >= tabs_.size() || screen_->capturing()) {
+    return;
+  }
+  if (!screen_->MayLeave()) {
+    RequestPaint();
+    return;
+  }
+  std::unique_ptr<MenuScreen> screen = tabs_[tab].create();
+  if (!screen) {
+    return;
+  }
+  screen_->Update(true);
+  screen_ = std::move(screen);
+  tab_ = tab;
+  row_rects_.clear();
+  REXLOG_INFO("Host UI: tab {}", screen_->title());
+  RequestPaint();
+}
+
 void HostUi::Apply(NavCommand command) {
   if (!is_open()) {
+    return;
+  }
+  if (command == NavCommand::kPreviousTab || command == NavCommand::kNextTab) {
+    if (tabs_.size() > 1) {
+      SwitchTab((tab_ + (command == NavCommand::kNextTab ? 1 : tabs_.size() - 1)) %
+                tabs_.size());
+    }
     return;
   }
   applying_ = true;
@@ -825,10 +888,18 @@ void HostUi::DrawMenu(rex::ui::UIDrawContext& context) {
   DrawRect(kContentLeft, kHelpLineY, kHelpRight - kContentLeft, 1.0f, kLine);
   DrawRect(kHelpRight, kHelpLineY, 1.0f, 33.0f, kLine);
   DrawRect(kHelpRight + 5.0f, kHelpLineY - 1.0f, kTitleWidth - kHelpRight - 5.0f, 2.0f, kRed);
-  DrawText(Face::kMedium, kTextSize, "CATEGORY", kLabelRight, kHeaderBaseline + list_shift,
-           kHeader, 1.0f);
-  DrawText(Face::kMedium, kTextSize, "ADJUSTABLE OPTION", kValueLeft,
-           kHeaderBaseline + list_shift, kHeader);
+  const std::vector<std::string>& headers = screen.headers();
+  DrawText(Face::kMedium, kTextSize, headers.empty() ? "CATEGORY" : headers[0], kLabelRight,
+           kHeaderBaseline + list_shift, kHeader, 1.0f);
+  if (headers.empty()) {
+    DrawText(Face::kMedium, kTextSize, "ADJUSTABLE OPTION", kValueLeft,
+             kHeaderBaseline + list_shift, kHeader);
+  }
+  for (size_t i = 1; i < headers.size(); ++i) {
+    DrawText(Face::kMedium, kTextSize, headers[i], kValueLeft + float(i - 1) * kSlotPitch,
+             kHeaderBaseline + list_shift, kHeader);
+  }
+  DrawTabs();
 
   size_t first = list_begin;
   if (rows.size() - list_begin > visible_rows &&
@@ -853,6 +924,11 @@ void HostUi::DrawMenu(rex::ui::UIDrawContext& context) {
     if (row.divider_above && i > first) {
       DrawRect(kContentLeft, top - 1.5f, kRowsRight - kContentLeft, 1.0f, kLine);
     }
+    if (row.heading) {
+      DrawText(Face::kCondensed, kTextSize + 3.0f, row.label, kContentLeft + 4.0f, baseline,
+               kHeader);
+      continue;
+    }
     if (focused) {
       DrawRect(kColumnX, top, kRowsRight - kColumnX, kBarHeight, kWhite, selection_bar_.get());
       if (row.adjust) {
@@ -870,7 +946,21 @@ void HostUi::DrawMenu(rex::ui::UIDrawContext& context) {
     }
     DrawText(Face::kMedium, kTextSize, row.label, kLabelRight, baseline,
              !enabled ? kDisabled : (focused ? kRed : kLabel), 1.0f);
-    if (row.value) {
+    if (row.slots) {
+      const std::vector<std::string> slots = row.slots();
+      const size_t focused_slot = std::min(screen.slot(), slots.empty() ? 0 : slots.size() - 1);
+      for (size_t s = 0; s < slots.size(); ++s) {
+        const float slot_x = kValueLeft + float(s) * kSlotPitch;
+        const bool here = focused && s == focused_slot;
+        DrawText(Face::kCondensed, kTextSize + 1.0f, slots[s], slot_x, baseline,
+                 !enabled ? kDisabled
+                 : here   ? (screen.capturing() ? kRed : kWhite)
+                          : kValue);
+        if (here) {
+          DrawRect(slot_x, top + kBarHeight - 8.0f, kSlotPitch - 30.0f, 2.0f, kRed);
+        }
+      }
+    } else if (row.value) {
       DrawText(Face::kCondensed, kTextSize + 1.0f, row.value(), kValueLeft, baseline,
                !enabled ? kDisabled : (focused ? kWhite : kValue));
     }
@@ -921,12 +1011,30 @@ void HostUi::DrawMenu(rex::ui::UIDrawContext& context) {
     const char* label;
   };
   const MenuStatus status = screen.status();
-  std::vector<Help> help = {{keyboard_prompts_ ? key_accept_.get() : button_a_.get(), "CHANGE"}};
-  if (screen.has_apply()) {
-    help.push_back({keyboard_prompts_ ? key_apply_.get() : button_y_.get(), "SAVE & APPLY"});
+  std::vector<Help> help;
+  // Escape is a key like any other while a key is awaited.
+  std::string clear_label;
+  if (screen.capturing()) {
+    help.push_back(keyboard_prompts_ ? Help{nullptr, "CLICK TO CANCEL"}
+                                     : Help{button_b_.get(), "CANCEL"});
+  } else {
+    help.push_back({keyboard_prompts_ ? key_accept_.get() : button_a_.get(), "CHANGE"});
+    if (screen.focus() < rows.size()) {
+      const MenuRow& row = rows[screen.focus()];
+      if (row.slots && row.clear_label) {
+        clear_label =
+            row.clear_label(std::min(screen.slot(), std::max<size_t>(row.slots().size(), 1) - 1));
+      }
+    }
+    if (!clear_label.empty()) {
+      help.push_back({keyboard_prompts_ ? key_clear_.get() : button_x_.get(), clear_label.c_str()});
+    }
+    if (screen.has_apply()) {
+      help.push_back({keyboard_prompts_ ? key_apply_.get() : button_y_.get(), "SAVE & APPLY"});
+    }
+    help.push_back({keyboard_prompts_ ? key_back_.get() : button_b_.get(),
+                    status.warning ? "DISCARD" : "BACK"});
   }
-  help.push_back(
-      {keyboard_prompts_ ? key_back_.get() : button_b_.get(), status.warning ? "DISCARD" : "BACK"});
   float help_x = kHelpRight - 16.0f;
   for (size_t i = help.size(); i-- > 0;) {
     help_x -= DrawText(Face::kMedium, kHelpSize, help[i].label, help_x, kHelpBaseline, kHelpText,
@@ -964,6 +1072,39 @@ void HostUi::DrawMenu(rex::ui::UIDrawContext& context) {
   // Keep painting while open so the pad is polled even when the title
   // presents nothing new.
   RequestPaint();
+}
+
+void HostUi::DrawTabs() {
+  tab_rects_.assign(tabs_.size(), RowRect{0, 0, -1, -1});
+  if (tabs_.size() < 2) {
+    return;
+  }
+  ImmediateTexture* const previous = keyboard_prompts_ ? key_previous_tab_.get() : tab_lb_.get();
+  ImmediateTexture* const next = keyboard_prompts_ ? key_next_tab_.get() : tab_rb_.get();
+  const float icon_width = keyboard_prompts_ ? kHelpIconSize : kTabIconWidth;
+  const float icon_height = keyboard_prompts_ ? kHelpIconSize : kTabIconHeight;
+  const float icon_top = kTabBaseline - 6.0f - icon_height * 0.5f;
+  float x = kContentLeft;
+  if (previous) {
+    DrawRect(x, icon_top, icon_width, icon_height, kWhite, previous);
+  }
+  x += icon_width + 16.0f;
+  for (size_t i = 0; i < tabs_.size(); ++i) {
+    const bool shown = i == tab_;
+    const float width = DrawText(Face::kCondensed, kTabSize, tabs_[i].title, x, kTabBaseline,
+                                 shown ? kWhite : kValue);
+    if (shown) {
+      DrawRect(x, kTabBaseline + 6.0f, width, 2.0f, kRed);
+    }
+    tab_rects_[i] = RowRect{canvas_.x + (x - 6.0f) * canvas_.scale,
+                            canvas_.y + (kTabBaseline - 22.0f) * canvas_.scale,
+                            canvas_.x + (x + width + 6.0f) * canvas_.scale,
+                            canvas_.y + (kTabBaseline + 10.0f) * canvas_.scale};
+    x += width + kTabGap;
+  }
+  if (next) {
+    DrawRect(x - kTabGap + 16.0f, icon_top, icon_width, icon_height, kWhite, next);
+  }
 }
 
 void HostUi::DrawSliderSection(const MenuRow& row, bool focused) {
@@ -1028,6 +1169,18 @@ void HostUi::OnKeyDown(rex::ui::KeyEvent& e) {
   }
   e.set_handled(true);
   keyboard_prompts_ = true;
+  if (screen_->capturing()) {
+    if (const std::string name = input::BindKeyName(key); !e.prev_state() && !name.empty()) {
+      captured_key_ = int(key);
+      screen_->CaptureKey(name);
+      RequestPaint();
+    }
+    return;
+  }
+  // The repeats of a key just captured (an arrow key) must not move the menu.
+  if (int(key) == captured_key_) {
+    return;
+  }
   switch (key) {
     case VirtualKey::kUp:
     case VirtualKey::kNumpad8:
@@ -1058,8 +1211,17 @@ void HostUi::OnKeyDown(rex::ui::KeyEvent& e) {
       }
       break;
     default:
-      if (!e.prev_state() && BindHasKey(apply_bind_, key)) {
+      if (e.prev_state()) {
+        break;
+      }
+      if (BindHasKey(keys_.apply, key)) {
         Apply(NavCommand::kApply);
+      } else if (BindHasKey(keys_.clear, key)) {
+        Apply(NavCommand::kClear);
+      } else if (BindHasKey(keys_.previous_tab, key)) {
+        Apply(NavCommand::kPreviousTab);
+      } else if (BindHasKey(keys_.next_tab, key)) {
+        Apply(NavCommand::kNextTab);
       }
       break;
   }
@@ -1068,6 +1230,9 @@ void HostUi::OnKeyDown(rex::ui::KeyEvent& e) {
 void HostUi::OnKeyUp(rex::ui::KeyEvent& e) {
   held_keys_.erase(std::remove(held_keys_.begin(), held_keys_.end(), int(e.virtual_key())),
                    held_keys_.end());
+  if (int(e.virtual_key()) == captured_key_) {
+    captured_key_ = -1;
+  }
   // Releases go on to the keyboard driver: the key that opened the page would
   // otherwise stay held there and press its button when the page closes.
 }
@@ -1083,6 +1248,9 @@ void HostUi::OnMouseMove(rex::ui::MouseEvent& e) {
     return;
   }
   e.set_handled(true);
+  if (screen_->capturing()) {
+    return;
+  }
   for (size_t i = 0; i < row_rects_.size(); ++i) {
     const RowRect& rect = row_rects_[i];
     if (float(e.x()) >= rect.x0 && float(e.x()) < rect.x1 && float(e.y()) >= rect.y0 &&
@@ -1101,20 +1269,36 @@ void HostUi::OnMouseDown(rex::ui::MouseEvent& e) {
   }
   e.set_handled(true);
   keyboard_prompts_ = true;
-  if (e.button() == rex::ui::MouseEvent::Button::kRight) {
+  // Any click ends a key capture, as back on the pad does.
+  if (e.button() == rex::ui::MouseEvent::Button::kRight || screen_->capturing()) {
     Apply(NavCommand::kBack);
     return;
   }
   if (e.button() != rex::ui::MouseEvent::Button::kLeft) {
     return;
   }
+  const auto inside = [&](const RowRect& rect) {
+    return float(e.x()) >= rect.x0 && float(e.x()) < rect.x1 && float(e.y()) >= rect.y0 &&
+           float(e.y()) < rect.y1;
+  };
+  for (size_t i = 0; i < tab_rects_.size(); ++i) {
+    if (inside(tab_rects_[i])) {
+      SwitchTab(i);
+      return;
+    }
+  }
   const size_t focus = screen_->focus();
-  if (focus >= row_rects_.size()) {
+  if (focus >= row_rects_.size() || !inside(row_rects_[focus])) {
     return;
   }
-  const RowRect& rect = row_rects_[focus];
-  if (float(e.x()) < rect.x0 || float(e.x()) >= rect.x1 || float(e.y()) < rect.y0 ||
-      float(e.y()) >= rect.y1) {
+  // Clicking a key slot picks it; clicking the label picks the focused one.
+  if (const MenuRow& row = screen_->rows()[focus]; row.slots) {
+    const float column = (float(e.x()) - canvas_.x) / canvas_.scale - kValueLeft;
+    if (column >= 0.0f) {
+      screen_->SetSlot(std::min(size_t(column / kSlotPitch),
+                                std::max<size_t>(row.slots().size(), 1) - 1));
+    }
+    Apply(NavCommand::kAccept);
     return;
   }
   // Clicking a slider's bar sets the value under the pointer.

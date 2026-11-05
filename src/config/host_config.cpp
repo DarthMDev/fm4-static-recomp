@@ -113,6 +113,16 @@ std::string SetValue(std::string_view text, std::string_view name, std::string_v
   return out;
 }
 
+std::string RemoveValue(std::string_view text, std::string_view name) {
+  const Match match = Find(text, name);
+  if (match.line_begin == std::string_view::npos) {
+    return std::string(text);
+  }
+  const size_t newline = text.find('\n', match.line_end);
+  const size_t end = newline == std::string_view::npos ? text.size() : newline + 1;
+  return std::string(text.substr(0, match.line_begin)) + std::string(text.substr(end));
+}
+
 std::string Quote(std::string_view value) {
   std::string out = "\"";
   for (char c : value) {
@@ -220,6 +230,14 @@ bool HostConfig::Load() {
 
 void HostConfig::Set(std::string_view name, std::string_view literal) {
   std::string updated = SetValue(text_, name, literal);
+  if (updated != text_) {
+    text_ = std::move(updated);
+    dirty_ = true;
+  }
+}
+
+void HostConfig::Remove(std::string_view name) {
+  std::string updated = RemoveValue(text_, name);
   if (updated != text_) {
     text_ = std::move(updated);
     dirty_ = true;

@@ -15,6 +15,7 @@ namespace fm4_static_recomp::input {
 class KeyboardRamp {
  public:
   explicit KeyboardRamp(RampRates rates);
+  void SetRates(const RampRates& rates) { rates_ = rates; }
   void Apply(rex::input::X_INPUT_GAMEPAD& pad, double elapsed_seconds, bool driving);
 
  private:
