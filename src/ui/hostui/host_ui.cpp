@@ -522,6 +522,10 @@ void HostUi::PrepareText(Text& text, std::u32string_view string) {
     if (text.texture) {
       for (Batch& batch : batches_) {
         if (batch.texture == text.texture.get()) {
+          for (auto& vertex : batch.vertices) {
+            vertex.u *= float(text.texture->width) / float(replacement->width);
+            vertex.v *= float(text.texture->height) / float(replacement->height);
+          }
           batch.texture = replacement.get();
         }
       }
