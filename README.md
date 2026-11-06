@@ -53,10 +53,11 @@ here for FM4.
 3. Press **PLAY**.
 
 > [!NOTE]
-> The first start compiles the game's shaders for your GPU before the title screen: up to
-> 40 seconds, longer on a processor with fewer threads. The game may look frozen meanwhile; let
-> it finish. Later starts take a second or two; the compile runs again after an update and after
-> a GPU driver update.
+> The first start prepares shaders for your GPU before the title screen, with a progress bar.
+> The window stays responsive; the time depends on your computer and graphics driver. Completed
+> work is saved every 10 seconds and when preparation finishes, so later starts are much faster.
+> An update or a GPU driver update may require preparation again. You can close the window
+> during preparation; it may briefly wait for the current graphics operation to finish.
 
 The first setup takes about 10 minutes (under 8 on the [test bench](guide/performance.md#test-bench)).
 Details: [Launcher guide](guide/launcher.md). Prefer
