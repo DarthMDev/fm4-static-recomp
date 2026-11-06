@@ -29,7 +29,6 @@
 #include <rex/ui/window.h>
 #include <rex/ui/window_listener.h>
 #include <rex/ui/windowed_app_context.h>
-#include <SDL3/SDL.h>
 
 #include "built_in_defaults.h"
 #include "code_image_check.h"
@@ -128,9 +127,6 @@ class Fm4App final : public rex::ReXApp {
       return;
     }
     config.gpu_plugin = "fh1";
-#if defined(__APPLE__)
-    SDL_SetHint(SDL_HINT_AUDIO_CHANNELS, "2");
-#endif
     fm4_static_recomp::ConfigureScriptedInput(config);
     fm4_static_recomp::ApplyBuiltInDefaults(fm4_static_recomp::DefaultStage::kBeforeGpuPlugin);
     // The GPU settings are registered by the plugin, so it is loaded here

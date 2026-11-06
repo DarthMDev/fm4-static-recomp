@@ -104,6 +104,16 @@ Draws, by their index in the frame or their shader hash:
 | `--fh1_debug_vs_constant=<hash>:c<n>=x,y,z,w` | Replace one float constant of that vertex shader |
 | `--fh1_debug_dump_range=<draw>:<address>:<length>` | Before that draw, write those guest bytes as the GPU has them to the resolve dump folder |
 
+Platform-specific renderer defaults (explicit launch values override these):
+
+| Option | FM4 default | What it does |
+|---|---|---|
+| `--pinyon_shift_fh1_source_presentation` | `true` on macOS, `false` on Windows | Present each new guest image once; avoids duplicate overlay repaint submissions blocking MoltenVK's graphics queue |
+| `--fh1_fold_clears` | `true` on macOS, `false` on Windows | Fold EDRAM clears into the next draw's rendering instead of opening a separate clear pass, reducing Metal encoder work |
+| `--fh1_skip_draws_without_effect` | `true` on macOS, `false` on Windows | Skip draws without surface writes; preserve occlusion queries and memory exports |
+| `--fh1_readback_small_float_resolves` | `true` on macOS, `false` on Windows | Copy completed 32-bit float resolves of 4 KB or less into guest memory for CPU consumers |
+| `--force_convert_quad_lists_to_triangle_lists` | `true` on macOS, `false` on Windows | Force quad lists through triangle-list conversion; disabling the override still allows conversion when the backend requires it |
+
 Costs (wrong image unless noted):
 
 | Option | What it does |

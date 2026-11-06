@@ -42,8 +42,8 @@ public static class LaunchArguments
         // The mod's AI is tuned on Xenia, about six physics substeps a tick at its 62 fps.
         if (installGame == ProfileStore.Pfp4) options["fm4_car_min_substeps"] = "6";
         if (settings.SkipIntro) options["fm4_skip_intro"] = "true";
-        if (settings.ShowFps) options["fm4_show_fps"] = "true";
-        if (!settings.ControllerVibration)
+        if (settings.ShowFps && !Predates(version, new Version(0, 3, 2))) options["fm4_show_fps"] = "true";
+        if (!settings.ControllerVibration && !Predates(version, new Version(0, 3, 2)))
         {
             options["controller_vibration"] = "false";
             options["pad_rumble_strength"] = "0";

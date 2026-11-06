@@ -17,7 +17,7 @@ public sealed class SetupRunner(InstallLayout layout, IPlatform platform) : IBui
     {
         if (OperatingSystem.IsMacOS())
             return [layout.SetupScript(request.Version), "--game-root", layout.Game,
-                "--cache-root", layout.Cache(request.Version), "--toolchain-root", layout.Toolchain,
+                "--cache-root", layout.Cache(request.Version),
                 "--jobs", request.BuildJobs.ToString(CultureInfo.InvariantCulture)];
         // A trailing backslash breaks the schema run's quoting inside setup.
         var arguments = new List<string>(PowerShell.FileArguments(layout.SetupScript(request.Version)))

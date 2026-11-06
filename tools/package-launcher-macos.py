@@ -60,7 +60,7 @@ def main():
     executable_dir.mkdir(parents=True)
     subprocess.run(['dotnet', 'publish', str(ROOT / 'launcher/Fm4StaticRecomp.Launcher'),
         '-c', 'Release', '-r', 'osx-arm64', '-o', str(executable_dir),
-        f'-p:Version={release["version"]}', '-p:PublishSingleFile=true', '-p:NuGetAudit=false'], check=True)
+        f'-p:Version={release["version"]}', '-p:PublishSingleFile=true'], check=True)
     resources = bundle / 'Contents/Resources'
     resources.mkdir()
     source_payload(resources / 'fm4-static-recomp-source.zip', release)

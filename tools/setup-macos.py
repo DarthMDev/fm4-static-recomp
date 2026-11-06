@@ -111,7 +111,6 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--game-root', type=Path, required=True)
     parser.add_argument('--cache-root', type=Path, required=True)
-    parser.add_argument('--toolchain-root', type=Path, required=True)
     parser.add_argument('--jobs', type=int, default=0)
     args = parser.parse_args()
     if not 0 <= args.jobs <= 32:

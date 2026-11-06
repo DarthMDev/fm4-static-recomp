@@ -22,12 +22,7 @@ public partial class MainWindow : Window
 {
     private enum Mode { Loading, Setup, Building, Ready, Playing, Crashed }
 
-    // AssemblyVersion drops prerelease suffixes; the source payload uses the full
-    // package version (for example 0.3.0-macos.1). Exclude only build metadata.
-    public static readonly string Version = System.Reflection.CustomAttributeExtensions
-        .GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>(typeof(MainWindow).Assembly)
-        ?.InformationalVersion.Split('+')[0]
-        ?? typeof(MainWindow).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+    public static readonly string Version = typeof(MainWindow).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
 
     private readonly string[] _args;
     // Set while --skip-launcher keeps the window closed; cleared once it opens.

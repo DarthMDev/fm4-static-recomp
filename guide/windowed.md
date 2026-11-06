@@ -3,7 +3,7 @@
 [← Back to the README](../README.md)
 
 The game starts fullscreen by default. It can start in a window instead, and **Alt+Enter**
-switches between a window and fullscreen at any moment while you play.
+or **F11** switches between a window and fullscreen while you play.
 
 ## In the launcher
 
@@ -17,12 +17,14 @@ At the top of the launcher's **GRAPHICS**:
 Press **SAVE**; both apply from the next start. For a size the list does not have, use
 [launch options](#launch-options).
 
-## Alt+Enter
+## Switching while playing
 
-**Alt+Enter** switches between the window and fullscreen while you play, also after a fullscreen
-start, in menus and in races alike; from fullscreen it opens a window of WINDOW SIZE. It does not
-change WINDOWED: the next start follows the
-setting again.
+**Alt+Enter** or **F11** switches between the window and fullscreen, in menus and in races alike;
+from fullscreen it opens a window of WINDOW SIZE. The in-game **GRAPHICS → FULLSCREEN** row
+shows the current window state and changes it immediately. None of these changes WINDOWED or
+saves a separate fullscreen setting: the next start follows the launcher's setting again.
+
+On macOS, use **Option+Enter**. F11 may be assigned to Show Desktop in macOS keyboard settings.
 
 ## Resizing
 
@@ -59,4 +61,5 @@ For the [manual install](manual-install.md#4-play), or a size the launcher does 
 ## Older versions
 
 A version before 0.3.1, after [GO BACK TO](launcher.md#updates) or while an update builds, starts
-fullscreen whatever WINDOWED says, and has no Alt+Enter.
+fullscreen whatever WINDOWED says, and has no Alt+Enter. F11 and the in-game FULLSCREEN row
+require version 0.3.2 or newer.

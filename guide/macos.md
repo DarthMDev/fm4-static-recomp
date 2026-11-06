@@ -34,7 +34,8 @@ shasum -a 256 -c FM4StaticRecomp-Launcher-macos-arm64.zip.sha256
 
 Follow the launcher’s setup steps with your own discs, then press PLAY. The
 launcher fetches the pinned SDK, translates the supported disc’s code and compiles
-the game. First play compiles shaders; revisit a race to compare warm-cache behavior.
+the game. First play compiles shaders before the title with a progress bar;
+revisit a race to compare warm-cache behavior.
 Use vanilla FM4 and a 60 FPS limit for the initial test. Project Forza Plus 4’s
 managed installer is available, but its Mac setup/gameplay path is not qualified.
 
@@ -64,19 +65,16 @@ git checkout release/0.3.2
 # Put your extracted Disc 1 at game/disc1, then:
 ./tools/build-mac.sh
 out/build/mac-arm64-release/fm4_static_recomp \
-  --game_data_root="$PWD/game/disc1" --user_data_root="$PWD/user" --gpu_backend=vulkan
+  --game_data_root="$PWD/game/disc1" --user_data_root="$PWD/user" --gpu_backend=vulkan \
+  --fm4_skip_intro=true
 ```
 
 `FM4_GAME_ROOT=/absolute/path/to/disc1 ./tools/build-mac.sh` selects another disc
 folder. Use a separate user directory when comparing builds.
 
-SDK changes for this preview are being reviewed in
-[shiftglue-sdk#4](https://github.com/i2kiselev/shiftglue-sdk/pull/4). During review,
-`config/macos-toolchain.json` temporarily selects that candidate SDK commit.
-After it merges and the maintainer sets the release SDK pin, remove the temporary
-`sdk` entry: Mac setup then takes its repository/revision from
-`config/release-toolchain.json`, as Windows does. Only Mac-specific configuration
-such as `minimum_macos` remains in the Mac file. No local patch stack is applied.
+`config/macos-toolchain.json` currently selects the preview SDK revision. Once
+the preview is integrated and the release SDK pin is set, Mac setup will use
+`config/release-toolchain.json`, as Windows does. No local patch stack is applied.
 
 Setup keeps managed SDK source under `.local/shiftglue-sdk-macos/<revision>` and
 builds the complete host, facade modules and FidelityFX runtime in
@@ -118,21 +116,30 @@ python3 tools/package-launcher-macos.py --output-dir out/macos-package-check
 Packaging runs unattended, includes only allowlisted source/launcher files and
 notices, verifies the app signature, and writes the ZIP and SHA-256 sidecar.
 It does not include development SDK hints, disc data, generated guest code, saves
-or caches. Official release assets are intended to be built by the maintainer’s
-CI from the release tag; the game is still built on each player’s Mac.
+or caches. The `macos-ci` pull-request label enables automated launcher, Python,
+native and SDK checks on an Apple Silicon macOS 15 runner, targeting macOS 14.
+Tagged builds run the same checks and retain the ZIP and checksum as Actions
+artifacts; they do not publish a GitHub release. The tag must match the release
+version and use the shared SDK pin without a temporary Mac override. The game
+is still built on each player’s Mac.
 
 ## Testing status
 
-Apple M3 testing reported stable 60 FPS with default graphics and a 60 FPS limit
-in menus and a default Free Play race on November 2, 2026. On November 5, a race
-using the updated SDK and restored vertex residency shortcut was reported free
-of observed geometry issues. This does not qualify every track, camera or mode,
-and the validation-enabled run is not a performance benchmark.
+On November 5, 2026, the contributor reported an Apple M3 Free Play race without
+observed geometry issues with the vertex residency shortcut restored. A normal
+launcher run showed around 60 FPS on the overlay, while a validation-enabled
+session recorded lower rendering throughput. The difference remains unexplained;
+these observations do not establish sustained measured 60 FPS or qualify every
+track, camera or mode.
+
+The latest contributor revision (`c6c0978`, SDK `9a6d904b`) was reported to pass
+the launcher, Python, native and SDK suites, with zero validation errors using
+Khronos layer 1.4.363.1. The hidden-page snapshot count peaked at 1,515 (about
+6 MB). Those reports precede the maintainer corrections and startup changes;
+the combined candidate still needs a fresh packaged install and race on a Mac.
 
 SDK/native regression coverage includes real neighboring 4 KB guest-page writes
 on a 16 KB host page. FSR 2/3 synthetic GPU dispatch and resize checks passed;
-explicit gameplay image-quality qualification remains separate. A current Khronos
-validation layer is required for meaningful logs: the installed 1.3.236 layer
-reported `03047`, while an otherwise identical startup/title comparison with
-1.4.363 logged no Vulkan errors. Post-rework install, race and validation results
-must be reported in the PR before merge.
+explicit gameplay image-quality qualification remains separate. Use a current Khronos
+validation layer when checking the combined candidate. Runtime qualification on
+macOS 14 and explicit FSR 2/3 gameplay remain pending.

@@ -164,14 +164,14 @@ IDs so you can select one. The imported profile is selected for Play and keeps
 the save's original XUID. Import copies the career; it does not play directly
 against the original save. **NEW CAREER** clears a pending setup import.
 
-The macOS SDK and portability patches are pinned separately in
-`config/macos-toolchain.json`; the Windows release pin is unchanged. Both the
-launcher and `tools/build-mac.sh` use this same preparation/build path. SDK patches
-are verified by checksum and applied automatically. Managed builds use a private
+Mac setup selects the SDK revision in `config/macos-toolchain.json` while the
+preview is under review, then uses the shared release pin once that temporary
+override is removed. Both the launcher and `tools/build-mac.sh` use this same
+preparation/build path. No patch stack is applied. Managed builds use a private
 SDK checkout and dependency cache below their extracted source directory.
 
 After a successful build, `.local/logs/macos-build.json` inside that source
-records the SDK/patch identities, compiler and tool versions, code image, and
+records the SDK identity, compiler and tool versions, code image, and
 binary hashes. `.local/logs/macos-sdk.json` records SDK preparation. These receipts
 describe the build inputs and outputs; they do not assert that gameplay has been
 validated or that different Xcode/tool versions produce byte-identical binaries.

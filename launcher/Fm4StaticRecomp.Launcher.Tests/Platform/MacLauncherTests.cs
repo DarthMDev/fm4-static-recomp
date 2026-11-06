@@ -34,6 +34,7 @@ public class MacLauncherTests
         Assert.Equal(layout.SetupScript("0.3.0"), arguments[0]);
         Assert.Contains(layout.Game, arguments);
         Assert.Contains("--jobs", arguments);
+        Assert.DoesNotContain("--toolchain-root", arguments);
         Assert.DoesNotContain("-AcceptMicrosoftLicense", arguments);
     }
 
