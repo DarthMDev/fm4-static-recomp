@@ -102,6 +102,9 @@ constexpr std::array kAfterGpuPlugin = {
     // Decoding on the XMA decoder thread lets the game's mixer now and then read a block before
     // it is decoded: one voice drops out for 5 ms, heard as crackle (#37).
     Default{"xma_decode_kicks_inline", "true"},
+    // A new car's garage thumbnail now and then lost a tile-shaped part, with no cause found; none
+    // broke with this on. It costs frame drops while a thumbnail is made.
+    Default{"fh1_hold_resolve_sync", "true"},
     Default{"pad_chord_debug_overlay", ""},
     // The keyboard plays beside the pad, Left Shift as the clutch while driving keys are
     // held; no mouse input (the game's menus have no pointer).

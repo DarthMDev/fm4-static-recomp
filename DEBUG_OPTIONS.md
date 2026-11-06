@@ -127,7 +127,7 @@ Resolves and visibility:
 | Option | What it does |
 |---|---|
 | `--fh1_resolve_dump_dir=<folder>`, `--fh1_resolve_dump_frame=<n>` | Write every resolve's output bytes to that folder (only frame `n` if given) |
-| `--fh1_hold_resolve_sync` | While a car thumbnail is made (`--fh1_readback_all_resolves_hold` set): a full memory barrier and a wait for the GPU after every resolve, its readbacks copied into guest memory at once (Vulkan) |
+| `--fh1_hold_resolve_sync` | While a car thumbnail is made (`--fh1_readback_all_resolves_hold` set): a full memory barrier and a wait for the GPU after every resolve, its readbacks copied into guest memory at once (Vulkan). On by default in FM4, frame drops while a thumbnail is made; `false` turns it off |
 | `--fh1_resolve_dump_hold` | With `--fh1_resolve_dump_dir`: dump only while a car thumbnail is made (`--fh1_readback_all_resolves_hold` set), at a resolution scale also the scaled bytes, and log each dump's format, pitch and rectangle (Vulkan) |
 | `--fh1_readback_all_resolves` | Copy every resolve into guest memory, not only the ones the CPU reads (slow) |
 | `--fh1_readback_all_resolves_hold` | Live. The same while set; the game sets it from a car thumbnail's render until it is saved, and clears it after, so a launch value does not last |

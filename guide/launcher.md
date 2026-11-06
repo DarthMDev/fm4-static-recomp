@@ -27,10 +27,11 @@ instead, see the [manual install](manual-install.md).
    | **Build** | The launcher downloads its build tools, translates and compiles the game. |
    | **Your profile** | A name; the gamertag starts as it. |
 
-3. **PLAY**. The first start compiles the game's shaders for your GPU before the title screen:
-   up to 40 seconds, longer on a processor with fewer threads, and the game may look frozen
-   meanwhile. Later starts take a second or two; the compile runs again after an update and
-   after a GPU driver update.
+3. **PLAY**. The first start prepares shaders for your GPU before the title screen. A progress
+   bar shows completed work, and the window stays responsive. The time depends on your computer
+   and graphics driver. Completed work is saved every 10 seconds and at the end, making later
+   starts much faster. An update or a GPU driver update may require preparation again. Closing
+   during preparation may briefly wait for the current graphics operation to finish.
 
 ## The main screen
 

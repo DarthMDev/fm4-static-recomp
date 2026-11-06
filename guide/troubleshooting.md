@@ -17,10 +17,21 @@ An install cannot be switched to the mod. Set up a second one:
 Your vanilla install and its saves stay as they are. Start a new career on the mod: vanilla saves
 do not work there.
 
-## The game looks frozen on its first start
+## The game is preparing shaders before the title screen
 
-The first start of every new version builds its shaders for up to 40 seconds before the title
-screen, and the window may not respond meanwhile. Wait; later starts skip this.
+The first start prepares shaders for your GPU. The window first says **Preparing shaders**,
+then shows the number completed and a progress bar. The time depends on your computer and
+graphics driver; there is no fixed time limit. You can move, minimize or restore the window
+while it works.
+
+Completed work is saved every 10 seconds and when preparation finishes. Later starts reuse it
+and are much faster. After an update or a GPU driver update, preparation may be needed again.
+If you close the window, it may say **Closing** while the current graphics operation finishes.
+Let it close normally. On restart the progress bar starts again, even when saved work makes
+preparation faster.
+
+If the window shows **Shader initialization failed**, the game will not start behind the error.
+Close it and follow [Reporting issues](reporting-issues.md), including the error and game log.
 
 ## The game crashes in a busy moment, a different spot each time
 
