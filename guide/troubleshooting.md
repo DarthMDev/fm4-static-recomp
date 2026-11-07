@@ -31,7 +31,17 @@ Let it close normally. On restart the progress bar starts again, even when saved
 preparation faster.
 
 If the window shows **Shader initialization failed**, the game will not start behind the error.
-Close it and follow [Reporting issues](reporting-issues.md), including the error and game log.
+The saved shaders are then usually out of date or damaged. To start again:
+
+1. Close the game window.
+2. Open the folder you extracted the launcher into, then `data` → `cache` → the folder named
+   after the game version, for example `0.3.2`.
+3. Delete the `shaders` folder there. Leave the other folders alone.
+4. Start the game again from the launcher. It now starts without prepared shaders, so the first
+   races may stutter briefly while the game compiles them.
+
+If the error comes back, follow [Reporting issues](reporting-issues.md), including the error and
+game log.
 
 ## The game crashes in a busy moment, a different spot each time
 
@@ -61,6 +71,8 @@ without G-Sync or FreeSync, pick the refresh rate or a whole fraction of it (144
 More in [High frame rates](high-frame-rate.md#picking-a-rate).
 
 ## Sound is slow, late or crackles on an older CPU
+
+From 0.3.2, try **SETTINGS → AUDIO COMPATIBILITY** in the launcher, press **SAVE** and restart the game. It is off by default and targets repeated or slowed race audio, particularly on older processors. If your sound already works well, leave it off.
 
 The game's sound needs CPU time next to the race; an older or slower CPU that is busy on every
 core falls behind. Set **FRAME RATE** to 60, and in Windows **Settings → System → Power &

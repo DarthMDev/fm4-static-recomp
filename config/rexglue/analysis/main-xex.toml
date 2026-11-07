@@ -4,6 +4,9 @@
 # tools/release_analysis.py moves them into the image being built through
 # config/rexglue/releases/<image>.toml; each image's [functions] are in fragments-<image>.toml.
 
+# Only these mixer copies may bypass FMA, after static or runtime proof of float-valued inputs.
+exact_single_fma_functions = [0x82B56430, 0x82B5CCF0, 0x82B94F78]
+
 # Microsoft CRT non-local jump pair (9 setjmp and 8 longjmp call sites). These
 # must be semantic codegen hooks so a longjmp restores the host-side PPCContext
 # captured at the setjmp call site.
@@ -380,3 +383,35 @@ address = 0x82C56B78
 name = "Fm4AudioMixBlock"
 context = true
 registers = ["r4"]
+
+[[midasm_hook]]
+address = 0x82B58C44
+name = "Fm4AudioStableGain"
+context = true
+registers = ["r21", "r23", "r27", "r28", "r31"]
+jump_address_on_true = 0x82B58D50
+
+[[midasm_hook]]
+address = 0x822B0040
+name = "Fm4MusicUpdate"
+registers = ["r31"]
+
+[[midasm_hook]]
+address = 0x82338D2C
+name = "Fm4MusicStreamGain"
+registers = ["r31", "f1"]
+
+[[midasm_hook]]
+address = 0x82338DBC
+name = "Fm4MusicStreamPlaying"
+registers = ["r31", "r3"]
+
+[[midasm_hook]]
+address = 0x829851AC
+name = "Fm4MusicMovieStarted"
+registers = ["r31"]
+
+[[midasm_hook]]
+address = 0x8297AA50
+name = "Fm4MusicMovieStopped"
+registers = ["r31"]

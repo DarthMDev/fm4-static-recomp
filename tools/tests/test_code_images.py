@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 import importlib.util
 import json
 import sys
@@ -40,6 +42,13 @@ class NormaliseTest(unittest.TestCase):
 
 
 class ResolvedAnalysisTest(unittest.TestCase):
+    def test_exact_fma_functions_are_collected_and_ported(self):
+        text = "exact_single_fma_functions = [0x82B56430, 0x82B5CCF0]\n"
+        self.assertEqual(ci.analysis_addresses({"exact_single_fma_functions": [0x82B56430, 0x82B5CCF0]}),
+                         [("exact_single_fma_functions", 0x82B56430), ("exact_single_fma_functions", 0x82B5CCF0)])
+        self.assertEqual(release_analysis.rewrite_addresses(text, {0x82B56430: 0x82B60A20, 0x82B5CCF0: 0x82B672E0}),
+                         "exact_single_fma_functions = [0x82B60A20, 0x82B672E0]\n")
+
     def test_hex_addresses_move(self):
         text = "setjmp_address = 0x82762EC0  # 0x82762EC0 stays in the comment\n"
         resolved = release_analysis.rewrite_addresses(text, {0x82762EC0: 0x82768B30})

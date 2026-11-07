@@ -121,9 +121,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools\run.ps1 -GameRoot D:\F
     --fm4_disc2_packages=D:\FM4\disc2 --fm4_dlc_packages=D:\FM4\dlc
 ```
 
-The packages are installed into your save folder in a few seconds; installed ones are
-skipped, so passing the options every time does no harm. `.local\state\logs\runtime.log`
-ends the install with a `Content: ...` summary.
+The packages are installed into your save folder in a few seconds; existing package files are
+skipped. Installed DLC is treated as fully unlocked: every normal launch repairs incomplete
+license information, even without these install options or the original packages. This leaves
+car files and saves unchanged. `.local\state\logs\runtime.log`
+records the license scan and the install summary.
 
 ## Updating
 

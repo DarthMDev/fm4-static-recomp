@@ -2,6 +2,8 @@
 // Copyright (c) 2026, i2kiselev (BSD 3-Clause: see LICENSE in the repository root).
 #pragma once
 
+#include "custom_music.h"
+
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -154,6 +156,7 @@ class Fm4App final : public rex::ReXApp {
         });
     fm4_static_recomp::InstallPixelShaderSwitches();
     fm4_static_recomp::InstallAudioPopFix();
+    fm4_static_recomp::InstallAudioCompatibility();
     rex::kernel::xboxkrnl::SetGuestFileOpenObserver([](std::string_view guest_path) {
       fm4_static_recomp::NoteGuestFileOpen(guest_path);
       fm4_static_recomp::LogFileOpen(guest_path);
@@ -248,6 +251,7 @@ class Fm4App final : public rex::ReXApp {
       }
     });
     InstallKeyboard();
+    fm4_static_recomp::InitializeCustomMusic();
     if (!REXCVAR_GET(controller_vibration)) {
       rex::cvar::SetFlagByName("pad_rumble_strength", "0");
     }
@@ -290,6 +294,7 @@ class Fm4App final : public rex::ReXApp {
   void OnShutdown() override {
     rex::ui::UnregisterBind("bind_toggle_fullscreen");
     rex::ui::UnregisterBind("bind_game_menu");
+    fm4_static_recomp::ShutdownCustomMusic();
     fm4_static_recomp::SetInputTick(nullptr);
     fm4_static_recomp::SetPromptTextSource(nullptr);
     fm4_static_recomp::SetGraphicsPageOpener(nullptr);

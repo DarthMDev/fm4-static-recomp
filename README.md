@@ -86,6 +86,10 @@ the command line? See the [manual install](guide/manual-install.md).
 | [Common problems](guide/troubleshooting.md) | Project Forza Plus 4 next to a vanilla install, crashes from overclocks, stutter, sound on older CPUs, upscalers that stay off, and their fixes |
 | [Reporting issues](guide/reporting-issues.md) | Checklist and template for a bug report |
 
+CUSTOM SOUNDTRACK (launcher SETTINGS, from 0.3.2) selects separate shuffled menu and race MP3/WAV folders, following the game’s music timing and volume. See [custom soundtrack](guide/launch-options.md#custom-soundtrack).
+
+AUDIO COMPATIBILITY (launcher SETTINGS, from 0.3.2) offers an optional faster mixer path for repeated or slowed race audio on older CPUs. It is **off by default** and independent of AUDIO POP FIX; [launch options](guide/launch-options.md) explain how to enable it.
+
 ## Features
 
 Compared with the original console, and with the same translation built against the stock

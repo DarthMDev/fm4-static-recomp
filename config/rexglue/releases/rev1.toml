@@ -7,6 +7,8 @@ image = "rev1"
 [addresses]
 # hook Fm4UiSceneStep: identical function
 0x822A46D0 = { at = 0x822A48E0, fingerprint = "e9974b79bace224f" }
+# hook Fm4MusicUpdate: identical function
+0x822B0040 = { at = 0x822AFF70, fingerprint = "7ea8081381454a3a" }
 # kMakeLocString: identical function
 0x822B1AE8 = { at = 0x822B1A18, fingerprint = "9d447230fd4d8cc0" }
 # hook Fm4MainLoopSession: changed function, aligned
@@ -133,6 +135,10 @@ image = "rev1"
 0x82955764 = { at = 0x8296101C, fingerprint = "237aa38c939ed291" }
 # kMakeMenuLabel: identical function
 0x82971220 = { at = 0x82479318, fingerprint = "5a66f80459b96770" }
+# hook Fm4AudioStableGain: identical function
+0x82B58C44 = { at = 0x82B63234, fingerprint = "b1c15bb0669fb1ba" }
+# hook Fm4AudioStableGain jump_address_on_true: identical function
+0x82B58D50 = { at = 0x82B63340, fingerprint = "66b787fa14cf6f97" }
 # hook Fm4AudioMixBlock: identical function
 0x82C56B78 = { at = 0x82C61008, fingerprint = "8ec1a1aee36648ff" }
 # rexcrt ConvertThreadToFiber: identical function
@@ -149,3 +155,11 @@ image = "rev1"
 0x82D59FF0 = { at = 0x82D59FE0, references = 103 }
 # kScenarioManagerPointer: data, 79 references in identical functions
 0x82DC3750 = { at = 0x82DC3890, references = 112 }
+
+0x82B56430 = { at = 0x82B60A20, fingerprint = "e79bb93e071dd44e" }
+0x82B5CCF0 = { at = 0x82B672E0, fingerprint = "405754c4e302367f" }
+0x82B94F78 = { at = 0x82B9F560, fingerprint = "7d2a19cea4bbcbf3" }
+0x82338D2C = { at = 0x823387E4, fingerprint = "baf8b444f4af153d" }
+0x82338DBC = { at = 0x82338874, fingerprint = "43ddd63cb7472886" }
+0x829851AC = { at = 0x8298FF94, fingerprint = "6a89bc7dbeb283a1" }
+0x8297AA50 = { at = 0x82986018, fingerprint = "6b1a9754897b4f63" }

@@ -18,6 +18,36 @@ public class LaunchArgumentsTests
         return (layout, profile, LauncherSettings.Load(layout.LauncherToml), temp);
     }
 
+    [Theory]
+    [InlineData("0.3.1", false)]
+    [InlineData("0.3.2", true)]
+    public void Custom_music_folders_are_forwarded_only_to_supported_versions(string version, bool supported)
+    {
+        var (layout, profile, settings, temp) = Setup();
+        using var _ = temp;
+        Directory.CreateDirectory(Path.GetDirectoryName(layout.LauncherToml)!);
+        File.WriteAllText(layout.LauncherToml, "menu_music_folder = \"C:/Music/My menu\"\n"
+            + "race_music_folder = \"D:/Музыка/Races\"\n");
+        settings = LauncherSettings.Load(layout.LauncherToml);
+        var args = LaunchArguments.ForPlay(layout, version, profile, settings, new WindowsPlatform());
+        Assert.Equal(supported, args.Contains("--fm4_menu_music_folder=C:/Music/My menu"));
+        Assert.Equal(supported, args.Contains("--fm4_race_music_folder=D:/Музыка/Races"));
+    }
+
+    [Fact]
+    public void An_explicit_empty_music_folder_restores_original_music()
+    {
+        var (layout, profile, settings, temp) = Setup();
+        using var _ = temp;
+        Directory.CreateDirectory(Path.GetDirectoryName(layout.LauncherToml)!);
+        File.WriteAllText(layout.LauncherToml, "menu_music_folder = \"C:/Music\"\n");
+        settings = LauncherSettings.Load(layout.LauncherToml);
+        settings.CommandLineOptions = "--fm4_menu_music_folder=\"\"";
+        var args = LaunchArguments.ForPlay(layout, "0.3.2", profile, settings, new WindowsPlatform());
+        Assert.Equal(new[] { "--fm4_menu_music_folder=" }, args.Where(a => a.StartsWith("--fm4_menu_music_folder")).ToArray());
+        Assert.DoesNotContain(args, a => a.StartsWith("--fm4_race_music_folder"));
+    }
+
     [Fact]
     public void Play_is_fullscreen_by_default_with_the_size_alt_enter_leaves_to()
     {
@@ -212,6 +242,34 @@ public class LaunchArgumentsTests
         settings.VibrationStrength = 40;
         Assert.DoesNotContain(LaunchArguments.ForPlay(layout, version, profile, settings, new WindowsPlatform()),
             a => a.StartsWith("--pad_rumble_strength"));
+    }
+
+    [Theory]
+    [InlineData(false, "0.3.2", null)]
+    [InlineData(true, "0.3.1", null)]
+    [InlineData(true, "0.3.2", "--fm4_audio_compatibility=true")]
+    [InlineData(true, "0.4.0", "--fm4_audio_compatibility=true")]
+    public void Audio_compatibility_requires_opt_in_and_a_supported_version(bool enabled, string version, string? expected)
+    {
+        var (layout, profile, settings, temp) = Setup();
+        using var _ = temp;
+        settings.AudioCompatibility = enabled;
+        var options = LaunchArguments.ForPlay(layout, version, profile, settings, new WindowsPlatform())
+            .Where(a => a.StartsWith("--fm4_audio_compatibility")).ToArray();
+        if (expected is null) Assert.Empty(options);
+        else Assert.Equal(new[] { expected }, options);
+    }
+
+    [Fact]
+    public void An_explicit_audio_compatibility_override_wins()
+    {
+        var (layout, profile, settings, temp) = Setup();
+        using var _ = temp;
+        settings.AudioCompatibility = true;
+        settings.CommandLineOptions = "--fm4_audio_compatibility=false";
+        var options = LaunchArguments.ForPlay(layout, "0.3.2", profile, settings, new WindowsPlatform())
+            .Where(a => a.StartsWith("--fm4_audio_compatibility")).ToArray();
+        Assert.Equal(new[] { "--fm4_audio_compatibility=false" }, options);
     }
 
     [Fact]

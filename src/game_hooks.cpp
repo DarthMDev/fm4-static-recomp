@@ -34,6 +34,8 @@
 #include <rex/system/xmemory.h>
 #include <rex/ui/upscaler.h>
 
+#include "audio_gain.h"
+#include "custom_music.h"
 #include "car_dirt.h"
 #include "game_hooks.h"
 #include "guest_addresses.h"
@@ -1045,11 +1047,71 @@ void Fm4ThumbnailRenderDone() {
   SetThumbnailRender(false);
 }
 
+namespace {
+std::atomic<uint32_t> g_fm4_music_manager{0};
+
+int FindMusicSlot(uint32_t stream) {
+  const uint32_t manager = g_fm4_music_manager.load(std::memory_order_acquire);
+  if (!manager) return -1;
+  const auto* base = rex::system::kernel_state()->memory()->virtual_membase();
+  for (size_t slot = 0; slot < 4; ++slot) {
+    if (LoadGuestWord(base + manager + 0x4C + 4 * slot) == stream) return static_cast<int>(slot);
+  }
+  return -1;
+}
+}
+
+void Fm4MusicUpdate(PPCRegister& r31) {
+  FM4_HOOK_CENSUS();
+  if (!fm4_static_recomp::CustomMusicEnabled()) return;
+  g_fm4_music_manager.store(r31.u32, std::memory_order_release);
+  const auto* base = rex::system::kernel_state()->memory()->virtual_membase();
+  std::array<fm4_static_recomp::MusicStream, 4> streams{};
+  for (size_t slot = 0; slot < streams.size(); ++slot) {
+    auto& stream = streams[slot];
+    stream.object = LoadGuestWord(base + r31.u32 + 0x4C + 4 * slot);
+    if (!stream.object) continue;
+    stream.playback = LoadGuestWord(base + stream.object + 0x0C);
+    stream.volume = std::bit_cast<float>(LoadGuestWord(base + stream.object + 0x1C));
+    stream.paused = base[stream.object + 0x14] != 0;
+  }
+  fm4_static_recomp::ObserveMusicStreams(r31.u32, streams);
+}
+
+void Fm4MusicStreamGain(PPCRegister& r31, PPCRegister& f1) {
+  FM4_HOOK_CENSUS();
+  if (!fm4_static_recomp::CustomMusicEnabled()) return;
+  const int slot = FindMusicSlot(r31.u32);
+  if (slot >= 0 && fm4_static_recomp::ReplacesMusicSlot(slot)) f1.f64 = 0.0;
+}
+
+void Fm4MusicStreamPlaying(PPCRegister& r31, PPCRegister& r3) {
+  FM4_HOOK_CENSUS();
+  if (!fm4_static_recomp::CustomMusicEnabled()) return;
+  const int slot = FindMusicSlot(r31.u32);
+  bool playing = false;
+  if (slot >= 0 && fm4_static_recomp::CustomMusicPlaying(slot, r31.u32, playing)) {
+    r3.u64 = playing ? 1 : 0;
+  }
+}
+
+void Fm4MusicMovieStarted(PPCRegister& r31) {
+  FM4_HOOK_CENSUS();
+  fm4_static_recomp::SetCustomMusicMoviePlaying(r31.u32, true);
+}
+
+void Fm4MusicMovieStopped(PPCRegister& r31) {
+  FM4_HOOK_CENSUS();
+  fm4_static_recomp::SetCustomMusicMoviePlaying(r31.u32, false);
+}
+
 void Fm4MainLoopSession(PPCRegister& r11) {
   FM4_HOOK_CENSUS();
   const bool race = r11.u32 != 0;
   g_race_session.store(race, std::memory_order_relaxed);
   fm4_static_recomp::input::GameInputContext().SetRaceSession(race);
+  fm4_static_recomp::SetCustomMusicRaceSession(race);
+  fm4_static_recomp::UpdateCustomMusic();
   {
     const std::lock_guard lock(g_input_tick_mutex);
     if (g_input_tick) {
@@ -1269,6 +1331,10 @@ bool Fm4OpenGraphicsOption(PPCRegister& r4) {
   return true;
 }
 
+REXCVAR_DEFINE_BOOL(fm4_audio_compatibility, false, "Forza Motorsport 4",
+                    "Opt-in faster, result-preserving audio mixer math for processors without FMA")
+    .lifecycle(rex::cvar::Lifecycle::kRequiresRestart);
+
 // FMOD mixes in 256-sample blocks and starts, stops and re-seeks voices between them without a
 // fade, so wherever that happens to a loud voice the mix steps at the block's first samples: the
 // clicks while revving at the limiter and shifting, where the top engine layers and the turbo are
@@ -1355,6 +1421,11 @@ void Fm4AudioMixBlock(PPCContext&, uint8_t* base, PPCRegister& r4) {
 
 namespace fm4_static_recomp {
 
+void InstallAudioCompatibility() {
+  rex::ppc::g_exact_single_fma.store(REXCVAR_GET(fm4_audio_compatibility), std::memory_order_relaxed);
+  REXLOG_INFO("Audio compatibility: {}", REXCVAR_GET(fm4_audio_compatibility));
+}
+
 void InstallAudioPopFix() {
   // A launch option for the crossfade is a diagnostic and wins over AUDIO POP FIX.
   constexpr const char* kCrossfade = "xma_loop_end_crossfade";
@@ -1375,3 +1446,13 @@ void InstallAudioPopFix() {
 }
 
 }  // namespace fm4_static_recomp
+
+bool Fm4AudioStableGain(PPCContext&, uint8_t* base, PPCRegister& r21, PPCRegister& r23,
+                       PPCRegister& r27, PPCRegister& r28, PPCRegister& r31) {
+  if (!rex::ppc::g_exact_single_fma.load(std::memory_order_relaxed)) return false;
+  const uint32_t processed = fm4_static_recomp::ProcessStableAudioGain(
+      base + r31.u32, base + r28.u32, base + uint32_t(r28.u32 + r27.u32), r21.u32, r23.u32);
+  r21.u64 -= processed;
+  r28.u64 += uint64_t(processed) * r23.u32 * 4;
+  return r21.u32 == 0;
+}
