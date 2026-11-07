@@ -151,6 +151,34 @@ TEST_CASE("Installed DLC without an enumeration header gets a full license", "[d
   CHECK(fm4_static_recomp::RepairInstalledDlcLicenses(install.root).repaired == 0);
 }
 
+TEST_CASE("An unfinished install does not receive a reconstructed header", "[dlc]") {
+  Installation install;
+  const auto marker = fm4_static_recomp::PendingInstallMarker(install.root, "PACK");
+  CHECK(marker.filename() == "PACK.installing");
+  std::ofstream(marker, std::ios::binary).flush();
+
+  const auto pending = fm4_static_recomp::RepairInstalledDlcLicenses(install.root);
+
+  CHECK(pending.repaired == 0);
+  CHECK(pending.failed == 0);
+  CHECK_FALSE(std::filesystem::exists(install.header));
+  CHECK(Read(install.payload) == "unchanged car payload");
+  std::filesystem::remove(marker);
+  CHECK(fm4_static_recomp::RepairInstalledDlcLicenses(install.root).repaired == 1);
+}
+
+TEST_CASE("An install marker does not block repair of an existing header", "[dlc]") {
+  Installation install;
+  const auto before = install.WriteHeader("");
+  std::ofstream(fm4_static_recomp::PendingInstallMarker(install.root, "PACK"), std::ios::binary)
+      .flush();
+
+  const auto result = fm4_static_recomp::RepairInstalledDlcLicenses(install.root);
+
+  CHECK(result.repaired == 1);
+  CHECK(Read(install.header) == before.substr(0, 0x148) + std::string(4, '\xff'));
+}
+
 TEST_CASE("A reconstructed header must preserve the complete package filename", "[dlc]") {
   Installation install;
   size_t length = 42;

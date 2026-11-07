@@ -5,6 +5,7 @@
 #include "tool_mode.h"
 
 #include <filesystem>
+#include <fstream>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -36,7 +37,8 @@ struct InstallCounts {
 };
 
 void InstallPackage(rex::system::xam::ContentManager& content,
-                    const std::filesystem::path& package, InstallCounts& counts) {
+                    const std::filesystem::path& user_root, const std::filesystem::path& package,
+                    InstallCounts& counts) {
   const std::string name = rex::path_to_utf8(package.filename());
   // The header is written after the files, so it marks a complete install.
   rex::system::xam::XCONTENT_AGGREGATE_DATA installed;
@@ -48,12 +50,22 @@ void InstallPackage(rex::system::xam::ContentManager& content,
     return;
   }
   REXLOG_INFO("Content: installing {}", rex::path_to_utf8(package));
+  const auto marker = PendingInstallMarker(user_root, package);
+  std::error_code error;
+  std::filesystem::create_directories(marker.parent_path(), error);
+  if (error || !std::ofstream(marker, std::ios::binary)) {
+    REXLOG_ERROR("Content: installing {} failed: cannot write {}", rex::path_to_utf8(package),
+                 rex::path_to_utf8(marker));
+    ++counts.failed;
+    return;
+  }
   const X_RESULT result = content.InstallContent(package);
   if (result != X_ERROR_SUCCESS) {
     REXLOG_ERROR("Content: installing {} failed: {:08X}", rex::path_to_utf8(package), uint32_t(result));
     ++counts.failed;
     return;
   }
+  std::filesystem::remove(marker, error);
   REXLOG_INFO("Content: installed {}", name);
   ++counts.installed;
 }
@@ -63,11 +75,12 @@ void InstallPackage(rex::system::xam::ContentManager& content,
 void InstallContentPackages(rex::Runtime& runtime) {
   auto& content = *runtime.kernel_state()->content_manager();
   InstallCounts counts;
+  const std::filesystem::path user_root = runtime.user_data_root();
   const std::filesystem::path disc2 = REXCVAR_GET(fm4_disc2_packages);
   if (!disc2.empty()) {
     for (std::string_view name : {"4d53091000000001", "4d53091000000002", "4d53091000000003",
                                   "4d53091000000004"}) {
-      InstallPackage(content, disc2 / name, counts);
+      InstallPackage(content, user_root, disc2 / name, counts);
     }
   }
   const std::filesystem::path dlc = REXCVAR_GET(fm4_dlc_packages);
@@ -75,7 +88,7 @@ void InstallContentPackages(rex::Runtime& runtime) {
     std::error_code ec;
     for (std::filesystem::recursive_directory_iterator it(dlc, ec), end; !ec && it != end;
          it.increment(ec)) {
-      if (it->is_regular_file()) InstallPackage(content, it->path(), counts);
+      if (it->is_regular_file()) InstallPackage(content, user_root, it->path(), counts);
     }
     if (ec) {
       REXLOG_ERROR("Content: reading {} failed: {}", rex::path_to_utf8(dlc), ec.message());
@@ -83,7 +96,7 @@ void InstallContentPackages(rex::Runtime& runtime) {
     }
   }
   if (CurrentToolMode() == ToolMode::kNone || CurrentToolMode() == ToolMode::kInstall) {
-    const auto licenses = RepairInstalledDlcLicenses(runtime.user_data_root());
+    const auto licenses = RepairInstalledDlcLicenses(user_root);
     counts.failed += int(licenses.failed);
     REXLOG_INFO("Content: license scan finished, {} repaired, {} failed",
                 licenses.repaired, licenses.failed);

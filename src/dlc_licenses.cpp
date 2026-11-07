@@ -15,13 +15,26 @@
 #include <rex/system/xam/content_manager.h>
 
 namespace fm4_static_recomp {
+namespace {
+
+std::filesystem::path TitleRoot(const std::filesystem::path& user_root) {
+  return rex::filesystem::ExtendedLengthPath(user_root / "0000000000000000" / "4D530910");
+}
+
+}  // namespace
+
+std::filesystem::path PendingInstallMarker(const std::filesystem::path& user_root,
+                                           const std::filesystem::path& package) {
+  auto path = TitleRoot(user_root) / "Headers" / "00000002" / package.filename();
+  path += ".installing";
+  return path;
+}
 
 DlcLicenseRepairResult RepairInstalledDlcLicenses(const std::filesystem::path& user_root) {
   using rex::system::xam::XCONTENT_AGGREGATE_DATA;
   constexpr size_t kMetadataSize = sizeof(XCONTENT_AGGREGATE_DATA);
   constexpr std::array<uint8_t, 4> kFullLicense{0xFF, 0xFF, 0xFF, 0xFF};
-  const auto title = rex::filesystem::ExtendedLengthPath(
-      user_root / "0000000000000000" / "4D530910");
+  const auto title = TitleRoot(user_root);
   const auto packages = title / "00000002";
   const auto headers = title / "Headers" / "00000002";
   DlcLicenseRepairResult result;
@@ -75,6 +88,14 @@ DlcLicenseRepairResult RepairInstalledDlcLicenses(const std::filesystem::path& u
         continue;
       }
     } else {
+      if (std::filesystem::exists(PendingInstallMarker(user_root, it->path()), error)) {
+        REXLOG_WARN("Content: {} has an unfinished install; install it again to unlock it", name);
+        continue;
+      }
+      if (error) {
+        fail(path, error.message());
+        continue;
+      }
       XCONTENT_AGGREGATE_DATA data{};
       if (name.size() > sizeof(data.file_name_raw)) {
         fail(path, "package name exceeds the installed header format");
