@@ -31,6 +31,7 @@ public partial class MainWindow
     private string _language = GameLanguages.Default.Code;
     private string _commandLineOptions = "";
     private string? _savesFolder, _savesNote;
+    private string? _menuMusicFolder, _raceMusicFolder;
     private string _pfp4Mode = DefaultMode;
     private bool _pfp4HarderAi;
     private Button? _saveSettingsButton, _restoreSettingsButton;
@@ -67,6 +68,7 @@ public partial class MainWindow
         _diagnostic30Fps = settings.Diagnostic30Fps;
         _audioPopFix = settings.AudioPopFix;
         _audioCompatibility = settings.AudioCompatibility;
+        (_menuMusicFolder, _raceMusicFolder) = (settings.MenuMusicFolder, settings.RaceMusicFolder);
         _vibrationStrength = settings.VibrationStrength;
         _commandLineOptions = settings.CommandLineOptions;
         (_savesFolder, _savesNote) = (settings.SavesFolder, null);
@@ -149,6 +151,8 @@ public partial class MainWindow
                || _diagnostic30Fps != settings.Diagnostic30Fps
                || _audioPopFix != settings.AudioPopFix
                || _audioCompatibility != settings.AudioCompatibility
+               || _menuMusicFolder != settings.MenuMusicFolder
+               || _raceMusicFolder != settings.RaceMusicFolder
                || _vibrationStrength != settings.VibrationStrength
                || !string.Equals(_savesFolder, settings.SavesFolder, StringComparison.OrdinalIgnoreCase)
                || (Pfp4Install && (_pfp4Mode != (host.Setup.Pfp4Mode ?? DefaultMode) || _pfp4HarderAi != host.Setup.Pfp4HarderAi));
@@ -259,6 +263,13 @@ public partial class MainWindow
             "100% is the game's own strength. Above 100% the controller's motors run stronger, 0% turns vibration off. "
             + "Versions before 0.3.2 always use 100%.", alwaysHelp: true, focus: vibration));
 
+        SettingsBody.Children.Add(Header("CUSTOM SOUNDTRACK"));
+        SettingsBody.Children.Add(Help("Choose folders of MP3 or WAV files, including subfolders. Tracks play in shuffled order. "
+            + "New races, restarts and menu/race switches choose a fresh track. The game's music volume still applies. "
+            + "Leave a folder unset for the original soundtrack. SAVE and restart the game to apply. Available from 0.3.2."));
+        SettingsBody.Children.Add(MusicFolderRow("MENU MUSIC FOLDER", _menuMusicFolder, value => _menuMusicFolder = value));
+        SettingsBody.Children.Add(MusicFolderRow("RACE MUSIC FOLDER", _raceMusicFolder, value => _raceMusicFolder = value));
+
         SettingsBody.Children.Add(Header("ADVANCED"));
         SettingsBody.Children.Add(Help("These are the recommended defaults. Don't change them unless you're sure what a setting does."));
         SettingsBody.Children.Add(Option("ASYNC READBACKS",
@@ -286,6 +297,31 @@ public partial class MainWindow
         AutomationProperties.SetName(jobs, "BUILD JOBS");
         jobs.ValueChanged += (_, e) => _buildJobs = (int)(e.NewValue ?? 0);
         SettingsBody.Children.Add(Labelled("BUILD JOBS", jobs, "0 picks them from your processor and memory.", alwaysHelp: true));
+    }
+
+    private Control MusicFolderRow(string label, string? folder, Action<string?> apply)
+    {
+        var path = new TextBlock { Text = folder ?? "ORIGINAL MUSIC", TextWrapping = TextWrapping.Wrap,
+            Foreground = Brush("ValueBrush"), VerticalAlignment = VerticalAlignment.Center };
+        var choose = new Button { Content = "CHOOSE…", Classes = { "quiet" } };
+        choose.Click += async (_, _) =>
+        {
+            if (_busy || await PickFolderAsync("Choose " + label.ToLowerInvariant()) is not { } selected) return;
+            apply(selected);
+            path.Text = selected;
+            RefreshUnsavedMark();
+        };
+        var original = new Button { Content = "ORIGINAL MUSIC", Classes = { "link" }, VerticalAlignment = VerticalAlignment.Center };
+        original.Click += (_, _) =>
+        {
+            if (_busy) return;
+            apply(null);
+            path.Text = "ORIGINAL MUSIC";
+            RefreshUnsavedMark();
+        };
+        return Labelled(label, new StackPanel { Spacing = 4, Children = { path,
+            new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Children = { choose, original } } } },
+            "Your files stay in this folder; no copying or conversion is needed.");
     }
 
     // The folder is checked when chosen; SAVE moves the saves.
@@ -519,6 +555,8 @@ public partial class MainWindow
             settings.Diagnostic30Fps = _diagnostic30Fps;
             settings.AudioPopFix = _audioPopFix;
             settings.AudioCompatibility = _audioCompatibility;
+            settings.MenuMusicFolder = _menuMusicFolder;
+            settings.RaceMusicFolder = _raceMusicFolder;
             settings.VibrationStrength = _vibrationStrength;
             settings.CommandLineOptions = _commandLineOptions.Trim();
             settings.Save();

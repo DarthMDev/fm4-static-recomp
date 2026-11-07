@@ -2,6 +2,8 @@
 // Copyright (c) 2026, i2kiselev (BSD 3-Clause: see LICENSE in the repository root).
 #pragma once
 
+#include "custom_music.h"
+
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -230,6 +232,7 @@ class Fm4App final : public rex::ReXApp {
       }
     });
     InstallKeyboard();
+    fm4_static_recomp::InitializeCustomMusic();
     // The SDK's pad_chord_game_menu runs the bind of this name.
     rex::ui::RegisterBind("bind_game_menu", "F6", "Toggle the GRAPHICS page", [this] {
       // A START pressed before BACK has already closed the page by itself.
@@ -246,6 +249,7 @@ class Fm4App final : public rex::ReXApp {
 
   void OnShutdown() override {
     rex::ui::UnregisterBind("bind_game_menu");
+    fm4_static_recomp::ShutdownCustomMusic();
     fm4_static_recomp::SetInputTick(nullptr);
     fm4_static_recomp::SetPromptTextSource(nullptr);
     fm4_static_recomp::SetGraphicsPageOpener(nullptr);

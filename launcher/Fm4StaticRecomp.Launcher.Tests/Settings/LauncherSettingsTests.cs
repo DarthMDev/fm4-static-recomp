@@ -24,6 +24,27 @@ public class LauncherSettingsTests
     }
 
     [Fact]
+    public void Music_folder_settings_survive_save_and_can_restore_originals_independently()
+    {
+        using var temp = new TempDir();
+        var path = Path.Combine(temp.Path, "launcher.toml");
+        var settings = LauncherSettings.Load(path);
+        Assert.Null(settings.MenuMusicFolder);
+        Assert.Null(settings.RaceMusicFolder);
+        settings.MenuMusicFolder = @"C:\Музыка\Menu tracks";
+        settings.RaceMusicFolder = @"D:\Music\Races";
+        settings.Save();
+        var loaded = LauncherSettings.Load(path);
+        Assert.Equal(settings.MenuMusicFolder, loaded.MenuMusicFolder);
+        Assert.Equal(settings.RaceMusicFolder, loaded.RaceMusicFolder);
+        loaded.MenuMusicFolder = null;
+        loaded.Save();
+        loaded = LauncherSettings.Load(path);
+        Assert.Null(loaded.MenuMusicFolder);
+        Assert.Equal(settings.RaceMusicFolder, loaded.RaceMusicFolder);
+    }
+
+    [Fact]
     public void A_missing_file_gives_the_defaults()
     {
         using var temp = new TempDir();
