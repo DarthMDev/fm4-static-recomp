@@ -38,6 +38,7 @@ struct Voice {
   float gain = -1.0f;
   bool paused = true;
   bool started = false;
+  bool active = false;
 };
 
 std::mutex g_music_mutex;
@@ -50,6 +51,15 @@ std::array<Voice, 4> g_voices;
 std::mt19937 g_random;
 
 size_t PlaylistForSlot(size_t slot) { return slot == 0 || slot == 3 ? 0 : 1; }
+
+// Keeps the player: destroying one joins its decoding thread and closes its audio stream on
+// the game thread that reports the change.
+void ResetVoice(Voice& voice) {
+  auto player = std::move(voice.player);
+  if (player && voice.active) player->Stop();
+  voice = {};
+  voice.player = std::move(player);
+}
 
 void StartVoice(Voice& voice, size_t domain) {
   auto& playlist = g_playlists[domain];
@@ -68,6 +78,7 @@ void StartVoice(Voice& voice, size_t domain) {
   voice.gain = -1.0f;
   voice.paused = true;
   voice.started = false;
+  voice.active = true;
   REXLOG_INFO("Custom {} music selected: {}", domain == 0 ? "menu" : "race",
               rex::path_to_utf8(voice.file.stem()));
 }
@@ -106,7 +117,7 @@ void ObserveMusicStreams(uint32_t manager, const std::array<MusicStream, 4>& str
   if (g_manager != manager) {
     g_manager = manager;
     g_state.SetStreams({});
-    for (auto& voice : g_voices) voice = {};
+    for (auto& voice : g_voices) ResetVoice(voice);
   }
   g_state.SetStreams(streams);
 }
@@ -115,7 +126,7 @@ bool CustomMusicPlaying(size_t slot, uint32_t stream, bool& playing) {
   if (!ReplacesMusicSlot(slot)) return false;
   const std::lock_guard lock(g_music_mutex);
   const auto& voice = g_voices[slot];
-  if (!voice.player || voice.stream != stream) return false;
+  if (!voice.active || voice.stream != stream) return false;
   if (!voice.started) {
     playing = true;
   } else {
@@ -148,16 +159,16 @@ void UpdateCustomMusic() {
     const auto& stream = g_state.Stream(slot);
     const size_t domain = PlaylistForSlot(slot);
     if (!ReplacesMusicSlot(slot) || !stream.object) {
-      voice = {};
+      ResetVoice(voice);
       continue;
     }
     if (voice.stream != stream.object || voice.generation != g_state.Generation(slot)) {
-      voice = {};
+      ResetVoice(voice);
       voice.stream = stream.object;
       voice.generation = g_state.Generation(slot);
     }
-    if (!voice.player && stream.playback) StartVoice(voice, domain);
-    if (!voice.player) continue;
+    if (!voice.active && stream.playback) StartVoice(voice, domain);
+    if (!voice.active) continue;
     auto status = voice.player->GetStatus();
     voice.started |= status.ready;
     if (!voice.started && !status.playing && !status.paused) {
@@ -168,7 +179,7 @@ void UpdateCustomMusic() {
         g_replacing[domain].store(false, std::memory_order_release);
         REXLOG_WARN("Custom {} music: no decodable tracks; using the original soundtrack",
                     domain == 0 ? "menu" : "race");
-        voice = {};
+        ResetVoice(voice);
         continue;
       }
       StartVoice(voice, domain);
