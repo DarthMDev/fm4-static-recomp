@@ -214,6 +214,34 @@ public class LaunchArgumentsTests
             a => a.StartsWith("--pad_rumble_strength"));
     }
 
+    [Theory]
+    [InlineData(false, "0.3.2", null)]
+    [InlineData(true, "0.3.1", null)]
+    [InlineData(true, "0.3.2", "--fm4_audio_compatibility=true")]
+    [InlineData(true, "0.4.0", "--fm4_audio_compatibility=true")]
+    public void Audio_compatibility_requires_opt_in_and_a_supported_version(bool enabled, string version, string? expected)
+    {
+        var (layout, profile, settings, temp) = Setup();
+        using var _ = temp;
+        settings.AudioCompatibility = enabled;
+        var options = LaunchArguments.ForPlay(layout, version, profile, settings, new WindowsPlatform())
+            .Where(a => a.StartsWith("--fm4_audio_compatibility")).ToArray();
+        if (expected is null) Assert.Empty(options);
+        else Assert.Equal(new[] { expected }, options);
+    }
+
+    [Fact]
+    public void An_explicit_audio_compatibility_override_wins()
+    {
+        var (layout, profile, settings, temp) = Setup();
+        using var _ = temp;
+        settings.AudioCompatibility = true;
+        settings.CommandLineOptions = "--fm4_audio_compatibility=false";
+        var options = LaunchArguments.ForPlay(layout, "0.3.2", profile, settings, new WindowsPlatform())
+            .Where(a => a.StartsWith("--fm4_audio_compatibility")).ToArray();
+        Assert.Equal(new[] { "--fm4_audio_compatibility=false" }, options);
+    }
+
     [Fact]
     public void The_audio_pop_fix_on_by_default_passes_no_option()
     {

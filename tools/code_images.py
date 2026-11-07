@@ -76,6 +76,7 @@ def analysis_addresses(analysis: dict) -> list[tuple[str, int]]:
     """(label, address) of every address field of a parsed analysis TOML but [functions], in a
     fixed order: the same fields of two versions of one file pair up."""
     out = [(key, analysis[key]) for key in ("setjmp_address", "longjmp_address") if key in analysis]
+    out += [("exact_single_fma_functions", address) for address in analysis.get("exact_single_fma_functions", [])]
     out += [(f"rexcrt {name}", address) for name, address in analysis.get("rexcrt", {}).items()]
     for table in analysis.get("switch_tables", []):
         out.append((f"switch 0x{table['address']:08X}", table["address"]))

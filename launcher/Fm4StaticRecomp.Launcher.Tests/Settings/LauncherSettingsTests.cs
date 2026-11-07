@@ -7,6 +7,23 @@ namespace Fm4StaticRecomp.Launcher.Tests.Settings;
 public class LauncherSettingsTests
 {
     [Fact]
+    public void Existing_settings_do_not_opt_into_audio_compatibility()
+    {
+        using var temp = new TempDir();
+        var path = Path.Combine(temp.Path, "launcher.toml");
+        Assert.False(LauncherSettings.Load(path).AudioCompatibility);
+        File.WriteAllText(path, "audio_pop_fix = true\ncompat = true\n");
+        var settings = LauncherSettings.Load(path);
+        Assert.False(settings.AudioCompatibility);
+        settings.AudioCompatibility = true;
+        settings.Save();
+        Assert.True(LauncherSettings.Load(path).AudioCompatibility);
+        settings.AudioCompatibility = false;
+        settings.Save();
+        Assert.False(LauncherSettings.Load(path).AudioCompatibility);
+    }
+
+    [Fact]
     public void A_missing_file_gives_the_defaults()
     {
         using var temp = new TempDir();

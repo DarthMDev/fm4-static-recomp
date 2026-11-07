@@ -153,3 +153,7 @@ image = "rev1"
 0x82D59FF0 = { at = 0x82D59FE0, references = 103 }
 # kScenarioManagerPointer: data, 79 references in identical functions
 0x82DC3750 = { at = 0x82DC3890, references = 112 }
+
+0x82B56430 = { at = 0x82B60A20, fingerprint = "e79bb93e071dd44e" }
+0x82B5CCF0 = { at = 0x82B672E0, fingerprint = "405754c4e302367f" }
+0x82B94F78 = { at = 0x82B9F560, fingerprint = "7d2a19cea4bbcbf3" }

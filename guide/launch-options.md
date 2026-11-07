@@ -17,6 +17,7 @@ or in the launcher's SETTINGS.
 | `--fm4_disc2_packages=<folder>` | Install the Disc 2 packages from this folder |
 | `--fm4_dlc_packages=<folder>` | Install every DLC package under this folder |
 | `--fm4_skip_intro=true` | Skip the startup disclaimer and studio videos |
+| `--fm4_audio_compatibility=true` | Opt-in audio mixer path for repeated or slowed race audio, particularly on older CPUs. Off by default; preserves the existing calculations. In the launcher: SETTINGS → AUDIO COMPATIBILITY (from 0.3.2). Restart the game after changing it |
 | `--fm4_audio_pop_fix=false` | AUDIO POP FIX off: the engine sounds pop where their loops start over and click when revving and shifting, as on a console. In the launcher: SETTINGS → AUDIO POP FIX (from 0.3.2) |
 | `--fm4_language=<code>` | The game's language (see [Languages](#languages)) |
 | `--fm4_config_root=<folder>` | Where `graphics.toml` and `controls.toml` live (default: the state folder's `config`) |

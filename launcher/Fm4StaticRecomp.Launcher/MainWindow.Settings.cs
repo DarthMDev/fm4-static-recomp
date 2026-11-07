@@ -25,7 +25,7 @@ public partial class MainWindow
 
     private GraphicsSettings? _graphics;
     private string? _graphicsProblem;
-    private bool _skipIntro, _audioPopFix = true, _asyncReadbacks, _presentViaDxgi, _compat, _diagnostic30Fps, _windowed;
+    private bool _skipIntro, _audioPopFix = true, _audioCompatibility, _asyncReadbacks, _presentViaDxgi, _compat, _diagnostic30Fps, _windowed;
     private (int Width, int Height) _windowSize = WindowSizes.Default;
     private int _buildJobs, _vibrationStrength = LauncherSettings.GameVibrationStrength;
     private string _language = GameLanguages.Default.Code;
@@ -66,6 +66,7 @@ public partial class MainWindow
         (_windowed, _windowSize) = (settings.Windowed, settings.WindowSize);
         _diagnostic30Fps = settings.Diagnostic30Fps;
         _audioPopFix = settings.AudioPopFix;
+        _audioCompatibility = settings.AudioCompatibility;
         _vibrationStrength = settings.VibrationStrength;
         _commandLineOptions = settings.CommandLineOptions;
         (_savesFolder, _savesNote) = (settings.SavesFolder, null);
@@ -147,6 +148,7 @@ public partial class MainWindow
                || (_windowed, _windowSize) != (settings.Windowed, settings.WindowSize)
                || _diagnostic30Fps != settings.Diagnostic30Fps
                || _audioPopFix != settings.AudioPopFix
+               || _audioCompatibility != settings.AudioCompatibility
                || _vibrationStrength != settings.VibrationStrength
                || !string.Equals(_savesFolder, settings.SavesFolder, StringComparison.OrdinalIgnoreCase)
                || (Pfp4Install && (_pfp4Mode != (host.Setup.Pfp4Mode ?? DefaultMode) || _pfp4HarderAi != host.Setup.Pfp4HarderAi));
@@ -235,6 +237,10 @@ public partial class MainWindow
             "Smooths the pops in the engine sounds, which a console has too: where a loop starts over, and where the game "
             + "restarts sounds while revving and shifting. Off plays the audio as the console does. Versions before 0.3.2 "
             + "always play it as the console does.", _audioPopFix, v => _audioPopFix = v));
+        SettingsBody.Children.Add(Option("AUDIO COMPATIBILITY",
+            "Try this if race audio repeats or slows down, particularly on older processors. Uses a faster calculation "
+            + "path for parts of the sound mixer. Off by default; requires game restart. Available from 0.3.2.",
+            _audioCompatibility, v => _audioCompatibility = v));
         var vibration = new Slider
         {
             Minimum = 0, Maximum = LauncherSettings.MaximumVibrationStrength, Value = _vibrationStrength, SmallChange = 1,
@@ -512,6 +518,7 @@ public partial class MainWindow
             (settings.Windowed, settings.WindowSize) = (_windowed, _windowSize);
             settings.Diagnostic30Fps = _diagnostic30Fps;
             settings.AudioPopFix = _audioPopFix;
+            settings.AudioCompatibility = _audioCompatibility;
             settings.VibrationStrength = _vibrationStrength;
             settings.CommandLineOptions = _commandLineOptions.Trim();
             settings.Save();

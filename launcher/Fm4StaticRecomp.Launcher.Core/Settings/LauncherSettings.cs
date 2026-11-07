@@ -19,6 +19,7 @@ public sealed class LauncherSettings
         PreviousVersion = _file.Get("previous_version");
         SkipIntro = _file.Get("skip_intro") != "false";
         AudioPopFix = _file.Get("audio_pop_fix") != "false";
+        AudioCompatibility = _file.Get("audio_compatibility") == "true";
         AsyncReadbacks = _file.Get("async_readbacks") != "false";
         PresentViaDxgi = _file.Get("present_via_dxgi") == "true";
         Compat = _file.Get("compat") == "true";
@@ -40,6 +41,7 @@ public sealed class LauncherSettings
     public string? PreviousVersion { get; set; }
     public bool SkipIntro { get; set; }
     public bool AudioPopFix { get; set; }
+    public bool AudioCompatibility { get; set; }
     public bool AsyncReadbacks { get; set; }
     public bool PresentViaDxgi { get; set; }
     public bool Compat { get; set; }
@@ -70,6 +72,7 @@ public sealed class LauncherSettings
         Text("previous_version", PreviousVersion);
         Flag("skip_intro", SkipIntro);
         Flag("audio_pop_fix", AudioPopFix);
+        Flag("audio_compatibility", AudioCompatibility);
         Flag("async_readbacks", AsyncReadbacks);
         Flag("present_via_dxgi", PresentViaDxgi);
         Flag("compat", Compat);

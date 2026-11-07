@@ -62,6 +62,8 @@ More in [High frame rates](high-frame-rate.md#picking-a-rate).
 
 ## Sound is slow, late or crackles on an older CPU
 
+From 0.3.2, try **SETTINGS → AUDIO COMPATIBILITY** in the launcher, press **SAVE** and restart the game. It is off by default and targets repeated or slowed race audio, particularly on older processors. If your sound already works well, leave it off.
+
 The game's sound needs CPU time next to the race; an older or slower CPU that is busy on every
 core falls behind. Set **FRAME RATE** to 60, and in Windows **Settings → System → Power &
 sleep → Additional power settings** choose **High performance**. Close other programs while

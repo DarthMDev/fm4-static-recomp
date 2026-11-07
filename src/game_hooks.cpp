@@ -1279,6 +1279,10 @@ bool Fm4OpenGraphicsOption(PPCRegister& r4) {
 // its first samples are bridged from the block before, and the offset that is left fades out over
 // the next 128 samples. AUDIO POP FIX in the launcher's SETTINGS switches this and the decoder's
 // loop crossfade (xma_loop_end_crossfade, see InstallAudioPopFix) together.
+REXCVAR_DEFINE_BOOL(fm4_audio_compatibility, false, "Forza Motorsport 4",
+                    "Opt-in faster, result-preserving audio mixer math for processors without FMA")
+    .lifecycle(rex::cvar::Lifecycle::kRequiresRestart);
+
 REXCVAR_DEFINE_BOOL(fm4_audio_pop_fix, true, "Forza Motorsport 4",
                     "Smooth the pops of the game's audio, heard on a console too: crossfade each "
                     "loop of a sound into its start, and the steps FMOD leaves at the start of a "
@@ -1355,6 +1359,11 @@ void Fm4AudioMixBlock(PPCContext&, uint8_t* base, PPCRegister& r4) {
 }
 
 namespace fm4_static_recomp {
+
+void InstallAudioCompatibility() {
+  rex::ppc::g_exact_single_fma.store(REXCVAR_GET(fm4_audio_compatibility), std::memory_order_relaxed);
+  REXLOG_INFO("Audio compatibility: {}", REXCVAR_GET(fm4_audio_compatibility));
+}
 
 void InstallAudioPopFix() {
   // A launch option for the crossfade is a diagnostic and wins over AUDIO POP FIX.
