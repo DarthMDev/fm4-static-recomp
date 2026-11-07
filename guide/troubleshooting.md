@@ -31,7 +31,17 @@ Let it close normally. On restart the progress bar starts again, even when saved
 preparation faster.
 
 If the window shows **Shader initialization failed**, the game will not start behind the error.
-Close it and follow [Reporting issues](reporting-issues.md), including the error and game log.
+The saved shaders are then usually out of date or damaged. To start again:
+
+1. Close the game window.
+2. Open the folder you extracted the launcher into, then `data` → `cache` → the folder named
+   after the game version, for example `0.3.2`.
+3. Delete the `shaders` folder there. Leave the other folders alone.
+4. Start the game again from the launcher. It now starts without prepared shaders, so the first
+   races may stutter briefly while the game compiles them.
+
+If the error comes back, follow [Reporting issues](reporting-issues.md), including the error and
+game log.
 
 ## The game crashes in a busy moment, a different spot each time
 
