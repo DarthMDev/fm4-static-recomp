@@ -1,6 +1,8 @@
 // Copyright (c) 2026, i2kiselev
 // BSD 3-Clause License: see LICENSE in the repository root.
 #include "disc2_install.h"
+#include "dlc_licenses.h"
+#include "tool_mode.h"
 
 #include <filesystem>
 #include <string>
@@ -79,6 +81,12 @@ void InstallContentPackages(rex::Runtime& runtime) {
       REXLOG_ERROR("Content: reading {} failed: {}", rex::path_to_utf8(dlc), ec.message());
       ++counts.failed;
     }
+  }
+  if (CurrentToolMode() == ToolMode::kNone || CurrentToolMode() == ToolMode::kInstall) {
+    const auto licenses = RepairInstalledDlcLicenses(runtime.user_data_root());
+    counts.failed += int(licenses.failed);
+    REXLOG_INFO("Content: license scan finished, {} repaired, {} failed",
+                licenses.repaired, licenses.failed);
   }
   if (!disc2.empty() || !dlc.empty()) {
     REXLOG_INFO("Content: install finished, {} installed, {} skipped, {} failed",

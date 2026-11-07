@@ -44,6 +44,10 @@ instead, see the [manual install](manual-install.md).
 | **SETTINGS** | The game's language, launch options (among them VIBRATION STRENGTH, 0-200 %, for a controller that vibrates too weakly, and AUDIO POP FIX, on by default, which smooths the pops in the engine sounds), advanced options (among them the [saves folder](saves.md#the-saves-folder), [PRESENT THROUGH DXGI](launch-options.md#frame-generation) and [30 FPS (DIAGNOSTIC)](high-frame-rate.md#testing-a-slow-processor)) and [command-line options](launch-options.md#with-the-launcher-command-line-options) for debugging. On a Project Forza Plus 4 install also its [career mode](project-forza-plus.md#career-modes-and-harder-ai). |
 | **CONTROLS** | The keyboard's keys and how fast steering and pedals ramp: [Rebinding keys](controls.md#rebinding-keys). Has its own **SAVE**. |
 
+Installed DLC is treated as fully unlocked. The game automatically repairs incomplete license
+information on startup. Existing installs do not need the original packages again for this
+repair; car files and saves stay unchanged.
+
 ## Playing in a window
 
 **WINDOWED** and **WINDOW SIZE**, at the top of GRAPHICS, start the game in a window, and

@@ -9,8 +9,9 @@ from Pinyon Shift (https://github.com/arcanite24/pinyon-shift). The launcher
 (`launcher/Fm4StaticRecomp.Launcher`) is a fork of Pinyon Shift's Avalonia launcher, and
 `tools/create-crash-report.ps1` is adapted from Pinyon Shift's. Parts of `src/scripted_input.*`,
 `src/ui/graphics_page.*`, `src/fm4_app.h`, `tools/setup.ps1`, `tools/codegen.ps1`,
-`tools/build.ps1` and `tools/undump.py` come from Pinyon Shift too. Each of these files says so
-in its first lines.
+`tools/build.ps1` and `tools/undump.py` come from Pinyon Shift too. The missing DLC header
+metadata in `src/dlc_licenses.cpp` follows the SDK's content-enumeration fallback.
+Each of these files says so in its first lines.
 
 ```text
 BSD 3-Clause License
