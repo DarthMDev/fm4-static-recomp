@@ -133,6 +133,10 @@ image = "rev1"
 0x82955764 = { at = 0x8296101C, fingerprint = "237aa38c939ed291" }
 # kMakeMenuLabel: identical function
 0x82971220 = { at = 0x82479318, fingerprint = "5a66f80459b96770" }
+# hook Fm4AudioStableGain: identical function
+0x82B58C44 = { at = 0x82B63234, fingerprint = "b1c15bb0669fb1ba" }
+# hook Fm4AudioStableGain jump_address_on_true: identical function
+0x82B58D50 = { at = 0x82B63340, fingerprint = "66b787fa14cf6f97" }
 # hook Fm4AudioMixBlock: identical function
 0x82C56B78 = { at = 0x82C61008, fingerprint = "8ec1a1aee36648ff" }
 # rexcrt ConvertThreadToFiber: identical function

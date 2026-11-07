@@ -20,6 +20,7 @@ add_executable(fm4_static_recomp WIN32
     src/disc2_install.cpp
     src/dlc_licenses.cpp
     src/game_hooks.cpp
+    src/audio_gain.cpp
     src/car_dirt.cpp
     src/code_image_check.cpp
     src/shadow_map.cpp
@@ -60,6 +61,7 @@ if(FM4_BUILD_TESTS)
         add_subdirectory("${REXSDK_DIR}/thirdparty/catch2" catch2 EXCLUDE_FROM_ALL)
     endif()
     add_executable(fm4_unit_tests EXCLUDE_FROM_ALL
+        tests/audio_gain_test.cpp
         tests/controls_test.cpp
         tests/dlc_licenses_test.cpp
         tests/keyboard_ramp_test.cpp
@@ -79,6 +81,7 @@ if(FM4_BUILD_TESTS)
         tests/controls_page_test.cpp
         tests/controller_layout_test.cpp
         src/car_dirt.cpp
+        src/audio_gain.cpp
         src/dlc_licenses.cpp
         src/code_image_check.cpp
         src/shadow_map.cpp

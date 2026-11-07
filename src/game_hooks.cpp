@@ -34,6 +34,7 @@
 #include <rex/system/xmemory.h>
 #include <rex/ui/upscaler.h>
 
+#include "audio_gain.h"
 #include "car_dirt.h"
 #include "game_hooks.h"
 #include "guest_addresses.h"
@@ -1375,3 +1376,12 @@ void InstallAudioPopFix() {
 }
 
 }  // namespace fm4_static_recomp
+
+bool Fm4AudioStableGain(PPCContext&, uint8_t* base, PPCRegister& r21, PPCRegister& r23,
+                       PPCRegister& r27, PPCRegister& r28, PPCRegister& r31) {
+  const uint32_t processed = fm4_static_recomp::ProcessStableAudioGain(
+      base + r31.u32, base + r28.u32, base + uint32_t(r28.u32 + r27.u32), r21.u32, r23.u32);
+  r21.u64 -= processed;
+  r28.u64 += uint64_t(processed) * r23.u32 * 4;
+  return r21.u32 == 0;
+}

@@ -380,3 +380,10 @@ address = 0x82C56B78
 name = "Fm4AudioMixBlock"
 context = true
 registers = ["r4"]
+
+[[midasm_hook]]
+address = 0x82B58C44
+name = "Fm4AudioStableGain"
+context = true
+registers = ["r21", "r23", "r27", "r28", "r31"]
+jump_address_on_true = 0x82B58D50
