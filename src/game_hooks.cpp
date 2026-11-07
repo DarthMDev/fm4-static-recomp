@@ -1388,6 +1388,7 @@ void InstallAudioPopFix() {
 
 bool Fm4AudioStableGain(PPCContext&, uint8_t* base, PPCRegister& r21, PPCRegister& r23,
                        PPCRegister& r27, PPCRegister& r28, PPCRegister& r31) {
+  if (!rex::ppc::g_exact_single_fma.load(std::memory_order_relaxed)) return false;
   const uint32_t processed = fm4_static_recomp::ProcessStableAudioGain(
       base + r31.u32, base + r28.u32, base + uint32_t(r28.u32 + r27.u32), r21.u32, r23.u32);
   r21.u64 -= processed;
