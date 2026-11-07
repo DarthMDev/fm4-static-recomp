@@ -1331,6 +1331,10 @@ bool Fm4OpenGraphicsOption(PPCRegister& r4) {
   return true;
 }
 
+REXCVAR_DEFINE_BOOL(fm4_audio_compatibility, false, "Forza Motorsport 4",
+                    "Opt-in faster, result-preserving audio mixer math for processors without FMA")
+    .lifecycle(rex::cvar::Lifecycle::kRequiresRestart);
+
 // FMOD mixes in 256-sample blocks and starts, stops and re-seeks voices between them without a
 // fade, so wherever that happens to a loud voice the mix steps at the block's first samples: the
 // clicks while revving at the limiter and shifting, where the top engine layers and the turbo are
@@ -1340,10 +1344,6 @@ bool Fm4OpenGraphicsOption(PPCRegister& r4) {
 // its first samples are bridged from the block before, and the offset that is left fades out over
 // the next 128 samples. AUDIO POP FIX in the launcher's SETTINGS switches this and the decoder's
 // loop crossfade (xma_loop_end_crossfade, see InstallAudioPopFix) together.
-REXCVAR_DEFINE_BOOL(fm4_audio_compatibility, false, "Forza Motorsport 4",
-                    "Opt-in faster, result-preserving audio mixer math for processors without FMA")
-    .lifecycle(rex::cvar::Lifecycle::kRequiresRestart);
-
 REXCVAR_DEFINE_BOOL(fm4_audio_pop_fix, true, "Forza Motorsport 4",
                     "Smooth the pops of the game's audio, heard on a console too: crossfade each "
                     "loop of a sound into its start, and the steps FMOD leaves at the start of a "
