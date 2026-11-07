@@ -85,7 +85,7 @@ TEST_CASE("Fully unlocked DLC is not rewritten", "[dlc]") {
   CHECK(result.repaired == 0);
   CHECK(result.failed == 0);
   CHECK(Read(install.header) == before);
-  CHECK(std::filesystem::last_write_time(install.header) == timestamp);
+  CHECK((std::filesystem::last_write_time(install.header) == timestamp));
 }
 
 TEST_CASE("DLC repair leaves saves and other titles alone", "[dlc]") {
@@ -128,7 +128,7 @@ TEST_CASE("DLC repair preserves trailing data accepted by the runtime", "[dlc]")
   const auto again = fm4_static_recomp::RepairInstalledDlcLicenses(install.root);
   CHECK(again.repaired == 0);
   CHECK(again.failed == 0);
-  CHECK(std::filesystem::last_write_time(install.header) == timestamp);
+  CHECK((std::filesystem::last_write_time(install.header) == timestamp));
 }
 
 TEST_CASE("Installed DLC without an enumeration header gets a full license", "[dlc]") {
