@@ -46,6 +46,11 @@ constexpr std::array kAfterGpuPlugin = {
     // with until each is measured here. The SDK's own default otherwise.
     Default{"fh1_msaa_single_sample", "false"},
 #if defined(__APPLE__)
+    // Mac testers observed driver-model clipping with the zero-product emulation.
+    Default{"spirv_ieee_vertex_math", "true"},
+    // Temporary preview tradeoff: scanning preserved 16 KB-page neighbors on
+    // every draw caused race-time spikes on M1 Max.
+    Default{"unprotected_page_check_interval", "64"},
     // Overlay repaint ticks must not submit the same guest image repeatedly.
     // MoltenVK may block in nextDrawable inside vkQueueSubmit while holding
     // the graphics queue, starving the game's submission worker.

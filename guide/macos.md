@@ -56,6 +56,31 @@ Option+Enter corresponds to Alt+Enter for switching fullscreen. F6 opens the
 in-game settings with GRAPHICS and KEYBOARD tabs. [Mac upscaling](macos-upscaling.md) describes FSR support and
 its test scope. MetalFX and frame interpolation are not part of this preview.
 
+## Temporary graphics workarounds
+
+The preview enables `spirv_ieee_vertex_math` on Mac after a tester repeatedly
+observed the driver clipping through the Aston Martin DB9 roof with it off and
+correct placement with it on. This changes vertex multiplication behavior;
+qualification across other cars and tracks remains ongoing.
+
+The preview also checks preserved GPU memory before every 64th Vulkan draw,
+using `unprotected_page_check_interval=64`. An M1 Max tester traced race-time
+spikes to these comparisons and reported smoother racing with this interval.
+This is a temporary performance workaround: delaying detection of CPU writes
+can leave geometry or textures stale. Checks made when requesting memory ranges
+still run. A more precise memory-tracking fix is deferred.
+
+If geometry or textures look wrong, open the launcher's SETTINGS, add
+`--unprotected_page_check_interval=1` to COMMAND-LINE OPTIONS, and restart the
+game. This restores checks before every draw, at a possible performance cost.
+For a vertex-math comparison, use `--spirv_ieee_vertex_math=false` and restart.
+Remove an option to return to the Mac default.
+
+The original [clipping report](https://github.com/i2kiselev/fm4-static-recomp/pull/47#issuecomment-6707870666)
+and [memory-scan experiment](https://github.com/i2kiselev/shiftglue-sdk/pull/4#issuecomment-6710898407)
+used earlier PR revisions. Results on the combined candidate still need Mac
+confirmation; Windows tests do not qualify these Mac-specific workarounds.
+
 ## Build from source
 
 ```sh

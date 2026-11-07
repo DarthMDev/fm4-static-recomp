@@ -108,6 +108,8 @@ Platform-specific renderer defaults (explicit launch values override these):
 
 | Option | FM4 default | What it does |
 |---|---|---|
+| `--spirv_ieee_vertex_math` | `true` on macOS, `false` on Windows | Use IEEE vertex multiplication; works around reported driver-model roof clipping on Mac. `false` restores guest zero-product emulation. Restart to compare. |
+| `--unprotected_page_check_interval=<n>` | `64` on macOS, `1` on Windows | Experimental: scan preserved unprotected GPU pages every `n` Vulkan draws (positive integer). `1` restores checks before every draw; larger values may use stale geometry or textures. Range-request checks still run. Restart to compare. |
 | `--pinyon_shift_fh1_source_presentation` | `true` on macOS, `false` on Windows | Present each new guest image once; avoids duplicate overlay repaint submissions blocking MoltenVK's graphics queue |
 | `--fh1_fold_clears` | `true` on macOS, `false` on Windows | Fold EDRAM clears into the next draw's rendering instead of opening a separate clear pass, reducing Metal encoder work |
 | `--fh1_skip_draws_without_effect` | `true` on macOS, `false` on Windows | Skip draws without surface writes; preserve occlusion queries and memory exports |
