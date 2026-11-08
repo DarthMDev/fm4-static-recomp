@@ -1,6 +1,8 @@
 // Copyright (c) 2026, i2kiselev
 // BSD 3-Clause License: see LICENSE in the repository root.
 using System.Runtime.InteropServices;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Text;
 using Fm4StaticRecomp.Launcher.Core.Install;
 using Fm4StaticRecomp.Launcher.Core.Platform;
@@ -102,6 +104,22 @@ public class RootCheckTests
     public void Refuses_a_folder_it_cannot_write()
     {
         if (!OperatingSystem.IsWindows()) return;
-        Assert.NotNull(RootCheck.Problem(@"C:\Windows\System32\fm4-test\data", Env with { Protected = [] }));
+        // An explicit deny binds an administrator too (CI runs elevated), unlike System32's permissions.
+        var parent = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "fm4t-" + Guid.NewGuid().ToString("N")[..6]));
+        var deny = new FileSystemAccessRule(WindowsIdentity.GetCurrent().User!,
+            FileSystemRights.CreateFiles | FileSystemRights.CreateDirectories, AccessControlType.Deny);
+        var acl = parent.GetAccessControl();
+        acl.AddAccessRule(deny);
+        parent.SetAccessControl(acl);
+        try
+        {
+            Assert.NotNull(RootCheck.Problem(Path.Combine(parent.FullName, "data"), Env with { Protected = [] }));
+        }
+        finally
+        {
+            acl.RemoveAccessRule(deny);
+            parent.SetAccessControl(acl);
+            parent.Delete(recursive: true);
+        }
     }
 }
