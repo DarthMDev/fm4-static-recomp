@@ -210,6 +210,8 @@ Known problems are tracked as
   Gas-and-Games: the car, career and physics mod the launcher sets up. This repository holds
   none of its files; you download the mod from its author.
 
+The people who contributed pull requests are listed in [CONTRIBUTORS.md](CONTRIBUTORS.md).
+
 **AI use:** code, scripts, documentation and reverse engineering of the game binary are
 AI-assisted.
 
