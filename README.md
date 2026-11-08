@@ -85,7 +85,7 @@ the command line? See the [manual install](guide/manual-install.md).
 
 CUSTOM SOUNDTRACK (launcher SETTINGS) selects separate shuffled menu and race MP3/WAV folders, following the game’s music timing and volume. See [custom soundtrack](guide/launch-options.md#custom-soundtrack).
 
-AUDIO FOR OLDER CPUS (launcher SETTINGS) offers an optional faster mixer path for repeated or slowed race audio, most of all on processors without FMA instructions (most made before 2013, and some Celeron and Pentium models). It is **off by default** and independent of AUDIO POP FIX; [launch options](guide/launch-options.md) explain how to enable it.
+AUDIO FOR OLDER CPUS (launcher SETTINGS → ADVANCED) offers an optional faster mixer path for repeated or slowed race audio, most of all on processors without FMA instructions (most made before 2013, and some Celeron and Pentium models). It is **off by default** and independent of AUDIO POP FIX; [launch options](guide/launch-options.md) explain how to enable it.
 
 ## Features
 

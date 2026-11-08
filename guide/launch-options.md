@@ -17,8 +17,8 @@ or in the launcher's SETTINGS.
 | `--fm4_disc2_packages=<folder>` | Install the Disc 2 packages from this folder |
 | `--fm4_dlc_packages=<folder>` | Install every DLC package under this folder |
 | `--fm4_skip_intro=true` | Skip the startup disclaimer and studio videos |
-| `--fm4_audio_compatibility=true` | Opt-in audio mixer path for repeated or slowed race audio, most of all on processors without FMA instructions (most made before 2013, and some Celeron and Pentium models). Off by default; enables faster gain processing and mixer math while preserving results. In the launcher: SETTINGS → AUDIO FOR OLDER CPUS. Restart the game after changing it |
-| `--fm4_audio_pop_fix=false` | AUDIO POP FIX off: the engine sounds pop where their loops start over and click when revving and shifting, as on a console. In the launcher: SETTINGS → AUDIO POP FIX |
+| `--fm4_audio_compatibility=true` | Opt-in audio mixer path for repeated or slowed race audio, most of all on processors without FMA instructions (most made before 2013, and some Celeron and Pentium models). Off by default; enables faster gain processing and mixer math while preserving results. In the launcher: SETTINGS → ADVANCED → AUDIO FOR OLDER CPUS. Restart the game after changing it |
+| `--fm4_audio_pop_fix=false` | AUDIO POP FIX off: the engine sounds pop where their loops start over and click when revving and shifting, as on a console. In the launcher: SETTINGS → ADVANCED → AUDIO POP FIX |
 | `--fm4_menu_music_folder=<folder>` | Shuffled menu MP3/WAV playlist; empty uses original music. Restart required; see [Custom soundtrack](#custom-soundtrack) |
 | `--fm4_race_music_folder=<folder>` | Shuffled race MP3/WAV playlist; empty uses original music. Restart required |
 | `--fm4_language=<code>` | The game's language (see [Languages](#languages)) |

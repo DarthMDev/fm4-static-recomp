@@ -29,7 +29,7 @@ void SetPromptTextSource(
 // plugin has registered them.
 void InstallPixelShaderSwitches();
 
-// Makes fm4_audio_pop_fix (AUDIO POP FIX in the launcher's SETTINGS) switch the decoder's loop
+// Makes fm4_audio_pop_fix (SETTINGS → ADVANCED → AUDIO POP FIX in the launcher) switch the decoder's loop
 // crossfade with the mix de-click; call once the command line is parsed.
 void InstallAudioPopFix();
 void InstallAudioCompatibility();

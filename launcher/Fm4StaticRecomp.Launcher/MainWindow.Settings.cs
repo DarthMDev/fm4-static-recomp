@@ -237,14 +237,6 @@ public partial class MainWindow
             "The game's text and voice-over. Korean, Chinese, Portuguese, Czech, Hungarian and Dutch keep the English voice-over.",
             alwaysHelp: true));
         SettingsBody.Children.Add(Option("SKIP INTRO VIDEOS", "The game starts at its title screen.", _skipIntro, v => _skipIntro = v));
-        SettingsBody.Children.Add(Option("AUDIO POP FIX",
-            "Smooths the pops in the engine sounds, which a console has too: where a loop starts over, and where the game "
-            + "restarts sounds while revving and shifting. Off plays the audio as the console does.", _audioPopFix, v => _audioPopFix = v));
-        SettingsBody.Children.Add(Option("AUDIO FOR OLDER CPUS",
-            "Try this if race audio repeats or slows down. It helps most on processors without FMA instructions: most "
-            + "made before 2013 and some Celeron and Pentium models. Uses a faster calculation path for parts of the "
-            + "sound mixer. Off by default; requires game restart.",
-            _audioCompatibility, v => _audioCompatibility = v));
         var vibration = new Slider
         {
             Minimum = 0, Maximum = LauncherSettings.MaximumVibrationStrength, Value = _vibrationStrength, SmallChange = 1,
@@ -281,6 +273,14 @@ public partial class MainWindow
         SettingsBody.Children.Add(Option("30 FPS (DIAGNOSTIC)",
             "For testing slow processors: the game runs at 30 frames per second, whatever GRAPHICS says. Not for normal play.",
             _diagnostic30Fps, v => _diagnostic30Fps = v));
+        SettingsBody.Children.Add(Option("AUDIO POP FIX",
+            "Smooths the pops in the engine sounds, which a console has too: where a loop starts over, and where the game "
+            + "restarts sounds while revving and shifting. Off plays the audio as the console does.", _audioPopFix, v => _audioPopFix = v));
+        SettingsBody.Children.Add(Option("AUDIO FOR OLDER CPUS",
+            "Try this if race audio repeats or slows down. It helps most on processors without FMA instructions: most "
+            + "made before 2013 and some Celeron and Pentium models. Uses a faster calculation path for parts of the "
+            + "sound mixer. Off by default; requires game restart.",
+            _audioCompatibility, v => _audioCompatibility = v));
         var commandLine = new TextBox { Text = _commandLineOptions, Watermark = "--name=value --other=value", Width = 420,
             HorizontalAlignment = HorizontalAlignment.Left };
         commandLine.TextChanged += (_, _) => _commandLineOptions = commandLine.Text ?? "";
