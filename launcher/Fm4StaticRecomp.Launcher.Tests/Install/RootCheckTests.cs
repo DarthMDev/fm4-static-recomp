@@ -55,6 +55,7 @@ public class RootCheckTests
     [Fact]
     public void Accepts_a_path_of_the_maximum_length_and_refuses_a_longer_one()
     {
+        if (!OperatingSystem.IsWindows()) return;
         var parent = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "fm4t-" + Guid.NewGuid().ToString("N")[..6]);
         try
         {
