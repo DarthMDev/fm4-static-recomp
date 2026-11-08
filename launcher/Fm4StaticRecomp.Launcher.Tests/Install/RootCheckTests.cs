@@ -18,7 +18,7 @@ public class RootCheckTests
     [InlineData(@"C:\Users\a\AppData\Local\Temp\Rar$EX01\data", "temporary", " Move the launcher's folder and start it again.")]
     [InlineData(@"C:\Games\FM4 [1]\data", "[ or ]", " Move the installation to a folder whose path has no square brackets.")]
     [InlineData(@"C:\Игры (1)\data", "non-English", " Move the installation to a folder whose path has no parentheses.")]
-    [InlineData(@"D:\Games\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\data", "54",
+    [InlineData(@"D:\Games\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\data", "91",
         @" Move the launcher's folder to a short path such as D:\FM4 and start it again.")]
     public void Refuses_with_the_reason_and_one_way_out(string root, string reason, string advice)
     {
@@ -47,6 +47,20 @@ public class RootCheckTests
         {
             foreach (var name in new[] { "Тест 1", "Games (1)" })
                 Assert.Null(RootCheck.Problem(Path.Combine(parent, name, "data"), Env));
+        }
+        finally { Directory.Delete(parent, recursive: true); }
+    }
+
+    [Fact]
+    public void Accepts_a_path_of_the_maximum_length_and_refuses_a_longer_one()
+    {
+        var parent = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "fm4t-" + Guid.NewGuid().ToString("N")[..6]);
+        try
+        {
+            var root = Path.Combine(parent, new string('a', RootCheck.MaximumLength - parent.Length - @"\\data".Length), "data");
+            Assert.Equal(91, root.Length);
+            Assert.Null(RootCheck.Problem(root, Env));
+            Assert.Contains("92 characters long", RootCheck.Problem(root.Replace(@"\data", @"a\data"), Env)!);
         }
         finally { Directory.Delete(parent, recursive: true); }
     }

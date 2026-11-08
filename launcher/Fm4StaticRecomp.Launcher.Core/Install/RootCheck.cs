@@ -20,8 +20,9 @@ public sealed record RootEnvironment(IReadOnlyList<string> Protected, string Tem
 
 public static class RootCheck
 {
-    // 260 minus the longest path a payload build creates below the root (196) minus a margin of 10.
-    public const int MaximumLength = 54;
+    // 260 minus the longest path setup creates below the root (159, a speech object file of the build;
+    // CMake and ninja do not pass Windows' path limit unless long paths are enabled) minus a margin of 10.
+    public const int MaximumLength = 91;
 
     // The same texts as setup's Assert-Fm4ToolchainPathSupported (tools\release-common.ps1).
     private const string Brackets = "CMake, which the build needs, finds no compiler when its folder path holds [ or ]. " +
