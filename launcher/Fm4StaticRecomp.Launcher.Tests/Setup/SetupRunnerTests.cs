@@ -70,7 +70,10 @@ public class SetupRunnerTests
         var failure = await new SetupRunner(layout, Platforms.Current).BuildAsync(new SetupRequest("1.0.0", 0, false, false),
             new SyncProgress<SetupEvent>(events.Add), lines.Add, CancellationToken.None);
         Assert.Equal(layout.Toolchain.Replace('\\', '/'), events.Single().Message);
-        Assert.Contains("Путь: " + layout.Cache("1.0.0"), lines);
+        // Windows PowerShell prints Cyrillic as ? where the console code page has none (437 on an English PC).
+        var console = Platforms.Current.ConsoleEncoding;
+        if (console.GetString(console.GetBytes("Путь")) == "Путь")
+            Assert.Contains("Путь: " + layout.Cache("1.0.0"), lines);
         Assert.NotNull(failure);
         Assert.Equal("The licence was not accepted.", failure!.Message);
         Assert.Equal("licence", failure.Step);
