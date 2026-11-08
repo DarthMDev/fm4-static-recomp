@@ -1,11 +1,13 @@
-name: macOS preview checks and packaging
+name: Checks and packaging
 
 on:
   pull_request:
     branches: [main, 'release/**']
     types: [opened, synchronize, reopened, labeled]
   push:
+    branches: ['release/**']
     tags: ['v*']
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -13,7 +15,7 @@ permissions:
 jobs:
   check-and-package:
     if: >-
-      github.event_name == 'push' ||
+      startsWith(github.ref, 'refs/tags/') ||
       contains(github.event.pull_request.labels.*.name, 'macos-ci')
     runs-on: macos-15
     timeout-minutes: 90
@@ -106,3 +108,75 @@ jobs:
             out/ci-package/FM4StaticRecomp-Launcher-macos-arm64.zip
             out/ci-package/FM4StaticRecomp-Launcher-macos-arm64.zip.sha256
             out/ci-evidence/macos-sdk-identity.json
+
+  windows:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/')) ||
+      (github.event_name == 'pull_request' && github.event.action != 'labeled')
+    runs-on: windows-2025
+    timeout-minutes: 150
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Provision the player toolchain
+        run: ./tools/provision-toolchain.ps1 -AcceptMicrosoftLicense
+      - name: Launcher tests
+        run: dotnet test launcher/Fm4StaticRecomp.Launcher.sln -c Release
+      - name: Python tests
+        run: python -m unittest discover -s tools/tests
+      - name: Prepare exact configured SDK
+        run: |
+          # Vulkan-Loader's fuzz test data exceeds MAX_PATH below the revision-named SDK folder.
+          git config --global core.longpaths true
+          @'
+          import json, os, sys
+          from pathlib import Path
+          sys.path.insert(0, str(Path('tools').resolve()))
+          from mac_sdk import prepare_sdk
+          sdk, identity = prepare_sdk(Path.cwd())
+          receipt = Path('out/ci-evidence/windows-sdk-identity.json')
+          receipt.parent.mkdir(parents=True, exist_ok=True)
+          receipt.write_text(json.dumps(identity, indent=2) + '\n')
+          with open(os.environ['GITHUB_ENV'], 'a') as env:
+              env.write(f'REXSDK_DIR={sdk.as_posix()}\n')
+          '@ | python -
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - name: Build and run native tests without game files
+        run: |
+          . ./tools/release-common.ps1
+          $environment = Enter-Fm4BuildEnvironment
+          & $environment.CMake --preset win-amd64-release "-DPYTHON_EXECUTABLE=$(Get-Fm4Python)" `
+            "-DREXSDK_DIR=$env:REXSDK_DIR" -DFM4_TESTS_ONLY=ON -DREXGLUE_BUILD_TESTS=ON `
+            @(Get-Fm4CMakeToolArguments -Environment $environment)
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          & $environment.CMake --build --preset win-amd64-release --target fm4_unit_tests unit_tests `
+            --parallel $env:NUMBER_OF_PROCESSORS
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $build = Resolve-Path out/build/win-amd64-release
+          $env:PATH = "$build;$build/rexglue-artifacts;$env:PATH"
+          & "$build/fm4-tests/fm4_unit_tests.exe"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          & "$build/rexglue-artifacts/unit_tests.exe"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - name: Package game-free launcher
+        run: ./tools/package-release.ps1 -Dotnet (Get-Command dotnet).Source
+      - name: Retain build artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: FM4StaticRecomp-Launcher-windows-${{ github.sha }}
+          if-no-files-found: error
+          path: |
+            .artifacts/release/FM4StaticRecomp-Launcher.zip
+            .artifacts/release/SHA256SUMS.txt
+            out/ci-evidence/windows-sdk-identity.json
