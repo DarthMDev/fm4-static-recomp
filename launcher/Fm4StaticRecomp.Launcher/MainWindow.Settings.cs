@@ -239,11 +239,11 @@ public partial class MainWindow
         SettingsBody.Children.Add(Option("SKIP INTRO VIDEOS", "The game starts at its title screen.", _skipIntro, v => _skipIntro = v));
         SettingsBody.Children.Add(Option("AUDIO POP FIX",
             "Smooths the pops in the engine sounds, which a console has too: where a loop starts over, and where the game "
-            + "restarts sounds while revving and shifting. Off plays the audio as the console does. Versions before 0.3.2 "
-            + "always play it as the console does.", _audioPopFix, v => _audioPopFix = v));
-        SettingsBody.Children.Add(Option("AUDIO COMPATIBILITY",
-            "Try this if race audio repeats or slows down, particularly on older processors. Uses a faster calculation "
-            + "path for parts of the sound mixer. Off by default; requires game restart. Available from 0.3.2.",
+            + "restarts sounds while revving and shifting. Off plays the audio as the console does.", _audioPopFix, v => _audioPopFix = v));
+        SettingsBody.Children.Add(Option("AUDIO FOR OLDER CPUS",
+            "Try this if race audio repeats or slows down. It helps most on processors without FMA instructions: most "
+            + "made before 2013 and some Celeron and Pentium models. Uses a faster calculation path for parts of the "
+            + "sound mixer. Off by default; requires game restart.",
             _audioCompatibility, v => _audioCompatibility = v));
         var vibration = new Slider
         {
@@ -260,13 +260,12 @@ public partial class MainWindow
         AutomationProperties.SetName(vibration, "VIBRATION STRENGTH");
         SettingsBody.Children.Add(Labelled("VIBRATION STRENGTH",
             new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Children = { vibration, vibrationValue } },
-            "100% is the game's own strength. Above 100% the controller's motors run stronger, 0% turns vibration off. "
-            + "Versions before 0.3.2 always use 100%.", alwaysHelp: true, focus: vibration));
+            "100% is the game's own strength. Above 100% the controller's motors run stronger, 0% turns vibration off.", alwaysHelp: true, focus: vibration));
 
         SettingsBody.Children.Add(Header("CUSTOM SOUNDTRACK"));
         SettingsBody.Children.Add(Help("Choose folders of MP3 or WAV files, including subfolders. Tracks play in shuffled order. "
             + "New races, restarts and menu/race switches choose a fresh track. The game's music volume still applies. "
-            + "Leave a folder unset for the original soundtrack. SAVE and restart the game to apply. Available from 0.3.2."));
+            + "Leave a folder unset for the original soundtrack. SAVE and restart the game to apply."));
         SettingsBody.Children.Add(MusicFolderRow("MENU MUSIC FOLDER", _menuMusicFolder, value => _menuMusicFolder = value));
         SettingsBody.Children.Add(MusicFolderRow("RACE MUSIC FOLDER", _raceMusicFolder, value => _raceMusicFolder = value));
 
