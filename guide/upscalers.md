@@ -119,7 +119,7 @@ again in the next frame by its mesh and its place among the draws.
 ## Shaders
 
 The extra pipelines an upscaler needs are part of the shader cache setup builds from your disc
-(5,652 pipelines, recorded from play with every upscaler on 1.0, Rev 1 and Project Forza Plus 4).
+(6,067 pipelines, recorded from play with every upscaler on 1.0, Rev 1 and Project Forza Plus 4).
 A combination it lacks builds in the background while the game draws with the ordinary pipeline,
 instead of freezing.
 

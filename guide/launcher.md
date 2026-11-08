@@ -101,7 +101,7 @@ builds, your saves and settings. Move or back up the folder as a whole, or keep 
   is removed.
 
 > [!IMPORTANT]
-> The folder's limits come from the build tools: the path of `data\` may be at most 54
+> The folder's limits come from the build tools: the path of `data\` may be at most 91
 > characters, may not hold `[` or `]`, and may not hold parentheses together with
 > non-English letters. The launcher checks this at start and names the folder if it cannot
 > use it.
