@@ -81,9 +81,9 @@ public static class RootCheck
             catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
             {
                 return "its drive cannot hold the folder links the profiles share their content through " +
-                       $"({ex.Message}). " + (environment.WindowsPathLimits
-                           ? "Use an NTFS drive."
-                           : "Choose a drive that supports symbolic links, such as APFS.");
+                       $"({ex.Message})" + (environment.WindowsPathLimits
+                           ? "; an NTFS drive can, FAT32, exFAT and network drives cannot."
+                           : ". Choose a drive that supports symbolic links, such as APFS.");
             }
             finally
             {

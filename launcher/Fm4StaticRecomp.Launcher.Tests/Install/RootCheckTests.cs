@@ -94,6 +94,7 @@ public class RootCheckTests
             var root = Path.Combine(parent, "data");
             var problem = RootCheck.Problem(root, Env with { CreateLink = (_, _) => throw new IOException("not supported") })!;
             Assert.Contains("folder links", problem);
+            Assert.Contains("(not supported); an NTFS drive can, FAT32, exFAT and network drives cannot.", problem);
             Assert.Empty(Directory.GetFileSystemEntries(root));
         }
         finally { Directory.Delete(parent, recursive: true); }
