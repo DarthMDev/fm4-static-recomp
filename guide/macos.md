@@ -56,9 +56,15 @@ has not been tested on a Mac yet.
 
 The game data (discs, content, profiles, settings and the build) goes to
 `~/Library/Application Support/FM4 Static Recomp/data`. At the first start the launcher shows
-this folder: **USE THIS FOLDER** keeps it, **CHOOSE DATA FOLDER…** picks another one, also on an
-external drive (it needs a drive formatted APFS or Mac OS Extended). An app that is not in
-Applications keeps its `data` folder next to it instead.
+this folder. **USE THIS FOLDER** keeps it, and **CHOOSE DATA FOLDER…** lets you pick a
+different folder, including one on an external drive. An app that is not in Applications
+keeps its `data` folder next to it instead.
+
+The external volume must be writable on macOS and support creating and following
+directory symbolic links. APFS and Mac OS Extended support these features natively.
+Other formats can work when their macOS driver provides both. NTFS was tested
+successfully with a compatible third-party driver. macOS's built-in NTFS support
+provides read access only. [Apple's external drive guidance](https://support.apple.com/en-gb/101830)
 
 The game's logs are in the data folder's `logs` folder.
 

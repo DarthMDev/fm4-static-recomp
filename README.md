@@ -13,6 +13,10 @@ An unofficial static recompilation of the Xbox 360 release of *Forza Motorsport 
 Windows, with an experimental Apple Silicon macOS preview, built locally from your own disc.
 
 **Mac users:** see the [macOS guide](guide/macos.md) for setup and testing status.
+To put game data on an external drive, choose a folder on a volume that macOS
+can write to and that supports directory symbolic links. NTFS works with a
+compatible macOS driver that provides both. See
+[Where the game data goes](guide/macos.md#where-the-game-data-goes).
 
 The game's PowerPC code is translated ahead of time into C++ by the
 [ShiftGlue SDK](https://github.com/arcanite24/shiftglue-sdk) and compiled for x86-64 on Windows or ARM64 on macOS. Its GPU
