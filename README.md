@@ -18,16 +18,18 @@ commands run on ShiftGlue's native Vulkan renderer, written for
 [Pinyon Shift](https://github.com/arcanite24/pinyon-shift) (*Forza Horizon*) and extended
 here for FM4.
 
-## New in 0.3.2: keyboard rebinding and your own music
+## New in 0.3.2: keyboard rebinding and many audio improvements
 
 > [!TIP]
-> **[Rebind the keyboard](guide/controls.md#rebinding-keys)** in the game (GRAPHICS → **KEYBOARD**)
-> or on the launcher's new **CONTROLS** page, with a primary and a secondary key for each action.
-> Also new: **[CUSTOM SOUNDTRACK](guide/launch-options.md#custom-soundtrack)** shuffles your own
-> MP3/WAV folders in the menus and in races, **AUDIO POP FIX** smooths the pops in the engine
-> sounds, **VIBRATION STRENGTH** goes up to 200 %, DLC that the game showed as locked works now,
-> and the first start prepares shaders before the title with a progress bar. Everything else in
-> this version: [release notes](https://github.com/i2kiselev/fm4-static-recomp/releases/latest).
+> **[Rebind the keyboard](guide/controls.md#rebinding-keys)** in the game or in the launcher,
+> with a primary and a secondary key for each action. **The sound got a lot of work:**
+> [your own music](guide/launch-options.md#custom-soundtrack) in the menus and in races,
+> engine sounds without pops, and a faster audio path for older processors. Also new: stronger
+> vibration for controllers that vibrate too weakly, DLC that the game showed as locked works
+> now, GPU readbacks and car thumbnails are much more reliable (a car turning pink after a
+> change of home space, or a thumbnail missing a tile, should now be rare), and the first start
+> prepares shaders before the title with a progress bar. Everything else in this version:
+> [release notes](https://github.com/i2kiselev/fm4-static-recomp/releases/latest).
 >
 > Since 0.3.1, **[Project Forza Plus 4](guide/project-forza-plus.md)** sets up from the launcher
 > **as a new install of its own**, and the **Rev 1** (1.1) Disc 1 releases work.
