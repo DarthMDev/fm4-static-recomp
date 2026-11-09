@@ -18,17 +18,19 @@ commands run on ShiftGlue's native Vulkan renderer, written for
 [Pinyon Shift](https://github.com/arcanite24/pinyon-shift) (*Forza Horizon*) and extended
 here for FM4.
 
-## New in 0.3.1: Project Forza Plus 4 and Rev 1 discs
+## New in 0.3.2: keyboard rebinding and your own music
 
 > [!TIP]
-> **[Project Forza Plus 4](guide/project-forza-plus.md)**, the car, career and physics mod, sets up
-> from the launcher **as a new install of its own**: extract the launcher into a new, empty folder,
-> choose the mod at the first setup, give it the mod's zip, play. An install already set up for
-> vanilla cannot be switched to the mod. Also new: the
-> **Rev 1** (1.1) Disc 1 releases, **[playing in a window](guide/windowed.md)** with Alt+Enter,
-> **FSR 1** for 1080p screens, careers imported from **Xenia Canary**, and a
-> **[saves folder](guide/saves.md#the-saves-folder)** of your own. Everything else in this
-> version: [release notes](https://github.com/i2kiselev/fm4-static-recomp/releases/latest).
+> **[Rebind the keyboard](guide/controls.md#rebinding-keys)** in the game (GRAPHICS → **KEYBOARD**)
+> or on the launcher's new **CONTROLS** page, with a primary and a secondary key for each action.
+> Also new: **[CUSTOM SOUNDTRACK](guide/launch-options.md#custom-soundtrack)** shuffles your own
+> MP3/WAV folders in the menus and in races, **AUDIO POP FIX** smooths the pops in the engine
+> sounds, **VIBRATION STRENGTH** goes up to 200 %, DLC that the game showed as locked works now,
+> and the first start prepares shaders before the title with a progress bar. Everything else in
+> this version: [release notes](https://github.com/i2kiselev/fm4-static-recomp/releases/latest).
+>
+> Since 0.3.1, **[Project Forza Plus 4](guide/project-forza-plus.md)** sets up from the launcher
+> **as a new install of its own**, and the **Rev 1** (1.1) Disc 1 releases work.
 
 > [!NOTE]
 > **Experimental release.** The offline game modes play without known blocking problems
