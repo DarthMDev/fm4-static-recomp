@@ -41,7 +41,7 @@ instead, see the [manual install](manual-install.md).
 | **PROFILE** | Adds, renames, imports and deletes [profiles](saves.md) (separate saves). |
 | **CONTENT** | Installs Disc 2 and DLC. Install them only here: the game's own Disc 2 install waits for a disc change that never comes. Also [unlocks the unicorn cars](#unicorn-cars). |
 | **GRAPHICS** | [Playing in a window](windowed.md) and the [GRAPHICS page's settings](graphics.md). **SAVE** on top writes this page and SETTINGS together. |
-| **SETTINGS** | The game's language, launch options (among them VIBRATION STRENGTH, 0–200 %, for a controller that vibrates too weakly), [CUSTOM SOUNDTRACK](launch-options.md#custom-soundtrack) for your own music, advanced options (among them AUDIO POP FIX, on by default, which smooths the pops in the engine sounds, [AUDIO FOR OLDER CPUS](troubleshooting.md#sound-is-slow-late-or-crackles-on-an-older-cpu), off by default, the [saves folder](saves.md#the-saves-folder), [PRESENT THROUGH DXGI](launch-options.md#frame-generation) and [30 FPS (DIAGNOSTIC)](high-frame-rate.md#testing-a-slow-processor)) and [command-line options](launch-options.md#with-the-launcher-command-line-options) for debugging. On a Project Forza Plus 4 install also its [career mode](project-forza-plus.md#career-modes-and-harder-ai). |
+| **SETTINGS** | The game's language, launch options (among them CONTROLLER VIBRATION, and VIBRATION STRENGTH, 0–200 %, for a controller that vibrates too weakly), [CUSTOM SOUNDTRACK](launch-options.md#custom-soundtrack) for your own music, advanced options (among them AUDIO POP FIX, on by default, which smooths the pops in the engine sounds, [AUDIO FOR OLDER CPUS](troubleshooting.md#sound-is-slow-late-or-crackles-on-an-older-cpu), off by default, SHOW FPS, the [saves folder](saves.md#the-saves-folder), [PRESENT THROUGH DXGI](launch-options.md#frame-generation) and [30 FPS (DIAGNOSTIC)](high-frame-rate.md#testing-a-slow-processor)) and [command-line options](launch-options.md#with-the-launcher-command-line-options) for debugging. On a Project Forza Plus 4 install also its [career mode](project-forza-plus.md#career-modes-and-harder-ai). |
 | **CONTROLS** | The keyboard's keys and how fast steering and pedals ramp: [Rebinding keys](controls.md#rebinding-keys). Has its own **SAVE**. |
 
 Installed DLC is treated as fully unlocked. The game automatically repairs incomplete license
@@ -117,71 +117,6 @@ The launcher checks GitHub when it starts (and from CHECK FOR UPDATES).
 Saves, content and settings are kept; each profile's save is zipped to `backups\` in the saves
 folder (`data\backups\` by default) before a new version first runs it.
 
-## macOS preview (Apple Silicon)
+## On a Mac
 
-The Avalonia launcher can also be built as a Finder app. This preview uses the
-current ShiftGlue Vulkan/MoltenVK backend. Install Xcode Command Line Tools,
-.NET 8 SDK, Python 3.11 or newer, CMake 3.25 or newer, and Ninja. With Homebrew:
-
-```sh
-xcode-select --install
-brew install python cmake ninja
-python3 tools/package-launcher-macos.py
-open "out/launcher-macos/FM4 Static Recomp.app"
-```
-
-Keep the app in a writable folder. Its `data` folder lives beside the app, outside
-the signed bundle. Choose your Disc 1 ISO, GOD folder or extracted folder; choose
-Disc 2 or **LATER**, enter a profile name, then **VERIFY AND BUILD**. macOS setup
-uses Apple's compiler and downloads/builds the pinned ShiftGlue SDK. It does not
-need PowerShell or Microsoft's Windows build files. The first game start compiles
-shaders. The minimum build target is macOS 14; older OS runtime testing is pending.
-
-For development against an existing SDK checkout, set `FM4_SDK_ROOT` when
-running `tools/setup-macos.py`. Packaging takes its version/repository from
-`config/release.json` and creates no local SDK hint. See the [macOS guide](macos.md).
-
-Mac preview updates are manual: close the launcher and game, replace the app,
-and keep the adjacent `data` folder. The Windows self-updater and PowerShell
-crash-report generator are unavailable on macOS; runtime logs remain in
-`data/logs`. The app is locally signed, not notarized. Disc installation, content,
-profiles, graphics, imported saves and gameplay need manual validation before a
-macOS release. Official Mac release assets are built by the maintainer’s CI
-from the release tag; local packaging is for verification.
-
-FSR 2 and FSR 3 temporal upscaling are included in the Mac build. See
-[macOS upscaling and frame generation](macos-upscaling.md) for verified GPU support,
-test commands, and the separate status of MetalFX and frame generation.
-
-### Existing discs and saves on macOS
-
-The disc and save selectors accept Unix symbolic links and Finder aliases. Use
-**CHOOSE DISC IMAGE** for `game/disc1.iso` or `game/disc2.iso`, or **CHOOSE FOLDER**
-for an alias pointing to extracted disc files. Sources are verified and copied
-into the launcher install; the linked originals stay in place.
-
-During setup, **YOUR PROFILE → CHOOSE EXISTING SAVE…** lets you pick an existing
-save before building. You can also use **PROFILE → IMPORT SAVE** after setup.
-Choose the save's Xbox profile folder, the shared `user` folder, or its alias.
-If the folder contains several careers, the launcher lists their Xbox profile
-IDs so you can select one. The imported profile is selected for Play and keeps
-the save's original XUID. Import copies the career; it does not play directly
-against the original save. **NEW CAREER** clears a pending setup import.
-
-Mac setup selects the SDK revision in `config/macos-toolchain.json` while the
-preview is under review, then uses the shared release pin once that temporary
-override is removed. Both the launcher and `tools/build-mac.sh` use this same
-preparation/build path. No patch stack is applied. Managed builds use a private
-SDK checkout and dependency cache below their extracted source directory.
-
-After a successful build, `.local/logs/macos-build.json` inside that source
-records the SDK identity, compiler and tool versions, code image, and
-binary hashes. `.local/logs/macos-sdk.json` records SDK preparation. These receipts
-describe the build inputs and outputs; they do not assert that gameplay has been
-validated or that different Xcode/tool versions produce byte-identical binaries.
-
-The clean-source macOS build has also been checked with the declared macOS 14
-compile target. Control-rate parsing uses a C-locale compatibility path on Apple
-platforms because current libc++ marks floating-point `from_chars` as macOS 26+.
-The native controls regressions and FSR GPU checks run on macOS 27; running on
-macOS 14 itself still needs validation.
+The launcher also runs as an app on Apple Silicon Macs, as an experimental preview. Setup works as on Windows; where the game data goes, updates and the known limits are in the [macOS guide](macos.md).

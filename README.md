@@ -198,8 +198,6 @@ Known problems are tracked as
 
 ## Credits
 
-- [DarthMDev](https://github.com/DarthMDev): initial Apple Silicon macOS support,
-  launcher integration, and Mac runtime testing and fixes.
 - [Pinyon Shift](https://github.com/arcanite24/pinyon-shift) by arcanite24: the
   *Forza Horizon* recompilation whose native renderer, host UI and build scripts this
   project builds on (see `THIRD_PARTY_NOTICES.md`).

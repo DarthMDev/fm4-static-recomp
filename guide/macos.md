@@ -32,7 +32,10 @@ Verify and extract the archive, then move the app to Applications and open
 shasum -a 256 -c FM4StaticRecomp-Launcher-macos-arm64.zip.sha256
 ```
 
-Follow the launcher’s setup steps with your own discs, then press PLAY. The
+Follow the launcher’s setup steps, the same as on Windows ([First setup](launcher.md#first-setup)):
+Disc 1 as an ISO image, a GOD folder or an extracted folder, Disc 2 now or later, and your
+profile; then press PLAY. Setup uses Apple’s compiler and needs neither PowerShell nor
+Microsoft’s Windows build files. The
 launcher fetches the pinned SDK, translates the supported disc’s code and compiles
 the game. First play compiles shaders before the title with a progress bar;
 revisit a race to compare warm-cache behavior.
@@ -47,6 +50,8 @@ adjacent `data` folder. Keep the data folder when updating because it holds
 discs, content, profiles, settings, source and builds. Back up profiles before replacing an installation.
 Mac updates are manual. Preview bundles are ad-hoc signed, not notarized;
 Gatekeeper may require approval in System Settings → Privacy & Security.
+The launcher cannot update itself on a Mac, and the crash-report generator is
+Windows-only: the game’s logs are in the data folder’s `logs` folder.
 
 ## Settings and controls
 
@@ -59,6 +64,21 @@ Keyboard/controller mappings are in [Keyboard](controls.md). On a Mac keyboard,
 Option+Enter corresponds to Alt+Enter for switching fullscreen. F6 opens the
 in-game settings with GRAPHICS and KEYBOARD tabs. [Mac upscaling](macos-upscaling.md) describes FSR support and
 its test scope. MetalFX and frame interpolation are not part of this preview.
+
+## Existing discs and saves
+
+The disc and save selectors accept Unix symbolic links and Finder aliases. Use
+**CHOOSE DISC IMAGE** for `game/disc1.iso` or `game/disc2.iso`, or **CHOOSE FOLDER**
+for an alias pointing to extracted disc files. Sources are verified and copied
+into the launcher install; the linked originals stay in place.
+
+During setup, **YOUR PROFILE → CHOOSE EXISTING SAVE…** lets you pick an existing
+save before building. You can also use **PROFILE → IMPORT SAVE** after setup.
+Choose the save's Xbox profile folder, the shared `user` folder, or its alias.
+If the folder contains several careers, the launcher lists their Xbox profile
+IDs so you can select one. The imported profile is selected for Play and keeps
+the save's original XUID. Import copies the career; it does not play directly
+against the original save. **NEW CAREER** clears a pending setup import.
 
 ## Temporary graphics workarounds
 
@@ -108,8 +128,20 @@ the preview is integrated and the release SDK pin is set, Mac setup will use
 Setup keeps managed SDK source under `.local/shiftglue-sdk-macos/<revision>` and
 builds the complete host, facade modules and FidelityFX runtime in
 `out/build/mac-arm64-release`. Build receipts are under `.local/logs`. A developer
-may explicitly set `FM4_SDK_ROOT` to a checkout at the selected revision; extra
+may explicitly set `FM4_SDK_ROOT` (read by `tools/setup-macos.py`) to a checkout at the selected revision; extra
 working changes are recorded. This override does not qualify a clean install.
+
+After a successful build, `.local/logs/macos-build.json` in the source folder
+records the SDK identity, compiler and tool versions, code image, and
+binary hashes. `.local/logs/macos-sdk.json` records SDK preparation. These receipts
+describe the build inputs and outputs; they do not assert that gameplay has been
+validated or that different Xcode/tool versions produce byte-identical binaries.
+
+The clean-source macOS build has also been checked with the declared macOS 14
+compile target. Control-rate parsing uses a C-locale compatibility path on Apple
+platforms because current libc++ marks floating-point `from_chars` as macOS 26+.
+The native controls regressions and FSR GPU checks run on macOS 27; running on
+macOS 14 itself still needs validation.
 
 ## Tests and packaging
 
@@ -141,6 +173,9 @@ use a fresh output directory:
 ```sh
 python3 tools/package-launcher-macos.py --output-dir out/macos-package-check
 ```
+
+Without `--output-dir` the app is written to `out/launcher-macos`; start it with
+`open "out/launcher-macos/FM4 Static Recomp.app"`.
 
 Packaging runs unattended, includes only allowlisted source/launcher files and
 notices, verifies the app signature, and writes the ZIP and SHA-256 sidecar.
