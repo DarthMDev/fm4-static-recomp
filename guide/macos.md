@@ -25,7 +25,7 @@ brew install python cmake ninja
 When a macOS preview is published, download
 `FM4StaticRecomp-Launcher-macos-arm64.zip` and its `.sha256` sidecar from the
 [project releases](https://github.com/i2kiselev/fm4-static-recomp/releases).
-Verify the archive, extract it into a writable folder you own, and open
+Verify and extract the archive, then move the app to Applications and open
 `FM4 Static Recomp.app`:
 
 ```sh
@@ -39,8 +39,12 @@ revisit a race to compare warm-cache behavior.
 Use vanilla FM4 and a 60 FPS limit for the initial test. Project Forza Plus 4’s
 managed installer is available, but its Mac setup/gameplay path is not qualified.
 
-Keep the adjacent `data` folder when updating: it holds discs, content, profiles,
-settings, source and builds. Back up profiles before replacing an installation.
+When opened from Applications, setup offers
+`~/Library/Application Support/FM4 Static Recomp/data` by default. Use
+**Choose Data Folder** to select a dedicated folder on another drive that
+supports symbolic links. Portable copies in writable folders keep their
+adjacent `data` folder. Keep the data folder when updating because it holds
+discs, content, profiles, settings, source and builds. Back up profiles before replacing an installation.
 Mac updates are manual. Preview bundles are ad-hoc signed, not notarized;
 Gatekeeper may require approval in System Settings → Privacy & Security.
 

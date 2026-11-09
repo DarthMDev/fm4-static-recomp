@@ -42,6 +42,8 @@ public partial class MainWindow : Window
     private readonly object _sessionLogGate = new();
     private StreamWriter? _sessionLog;
     private bool _busy;
+    private MacDataLocation? _dataLocation;
+    private string? _dataRoot;
 
     public MainWindow() : this([]) { }
 
@@ -101,15 +103,94 @@ public partial class MainWindow : Window
 
     private async Task LoadAsync()
     {
+        var environment = RootEnvironment.Current;
+        if (OperatingSystem.IsMacOS() && MacDataLocation.UsesApplicationSupport(AppContext.BaseDirectory, environment))
+        {
+            _dataLocation = MacDataLocation.Current;
+            try
+            {
+                _dataRoot = _dataLocation.Read();
+            }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+            {
+                ShowDataLocation(_dataLocation.DefaultRoot, error.Message);
+                return;
+            }
+            if (_dataRoot is null && !File.Exists(new InstallLayout(_dataLocation.DefaultRoot).SetupState))
+            {
+                ShowDataLocation(_dataLocation.DefaultRoot);
+                return;
+            }
+            _dataRoot ??= _dataLocation.DefaultRoot;
+        }
+        await OpenInstallAsync();
+    }
+
+    private void ShowDataLocation(string root, string? problem = null)
+    {
+        Headline.Text = "GAME DATA FOLDER";
+        Subhead.Text = problem is null ? $"Game data will be installed in {root}." : $"{problem}\n\n{root}";
+        SetupPanel.IsVisible = PrimaryButton.IsVisible = SavesButton.IsVisible = false;
+        DataLocationPanel.IsVisible = true;
+        OpenSkippedWindow();
+    }
+
+    private async void UseDataLocation_Click(object? sender, RoutedEventArgs e) =>
+        await SelectDataLocationAsync(_dataRoot ?? _dataLocation!.DefaultRoot);
+
+    private async void ChooseDataLocation_Click(object? sender, RoutedEventArgs e)
+    {
+        if (!_busy && await PickFolderAsync("Choose a dedicated folder for FM4 game data") is { } root)
+            await SelectDataLocationAsync(root);
+    }
+
+    private async Task SelectDataLocationAsync(string root)
+    {
+        if (_busy) return;
+        _busy = true;
+        IsEnabled = false;
+        try
+        {
+            root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(root));
+            var problem = await Task.Run(() => RootCheck.Problem(root, RootEnvironment.Current));
+            if (problem is not null)
+            {
+                ShowDataLocation(_dataRoot ?? _dataLocation!.DefaultRoot, problem);
+                return;
+            }
+            await Task.Run(() => _dataLocation!.Save(root));
+            _dataRoot = root;
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            ShowDataLocation(_dataRoot ?? _dataLocation!.DefaultRoot, error.Message);
+            return;
+        }
+        finally
+        {
+            _busy = false;
+            IsEnabled = true;
+        }
+        await OpenInstallAsync();
+    }
+
+    private async Task OpenInstallAsync()
+    {
         _busy = true;
         IsEnabled = false;
         try
         {
             var lockWait = _args.Contains(SelfReplace.AfterUpdateSwitch) ? TimeSpan.FromSeconds(30) : TimeSpan.Zero;
-            _host = await LauncherHost.OpenAsync(AppContext.BaseDirectory, Version, lockWait);
+            _host = await LauncherHost.OpenAsync(AppContext.BaseDirectory, Version, lockWait, _dataRoot);
         }
         catch (LauncherStartException error)
         {
+            if (_dataLocation is not null && error.Headline == "GAME DATA FOLDER UNAVAILABLE")
+            {
+                ShowDataLocation(_dataRoot!, error.Message);
+                return;
+            }
+            DataLocationPanel.IsVisible = false;
             Headline.Text = error.Headline;
             Subhead.Text = error.Message;
             SetupPanel.IsVisible = false;
@@ -123,6 +204,7 @@ public partial class MainWindow : Window
             _busy = false;
             IsEnabled = true;
         }
+        DataLocationPanel.IsVisible = false;
         VectorHeading.Fonts = _host.Fonts;
         _host.Changed += () => Dispatcher.UIThread.Post(UpdateActions);
         StartSessionLog();

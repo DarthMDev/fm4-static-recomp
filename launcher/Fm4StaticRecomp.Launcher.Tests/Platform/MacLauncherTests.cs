@@ -8,6 +8,31 @@ namespace Fm4StaticRecomp.Launcher.Tests.Platform;
 
 public class MacLauncherTests
 {
+    [Theory]
+    [InlineData("/Applications/FM4.app/Contents/MacOS", true)]
+    [InlineData("/private/tmp/FM4.app/Contents/MacOS", true)]
+    [InlineData("/private/var/folders/cache/AppTranslocation/id/d/FM4.app/Contents/MacOS", true)]
+    [InlineData("/Volumes/External/FM4.app/Contents/MacOS", false)]
+    public void System_locations_use_application_support(string launcherDirectory, bool expected)
+    {
+        if (OperatingSystem.IsWindows()) return;
+        var environment = new RootEnvironment(["/Applications"], "/private/tmp", WindowsPathLimits: false);
+        Assert.Equal(expected, MacDataLocation.UsesApplicationSupport(launcherDirectory, environment));
+    }
+
+    [Fact]
+    public void Custom_data_folder_is_remembered_outside_the_install()
+    {
+        using var temp = new TempDir();
+        var location = new MacDataLocation(Path.Combine(temp.Path, "Application Support"));
+        Assert.Null(location.Read());
+        var custom = Path.Combine(temp.Path, "External Game Data");
+        location.Save(custom);
+        Assert.Equal(custom, location.Read());
+        location.Save(location.DefaultRoot);
+        Assert.Equal(location.DefaultRoot, location.Read());
+    }
+
     [Fact]
     public void Bundle_keeps_data_beside_app_even_with_spaces_in_path()
     {

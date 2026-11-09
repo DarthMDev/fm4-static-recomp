@@ -94,11 +94,13 @@ def main():
     subprocess.run(['codesign', '--verify', '--deep', '--strict', str(bundle)], check=True)
     (output / 'README.txt').write_text(
         'FM4 Static Recomp — macOS Apple Silicon preview\n\n'
-        'Keep this app in a writable folder. Open it to install your own verified discs.\n'
+        'Move the app to Applications and open it to install your own verified discs.\n'
         f'Requires macOS {minimum_macos}+, Xcode Command Line Tools, Python 3.11+, CMake and Ninja.\n'
         'Install command line tools with xcode-select --install; brew install python cmake ninja\n'
         'Setup downloads and builds the pinned ShiftGlue SDK and then compiles your game locally.\n'
-        'The data folder beside the app contains discs, content, profiles, builds and settings.\n'
+        'From Applications, setup defaults to ~/Library/Application Support/FM4 Static Recomp/data.\n'
+        'Choose Data Folder during setup to use another location, including an external drive.\n'
+        'For portable installs, data stays beside the app.\n'
         'Keep data when updating. Mac preview updates are manual.\n'
         'Locally signed; not notarized. Experimental Apple Silicon preview.\n'
         'See guide/macos.md in the source payload for testing status and known limits.\n'

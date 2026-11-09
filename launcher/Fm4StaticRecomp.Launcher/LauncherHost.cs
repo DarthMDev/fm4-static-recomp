@@ -73,11 +73,11 @@ public sealed class LauncherHost
     public event Action? Changed;
 
     // lockWait: how long to wait for another launcher on this folder to exit (an update's restart).
-    public static Task<LauncherHost> OpenAsync(string launcherDirectory, string launcherVersion, TimeSpan lockWait) => Task.Run(() =>
+    public static Task<LauncherHost> OpenAsync(string launcherDirectory, string launcherVersion, TimeSpan lockWait, string? dataRoot = null) => Task.Run(() =>
     {
-        var layout = InstallLayout.ForLauncher(launcherDirectory);
+        var layout = dataRoot is null ? InstallLayout.ForLauncher(launcherDirectory) : new InstallLayout(dataRoot);
         if (RootCheck.Problem(layout.Root, RootEnvironment.Current) is { } problem)
-            throw new LauncherStartException("MOVE THE LAUNCHER'S FOLDER", problem);
+            throw new LauncherStartException(OperatingSystem.IsMacOS() ? "GAME DATA FOLDER UNAVAILABLE" : "MOVE THE LAUNCHER'S FOLDER", problem);
         var installLock = InstallLock.TryAcquire(layout.Root, lockWait)
                           ?? throw new LauncherStartException("ALREADY RUNNING",
                               "Another FM4 Static Recomp launcher is using this folder. Switch to its window, or close it and start this one again.");
@@ -89,6 +89,7 @@ public sealed class LauncherHost
         catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or
                                        System.Text.Json.JsonException or KeyNotFoundException)
         {
+            installLock.Dispose();
             throw new LauncherStartException("SOMETHING IS MISSING", ex.Message);
         }
         try
@@ -97,6 +98,7 @@ public sealed class LauncherHost
         }
         catch (Exception ex) when (ex is System.Text.Json.JsonException or IOException or UnauthorizedAccessException)
         {
+            installLock.Dispose();
             throw new LauncherStartException("THE INSTALL CANNOT BE READ",
                 $"{ex.Message} If {layout.SetupState} is damaged, delete it: setup then runs again, and your saves, " +
                 "content and settings stay.");

@@ -8,7 +8,8 @@ namespace Fm4StaticRecomp.Launcher.Core.Install;
 public sealed record RootEnvironment(IReadOnlyList<string> Protected, string Temp, Action<string, string>? CreateLink = null, bool WindowsPathLimits = true)
 {
     public static RootEnvironment Current => new(
-        new[]
+        OperatingSystem.IsMacOS() ? ["/Applications", "/System", "/Library",
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Applications")] : new[]
         {
             Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
             Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
@@ -39,6 +40,7 @@ public static class RootCheck
             null => null,
             // Setup's texts say where to move already.
             (Brackets or NonEnglishParentheses) and var own => $"The launcher cannot install into {root}: {own}",
+            var reason when !environment.WindowsPathLimits => $"The launcher cannot install into {root}: {reason}",
             var reason when full.Length > MaximumLength =>
                 $"The launcher cannot install into {root}: {reason} Move the launcher's folder to a short path such as " +
                 $"{Path.GetPathRoot(full)}FM4 and start it again.",
@@ -49,13 +51,17 @@ public static class RootCheck
     private static string? Reason(string root, RootEnvironment environment)
     {
         foreach (var folder in environment.Protected)
-            if (IsUnder(root, folder)) return $"it is inside {folder}, which Windows protects.";
+            if (IsUnder(root, folder)) return $"it is inside {folder}, which {(environment.WindowsPathLimits ? "Windows" : "macOS")} protects.";
         if (IsUnder(root, environment.Temp))
-            return "it is in the temporary folder, which Windows clears (extract the launcher's zip first).";
+            return environment.WindowsPathLimits
+                ? "it is in the temporary folder, which Windows clears (extract the launcher's zip first)."
+                : "it is in a temporary folder.";
         if (root.IndexOfAny(['[', ']']) >= 0) return Brackets;
         if (environment.WindowsPathLimits && root.Any(c => c > 0x7F) && root.IndexOfAny(['(', ')']) >= 0) return NonEnglishParentheses;
         if (environment.WindowsPathLimits && root.Length > MaximumLength)
             return $"the path is {root.Length} characters long; the build needs one of at most {MaximumLength}.";
+        if (!environment.WindowsPathLimits && MacDataLocation.ExternalVolumeMissing(root))
+            return "its external drive is unavailable. Reconnect the drive and try again.";
         try
         {
             Directory.CreateDirectory(root);
@@ -75,7 +81,9 @@ public static class RootCheck
             catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
             {
                 return "its drive cannot hold the folder links the profiles share their content through " +
-                       $"({ex.Message}); an NTFS drive can, FAT32, exFAT and network drives cannot.";
+                       $"({ex.Message}). " + (environment.WindowsPathLimits
+                           ? "Use an NTFS drive."
+                           : "Choose a drive that supports symbolic links, such as APFS.");
             }
             finally
             {
@@ -85,7 +93,7 @@ public static class RootCheck
         return null;
     }
 
-    private static bool IsUnder(string path, string folder)
+    internal static bool IsUnder(string path, string folder)
     {
         var prefix = Path.TrimEndingDirectorySeparator(Path.GetFullPath(folder)) + Path.DirectorySeparatorChar;
         return (path + Path.DirectorySeparatorChar).StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
