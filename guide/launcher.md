@@ -25,7 +25,7 @@ instead, see the [manual install](manual-install.md).
    | **Disc 2** (optional) | An ISO, a GOD folder or the folder with its four packages, or **Later** (CONTENT installs it any time). It is verified now and installed after the build, so keep it where it is until then. |
    | **Microsoft licence** | The build downloads Microsoft's C++ runtime and Windows SDK files from Microsoft. Read and accept their licences, or decline and use Microsoft's installer instead, which asks for administrator permission once. |
    | **Build** | The launcher downloads its build tools, translates and compiles the game. |
-   | **Your profile** | A name; the gamertag starts as it. |
+   | **Your profile** | A name; the gamertag starts as it. **CHOOSE EXISTING SAVE…** starts the profile from a save you already have ([Importing saves](saves.md#importing-saves)); **NEW CAREER** undoes that. |
 
 3. **PLAY**. The first start prepares shaders for your GPU before the title screen. A progress
    bar shows completed work, and the window stays responsive. The time depends on your computer

@@ -140,7 +140,8 @@ file with its size and hash.
 
 ## What you need
 
-- Windows 10 version 2004 (build 19041) or newer, 64-bit.
+- Windows 10 version 2004 (build 19041) or newer, 64-bit. On a Mac, see the
+  [macOS guide](guide/macos.md).
 - A GPU with a current Vulkan driver.
 - An XInput gamepad (an Xbox controller, or another pad through a mapper), or the keyboard.
 - Your own Forza Motorsport 4 Disc 1, as an ISO or a Games on Demand (GOD) copy. Disc 2 and

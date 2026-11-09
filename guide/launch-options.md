@@ -159,7 +159,8 @@ the command line. Two exceptions:
   page, not to the options above: do not add other options to it.
 - **The launcher's own options** are passed on its command line and beat environment
   variables: the paths, `user_name`, `fm4_language`, `fm4_skip_intro`, `fh1_async_readbacks`,
-  `vulkan_present_via_dxgi`, `fm4_frame_rate` (30 FPS (DIAGNOSTIC)), `pad_rumble_strength`,
+  `vulkan_present_via_dxgi`, `fm4_frame_rate` (30 FPS (DIAGNOSTIC)), `fm4_show_fps`,
+  `controller_vibration`, `pad_rumble_strength`,
   `fm4_audio_compatibility`, `fm4_audio_pop_fix`, the two music folders, `fullscreen`, `window_width`,
   `window_height`, `fm4_car_min_substeps` on Project Forza Plus 4, and COMPAT MODE's list. Set those in its SETTINGS, or replace one in COMMAND-LINE OPTIONS.
 

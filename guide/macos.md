@@ -2,115 +2,120 @@
 
 [← Back to the README](../README.md)
 
-FM4 Static Recomp supports an experimental Apple Silicon build using ShiftGlue’s
-Vulkan renderer through MoltenVK. The game is built locally from your own verified
-disc. No game data or game executable is distributed.
+FM4 Static Recomp has an experimental preview for Apple Silicon Macs. As on Windows, the game
+is built on your Mac from your own disc; it draws through Vulkan on MoltenVK. No game data or
+game program is distributed.
 
-## Requirements and installation
+## What you need
 
-- Apple Silicon Mac; the build targets macOS 14.0 or newer. Runtime qualification
-  on the minimum OS remains pending.
-- Xcode Command Line Tools, Python 3.11+, CMake 3.25+ and Ninja.
+- A Mac with Apple Silicon (M1 or newer) and macOS 14 or newer (so far tested on newer
+  versions only).
 - Your own [supported FM4 Disc 1](../README.md#supported-game); Disc 2 is optional.
-- Internet access for the pinned SDK and build dependencies, and a writable
-  installation folder with space for the discs, SDK sources and build outputs.
+- An internet connection during setup, and about 10 GB free where the game data goes (see
+  [Where the game data goes](#where-the-game-data-goes)).
 
-Install the build tools from a native ARM64 terminal:
+## Installing
 
-```sh
-xcode-select --install
-brew install python cmake ninja
-```
+1. Install the build tools. Open **Terminal** (in Applications → Utilities) and run:
 
-When a macOS preview is published, download
-`FM4StaticRecomp-Launcher-macos-arm64.zip` and its `.sha256` sidecar from the
-[project releases](https://github.com/i2kiselev/fm4-static-recomp/releases).
-Verify and extract the archive, then move the app to Applications and open
-`FM4 Static Recomp.app`:
+   ```sh
+   xcode-select --install
+   ```
 
-```sh
-shasum -a 256 -c FM4StaticRecomp-Launcher-macos-arm64.zip.sha256
-```
+   Confirm the window that opens and wait until it finishes.
+2. Install [Homebrew](https://brew.sh): copy the one command shown on its page into Terminal
+   and follow what it says. Then run:
 
-Follow the launcher’s setup steps, the same as on Windows ([First setup](launcher.md#first-setup)):
-Disc 1 as an ISO image, a GOD folder or an extracted folder, Disc 2 now or later, and your
-profile; then press PLAY. Setup uses Apple’s compiler and needs neither PowerShell nor
-Microsoft’s Windows build files. The
-launcher fetches the pinned SDK, translates the supported disc’s code and compiles
-the game. First play compiles shaders before the title with a progress bar;
-revisit a race to compare warm-cache behavior.
-Use vanilla FM4 and a 60 FPS limit for the initial test. Project Forza Plus 4’s
-managed installer is available, but its Mac setup/gameplay path is not qualified.
+   ```sh
+   brew install python cmake ninja
+   ```
 
-When opened from Applications, setup offers
-`~/Library/Application Support/FM4 Static Recomp/data` by default. Use
-**Choose Data Folder** to select a dedicated folder on another drive that
-supports symbolic links. Portable copies in writable folders keep their
-adjacent `data` folder. Keep the data folder when updating because it holds
-discs, content, profiles, settings, source and builds. Back up profiles before replacing an installation.
-Mac updates are manual. Preview bundles are ad-hoc signed, not notarized;
-Gatekeeper may require approval in System Settings → Privacy & Security.
-The launcher cannot update itself on a Mac, and the crash-report generator is
-Windows-only: the game’s logs are in the data folder’s `logs` folder.
+3. Download `FM4StaticRecomp-Launcher-macos-arm64.zip` from the
+   [latest release](https://github.com/i2kiselev/fm4-static-recomp/releases/latest) and
+   double-click it to extract `FM4 Static Recomp.app`.
+4. Move `FM4 Static Recomp.app` to **Applications** and open it. If macOS says the app can't be
+   opened, open **System Settings → Privacy & Security**, click **Open Anyway** next to
+   FM4 Static Recomp, and open the app again.
+5. Follow the setup steps, the same as on Windows ([First setup](launcher.md#first-setup)):
+   - **DISC 1:** **CHOOSE DISC IMAGE** for an ISO, or **CHOOSE FOLDER** for a GOD folder or an
+     extracted folder. A Finder alias to it works too.
+   - **DISC 2:** **CHOOSE DISC 2** or **CHOOSE DISC 2 FOLDER**, or **LATER**.
+   - **YOUR PROFILE:** a name, or **CHOOSE EXISTING SAVE…** to continue a career you already
+     have ([Existing saves](#existing-saves)).
 
-## Settings and controls
+   Setup verifies the disc, downloads the SDK and builds the game; the originals you chose stay
+   where they are.
+6. Press **PLAY**. The first start prepares shaders before the title with a progress bar; how
+   long it takes depends on your Mac. Finished work is saved every 10 seconds and at the end,
+   so later starts are much faster.
 
-The launcher’s GRAPHICS page controls resolution, upscaling and the initial
-window size. SETTINGS includes SHOW FPS, CONTROLLER VIBRATION and VIBRATION
-STRENGTH (0–200%). Turning CONTROLLER VIBRATION off forces all rumble off while
-retaining the saved strength for later. AUDIO POP FIX is available as in Windows.
+Start with vanilla FM4 and a 60 FPS limit. Project Forza Plus 4 can be chosen at setup, but it
+has not been tested on a Mac yet.
 
-Keyboard/controller mappings are in [Keyboard](controls.md). On a Mac keyboard,
-Option+Enter corresponds to Alt+Enter for switching fullscreen. F6 opens the
-in-game settings with GRAPHICS and KEYBOARD tabs. [Mac upscaling](macos-upscaling.md) describes FSR support and
-its test scope. MetalFX and frame interpolation are not part of this preview.
+## Where the game data goes
 
-## Existing discs and saves
+The game data (discs, content, profiles, settings and the build) goes to
+`~/Library/Application Support/FM4 Static Recomp/data`. At the first start the launcher shows
+this folder: **USE THIS FOLDER** keeps it, **CHOOSE DATA FOLDER…** picks another one, also on an
+external drive (it needs a drive formatted APFS or Mac OS Extended). An app that is not in
+Applications keeps its `data` folder next to it instead.
 
-The disc and save selectors accept Unix symbolic links and Finder aliases. Use
-**CHOOSE DISC IMAGE** for `game/disc1.iso` or `game/disc2.iso`, or **CHOOSE FOLDER**
-for an alias pointing to extracted disc files. Sources are verified and copied
-into the launcher install; the linked originals stay in place.
+The game's logs are in the data folder's `logs` folder.
 
-During setup, **YOUR PROFILE → CHOOSE EXISTING SAVE…** lets you pick an existing
-save before building. You can also use **PROFILE → IMPORT SAVE** after setup.
-Choose the save's Xbox profile folder, the shared `user` folder, or its alias.
-If the folder contains several careers, the launcher lists their Xbox profile
-IDs so you can select one. The imported profile is selected for Play and keeps
-the save's original XUID. Import copies the career; it does not play directly
-against the original save. **NEW CAREER** clears a pending setup import.
+## Updating
 
-## Temporary graphics workarounds
+The launcher does not update itself on a Mac. To update:
 
-The preview enables `spirv_ieee_vertex_math` on Mac after a tester repeatedly
-observed the driver clipping through the Aston Martin DB9 roof with it off and
-correct placement with it on. This changes vertex multiplication behavior;
-qualification across other cars and tracks remains ongoing.
+1. Close the game and the launcher.
+2. Download the new `FM4StaticRecomp-Launcher-macos-arm64.zip` from the
+   [latest release](https://github.com/i2kiselev/fm4-static-recomp/releases/latest) and
+   double-click it.
+3. Replace `FM4 Static Recomp.app` in Applications with the new one and open it. It keeps your
+   data folder and builds the new version.
 
-The preview also checks preserved GPU memory before every 64th Vulkan draw,
-using `unprotected_page_check_interval=64`. An M1 Max tester traced race-time
-spikes to these comparisons and reported smoother racing with this interval.
-This is a temporary performance workaround: delaying detection of CPU writes
-can leave geometry or textures stale. Checks made when requesting memory ranges
-still run. A more precise memory-tracking fix is deferred.
+## Settings and keys
 
-If geometry or textures look wrong, open the launcher's SETTINGS, add
-`--unprotected_page_check_interval=1` to COMMAND-LINE OPTIONS, and restart the
-game. This restores checks before every draw, at a possible performance cost.
-For a vertex-math comparison, use `--spirv_ieee_vertex_math=false` and restart.
-Remove an option to return to the Mac default.
+The launcher's pages are the same as on Windows ([Launcher](launcher.md)). SETTINGS has
+CONTROLLER VIBRATION and, right after it, VIBRATION STRENGTH (0–200 %): turning CONTROLLER
+VIBRATION off turns all vibration off and keeps the strength for later. SETTINGS → ADVANCED has
+SHOW FPS (F3 shows and hides it while you play) and AUDIO POP FIX, as on Windows.
 
-The original [clipping report](https://github.com/i2kiselev/fm4-static-recomp/pull/47#issuecomment-6707870666)
-and [memory-scan experiment](https://github.com/i2kiselev/shiftglue-sdk/pull/4#issuecomment-6710898407)
-used earlier PR revisions. Results on the combined candidate still need Mac
-confirmation; Windows tests do not qualify these Mac-specific workarounds.
+The keys are in [Keyboard](controls.md). On a Mac keyboard, **Option+Enter** works like
+Alt+Enter and switches between a window and fullscreen. F6 opens the in-game GRAPHICS and
+KEYBOARD pages. [Mac upscaling](macos-upscaling.md) says which upscalers work; MetalFX and frame
+generation are not part of this preview.
+
+## Existing saves
+
+**CHOOSE EXISTING SAVE…** at setup, or **PROFILE → IMPORT SAVE** later, copies a career you
+already have. Choose the save's Xbox profile folder, the `user` folder that holds it, or a
+Finder alias to either. If the folder holds several careers, the launcher lists them to pick
+one. The import is a copy: your original save stays as it is. **NEW CAREER** cancels a save
+chosen at setup.
+
+## If geometry or textures look wrong
+
+The preview uses two Mac-only defaults against problems testers saw: IEEE vertex math (against
+a roof clipping through the Aston Martin DB9) and a GPU memory check before every 64th draw
+instead of every draw (against stutter in races). If geometry or textures look wrong, open the
+launcher's SETTINGS → ADVANCED, enter `--unprotected_page_check_interval=1` in COMMAND-LINE
+OPTIONS, press **SAVE** and start the game again: it then checks before every draw, which may
+cost some speed. Remove the option to go back to the Mac default.
+
+For developers, the background: `spirv_ieee_vertex_math` is on by default on Mac after a
+tester repeatedly saw the DB9 roof clip with it off ([report](https://github.com/i2kiselev/fm4-static-recomp/pull/47#issuecomment-6707870666));
+`unprotected_page_check_interval=64` follows an M1 Max tester's trace of race-time spikes to the
+per-draw memory comparisons ([experiment](https://github.com/i2kiselev/shiftglue-sdk/pull/4#issuecomment-6710898407)).
+A later check can leave geometry or textures stale until the next check; checks made when
+memory ranges are requested still run. A more precise memory-tracking fix is planned.
+`--spirv_ieee_vertex_math=false` turns the vertex-math default off for a comparison.
 
 ## Build from source
 
 ```sh
 git clone https://github.com/i2kiselev/fm4-static-recomp.git
 cd fm4-static-recomp
-git checkout release/0.3.2
+git checkout v0.3.2
 # Put your extracted Disc 1 at game/disc1, then:
 ./tools/build-mac.sh
 out/build/mac-arm64-release/fm4_static_recomp \
@@ -128,8 +133,8 @@ the preview is integrated and the release SDK pin is set, Mac setup will use
 Setup keeps managed SDK source under `.local/shiftglue-sdk-macos/<revision>` and
 builds the complete host, facade modules and FidelityFX runtime in
 `out/build/mac-arm64-release`. Build receipts are under `.local/logs`. A developer
-may explicitly set `FM4_SDK_ROOT` (read by `tools/setup-macos.py`) to a checkout at the selected revision; extra
-working changes are recorded. This override does not qualify a clean install.
+may explicitly set `FM4_SDK_ROOT` (read by `tools/setup-macos.py`) to a checkout at the
+selected revision; extra working changes are recorded. This override does not qualify a clean install.
 
 After a successful build, `.local/logs/macos-build.json` in the source folder
 records the SDK identity, compiler and tool versions, code image, and
@@ -185,25 +190,12 @@ native and SDK checks on an Apple Silicon macOS 15 runner, targeting macOS 14.
 Tagged builds run the same checks and retain the ZIP and checksum as Actions
 artifacts; they do not publish a GitHub release. The tag must match the release
 version and use the shared SDK pin without a temporary Mac override. The game
-is still built on each player’s Mac.
+is still built on each player's Mac.
 
 ## Testing status
 
-On November 5, 2026, the contributor reported an Apple M3 Free Play race without
-observed geometry issues with the vertex residency shortcut restored. A normal
-launcher run showed around 60 FPS on the overlay, while a validation-enabled
-session recorded lower rendering throughput. The difference remains unexplained;
-these observations do not establish sustained measured 60 FPS or qualify every
-track, camera or mode.
-
-The latest contributor revision (`c6c0978`, SDK `9a6d904b`) was reported to pass
-the launcher, Python, native and SDK suites, with zero validation errors using
-Khronos layer 1.4.363.1. The hidden-page snapshot count peaked at 1,515 (about
-6 MB). Those reports precede the maintainer corrections and startup changes;
-the combined candidate still needs a fresh packaged install and race on a Mac.
-
-SDK/native regression coverage includes real neighboring 4 KB guest-page writes
-on a 16 KB host page. FSR 2/3 synthetic GPU dispatch and resize checks passed;
-explicit gameplay image-quality qualification remains separate. Use a current Khronos
-validation layer when checking the combined candidate. Runtime qualification on
-macOS 14 and explicit FSR 2/3 gameplay remain pending.
+Contributors tested the preview on Apple M1 Max and M3 Macs: setup from the app and Free Play
+races in vanilla FM4 at a 60 FPS limit, and a run with Vulkan validation that logged no errors.
+The automated checks cover neighbouring 4 KB guest-page writes on a 16 KB host page and FSR 2/3
+on the GPU. Not tested yet: macOS 14 itself, Project Forza Plus 4, and FSR 2/3 image quality
+in races.

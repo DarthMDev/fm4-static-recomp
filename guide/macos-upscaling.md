@@ -1,7 +1,9 @@
 # macOS upscaling and frame generation
 
+[← Back to the README](../README.md)
+
 The current macOS game build uses ShiftGlue's Vulkan presenter through MoltenVK.
-MoltenVK uses Metal underneath, but that does not automatically enable Apple’s
+MoltenVK uses Metal underneath, but that does not automatically enable Apple's
 MetalFX APIs.
 
 | Feature | Current macOS build |
@@ -19,7 +21,7 @@ real game rendering; it does not generate intermediate frames.
 
 ## Trying FSR 2 or FSR 3
 
-Choose **GRAPHICS → UPSCALER → FSR 2** or **FSR 3**, then save. Use a resolution
+In the launcher's **GRAPHICS**, choose **UPSCALER → FSR 2** or **FSR 3** and press **SAVE**. Use a resolution
 scale that fits the output display. For example, a 1x render (1280×720) can be
 upscaled to a 2560×1440 or 3840×2160 output. A render larger than the output is
 downscaled, so the temporal upscaler does not run. At matching input/output sizes,
