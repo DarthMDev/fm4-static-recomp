@@ -17,12 +17,12 @@ or in the launcher's SETTINGS.
 | `--fm4_disc2_packages=<folder>` | Install the Disc 2 packages from this folder |
 | `--fm4_dlc_packages=<folder>` | Install every DLC package under this folder |
 | `--fm4_skip_intro=true` | Skip the startup disclaimer and studio videos |
-| `--fm4_show_fps=true` | Show the [average guest-output FPS overlay](../DEBUG_OPTIONS.md#reading-the-fps-overlay) on start (also toggled with F3) |
-| `--controller_vibration=false` | Turn off controller vibration rumble motors (`--pad_rumble_strength=0`) |
-| `--fm4_audio_compatibility=true` | Opt-in audio mixer path for repeated or slowed race audio, most of all on processors without FMA instructions (most made before 2013, and some Celeron and Pentium models). Off by default; enables faster gain processing and mixer math while preserving results. In the launcher: SETTINGS → AUDIO FOR OLDER CPUS. Restart the game after changing it |
-| `--fm4_audio_pop_fix=false` | AUDIO POP FIX off: the engine sounds pop where their loops start over and click when revving and shifting, as on a console. In the launcher: SETTINGS → AUDIO POP FIX |
-| `--fm4_menu_music_folder=<folder>` | Shuffled menu MP3/WAV playlist; empty uses original music. Restart required; see [Custom soundtrack](#custom-soundtrack) |
-| `--fm4_race_music_folder=<folder>` | Shuffled race MP3/WAV playlist; empty uses original music. Restart required |
+| `--fm4_show_fps=true` | Show the [frame rate overlay](../DEBUG_OPTIONS.md#reading-the-fps-overlay) from the start (F3 shows and hides it). In the launcher: SETTINGS → ADVANCED → SHOW FPS |
+| `--controller_vibration=false` | Turns all controller vibration off (VIBRATION STRENGTH keeps its value). In the launcher: SETTINGS → CONTROLLER VIBRATION |
+| `--fm4_audio_compatibility=true` | Opt-in audio mixer path for repeated or slowed race audio, most of all on processors without FMA instructions (most made before 2013, and some Celeron and Pentium models). Off by default. In the launcher: SETTINGS → ADVANCED → AUDIO FOR OLDER CPUS. Restart the game after changing it |
+| `--fm4_audio_pop_fix=false` | AUDIO POP FIX off: the engine sounds pop where their loops start over and click when revving and shifting, as on a console. In the launcher: SETTINGS → ADVANCED → AUDIO POP FIX |
+| `--fm4_menu_music_folder=<folder>` | Shuffled menu MP3/WAV playlist; empty uses original music. See [Custom soundtrack](#custom-soundtrack) |
+| `--fm4_race_music_folder=<folder>` | Shuffled race MP3/WAV playlist; empty uses original music |
 | `--fm4_language=<code>` | The game's language (see [Languages](#languages)) |
 | `--fm4_config_root=<folder>` | Where `graphics.toml` and `controls.toml` live (default: the state folder's `config`) |
 | `--fh1_async_readbacks=false` | Turn off asynchronous readbacks, if you ever see a corrupted texture |
@@ -158,8 +158,10 @@ the command line. Two exceptions:
   under the launcher, `.local\state\config\graphics.toml` in a manual install) belongs to that
   page, not to the options above: do not add other options to it.
 - **The launcher's own options** are passed on its command line and beat environment
-  variables: the paths, `fm4_language`, `fm4_skip_intro`, `fh1_async_readbacks`,
-  `vulkan_present_via_dxgi`, `fullscreen`, `window_width`, `window_height`, and COMPAT MODE's list. Set those in its SETTINGS, or replace one in COMMAND-LINE OPTIONS.
+  variables: the paths, `user_name`, `fm4_language`, `fm4_skip_intro`, `fh1_async_readbacks`,
+  `vulkan_present_via_dxgi`, `fm4_frame_rate` (30 FPS (DIAGNOSTIC)), `pad_rumble_strength`,
+  `fm4_audio_compatibility`, `fm4_audio_pop_fix`, the two music folders, `fullscreen`, `window_width`,
+  `window_height`, `fm4_car_min_substeps` on Project Forza Plus 4, and COMPAT MODE's list. Set those in its SETTINGS, or replace one in COMMAND-LINE OPTIONS.
 
 ### Checking that an option took effect
 

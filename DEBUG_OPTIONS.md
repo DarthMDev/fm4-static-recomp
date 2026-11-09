@@ -2,8 +2,8 @@
 
 Options for checking a rendering problem, comparing a fix against the picture without it, or
 measuring a cost. They are not needed to play; the defaults are the intended setting. Set them
-like the [launch options](guide/launch-options.md): with the launcher through `REX_`
-environment variables, else in `fm4_static_recomp.toml` or on the command line, for example
+like the [launch options](guide/launch-options.md): with the launcher in SETTINGS → ADVANCED →
+COMMAND-LINE OPTIONS (or through `REX_` environment variables), else in `fm4_static_recomp.toml` or on the command line, for example
 `tools\run.ps1 -GameArguments '--fm4_skip_intro=true','--present_upscaler_view=motion'`
 (examples of each in [Setting options and debugging](guide/launch-options.md#setting-options-and-debugging)).
 

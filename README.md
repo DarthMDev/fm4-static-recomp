@@ -20,17 +20,21 @@ commands run on ShiftGlue's native Vulkan renderer, written for
 [Pinyon Shift](https://github.com/arcanite24/pinyon-shift) (*Forza Horizon*) and extended
 here for FM4.
 
-## New in 0.3.1: Project Forza Plus 4 and Rev 1 discs
+## New in 0.3.2: keyboard rebinding and many audio improvements
 
 > [!TIP]
-> **[Project Forza Plus 4](guide/project-forza-plus.md)**, the car, career and physics mod, sets up
-> from the launcher **as a new install of its own**: extract the launcher into a new, empty folder,
-> choose the mod at the first setup, give it the mod's zip, play. An install already set up for
-> vanilla cannot be switched to the mod. Also new: the
-> **Rev 1** (1.1) Disc 1 releases, **[playing in a window](guide/windowed.md)** with Alt+Enter,
-> **FSR 1** for 1080p screens, careers imported from **Xenia Canary**, and a
-> **[saves folder](guide/saves.md#the-saves-folder)** of your own. Everything else in this
-> version: [release notes](https://github.com/i2kiselev/fm4-static-recomp/releases/latest).
+> **[Rebind the keyboard](guide/controls.md#rebinding-keys)** in the game or in the launcher,
+> with a primary and a secondary key for each action. **The sound got a lot of work:**
+> [your own music](guide/launch-options.md#custom-soundtrack) in the menus and in races,
+> engine sounds without pops, and a faster audio path for older processors. Also new: stronger
+> vibration for controllers that vibrate too weakly, DLC that the game showed as locked works
+> now, GPU readbacks and car thumbnails are much more reliable (a car turning pink after a
+> change of home space, or a thumbnail missing a tile, should now be rare), and the first start
+> prepares shaders before the title with a progress bar. Everything else in this version:
+> [release notes](https://github.com/i2kiselev/fm4-static-recomp/releases/latest).
+>
+> Since 0.3.1, **[Project Forza Plus 4](guide/project-forza-plus.md)** sets up from the launcher
+> **as a new install of its own**, and the **Rev 1** (1.1) Disc 1 releases work.
 
 > [!NOTE]
 > **Experimental release.** The offline game modes play without known blocking problems
@@ -85,10 +89,6 @@ the command line? See the [manual install](guide/manual-install.md).
 | [Testing and benchmarks](guide/performance.md) | What was played, frame rates and VRAM, comparisons with Xenia and hl360-forza4 |
 | [Common problems](guide/troubleshooting.md) | Project Forza Plus 4 next to a vanilla install, crashes from overclocks, stutter, sound on older CPUs, upscalers that stay off, and their fixes |
 | [Reporting issues](guide/reporting-issues.md) | Checklist and template for a bug report |
-
-CUSTOM SOUNDTRACK (launcher SETTINGS) selects separate shuffled menu and race MP3/WAV folders, following the game’s music timing and volume. See [custom soundtrack](guide/launch-options.md#custom-soundtrack).
-
-AUDIO FOR OLDER CPUS (launcher SETTINGS) offers an optional faster mixer path for repeated or slowed race audio, most of all on processors without FMA instructions (most made before 2013, and some Celeron and Pentium models). It is **off by default** and independent of AUDIO POP FIX; [launch options](guide/launch-options.md) explain how to enable it.
 
 ## Features
 
@@ -215,7 +215,7 @@ Known problems are tracked as
   Gas-and-Games: the car, career and physics mod the launcher sets up. This repository holds
   none of its files; you download the mod from its author.
 
-The people who contributed pull requests are listed in [CONTRIBUTORS.md](CONTRIBUTORS.md).
+The people whose pull requests or testing are part of the project are listed in [CONTRIBUTORS.md](CONTRIBUTORS.md).
 
 **AI use:** code, scripts, documentation and reverse engineering of the game binary are
 AI-assisted.

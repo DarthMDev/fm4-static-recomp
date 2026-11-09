@@ -72,7 +72,7 @@ More in [High frame rates](high-frame-rate.md#picking-a-rate).
 
 ## Sound is slow, late or crackles on an older CPU
 
-Try **SETTINGS → AUDIO FOR OLDER CPUS** in the launcher, press **SAVE** and restart the game. It is off by default and targets repeated or slowed race audio, most of all on processors without FMA instructions (most made before 2013, and some Celeron and Pentium models). If your sound already works well, leave it off.
+Try **SETTINGS → ADVANCED → AUDIO FOR OLDER CPUS** in the launcher, press **SAVE** and restart the game. It is off by default and targets repeated or slowed race audio, most of all on processors without FMA instructions (most made before 2013, and some Celeron and Pentium models). If your sound already works well, leave it off.
 
 The game's sound needs CPU time next to the race; an older or slower CPU that is busy on every
 core falls behind. Set **FRAME RATE** to 60, and in Windows **Settings → System → Power &
@@ -84,7 +84,7 @@ Then turn it off again and press SAVE.
 ## Engine sounds pop or click
 
 FM4's engine loops pop where they start over, and click when revving at the limiter and
-shifting, on a console too. **AUDIO POP FIX** in the launcher's SETTINGS smooths them
+shifting, on a console too. SETTINGS → ADVANCED → **AUDIO POP FIX** in the launcher smooths them
 ([#37](https://github.com/i2kiselev/fm4-static-recomp/issues/37)). It is on by default: check that
 it is still ticked.
 
