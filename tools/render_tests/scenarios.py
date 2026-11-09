@@ -54,6 +54,9 @@ THUMBNAIL = ImageLimits(1.0, 3.0, 0.005)
 SHOWROOM_VIEW = Rect(0, 0, 1, 0.88)
 # Per-frame counters of the same race came within 1 % over four runs.
 COUNTER_TOLERANCE = 0.03
+# Project Forza Plus 4's races vary more: one build's Hockenheim transfers came 195 to 215 per
+# frame, the stock game's 194 to 196.
+PFP4_COUNTER_TOLERANCE = 0.15
 # Sky-blue shade on the white paint is not a bug: in races only green below red and blue is.
 RACE_TINT = 4
 # Pipelines a warm cache may still make for pairs the shipped list lacks (the AI cars vary).
@@ -82,6 +85,12 @@ UPGRADE_CAR = Rect(0.46, 0.40, 0.56, 0.44)
 UPGRADE_CAR_MIN = 120
 
 
+def counter_tolerance(release_name):
+    if release_name.startswith("Project Forza Plus 4"):
+        return PFP4_COUNTER_TOLERANCE
+    return COUNTER_TOLERANCE
+
+
 @dataclass
 class Run:
     dir: Path
@@ -92,6 +101,7 @@ class Run:
     results: list = field(default_factory=list)
     launches: int = 0
     hooks: set = field(default_factory=set)
+    counter_tolerance: float = COUNTER_TOLERANCE
 
     def refs(self, scale):
         return References(self.references, scale, self.record, self.force, self.dir / "captures")
@@ -179,10 +189,10 @@ def _race(run, session, scale, steps, seconds, label, environment=None):
         run.add(CheckResult(f"{label} counters", False, "no stats window", "2 stats lines"))
     else:
         figures = run.figures(scale)
-        run.add(figures.band(f"{label} resolves", window.resolves, COUNTER_TOLERANCE),
-                figures.band(f"{label} transfers", window.transfers, COUNTER_TOLERANCE),
+        run.add(figures.band(f"{label} resolves", window.resolves, run.counter_tolerance),
+                figures.band(f"{label} transfers", window.transfers, run.counter_tolerance),
                 figures.band(f"{label} transfer tile passes", window.transfer_tile_passes,
-                             COUNTER_TOLERANCE),
+                             run.counter_tolerance),
                 max_check(f"{label} one-off readbacks", window.one_off_readbacks,
                           ONE_OFF_READBACKS))
     routes.quit_race(session)

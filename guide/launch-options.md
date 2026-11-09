@@ -19,8 +19,8 @@ or in the launcher's SETTINGS.
 | `--fm4_skip_intro=true` | Skip the startup disclaimer and studio videos |
 | `--fm4_show_fps=true` | Show the [average guest-output FPS overlay](../DEBUG_OPTIONS.md#reading-the-fps-overlay) on start (also toggled with F3) |
 | `--controller_vibration=false` | Turn off controller vibration rumble motors (`--pad_rumble_strength=0`) |
-| `--fm4_audio_compatibility=true` | Opt-in audio mixer path for repeated or slowed race audio, particularly on older CPUs. Off by default; enables faster gain processing and mixer math while preserving results. In the launcher: SETTINGS → AUDIO COMPATIBILITY (from 0.3.2). Restart the game after changing it |
-| `--fm4_audio_pop_fix=false` | AUDIO POP FIX off: the engine sounds pop where their loops start over and click when revving and shifting, as on a console. In the launcher: SETTINGS → AUDIO POP FIX (from 0.3.2) |
+| `--fm4_audio_compatibility=true` | Opt-in audio mixer path for repeated or slowed race audio, most of all on processors without FMA instructions (most made before 2013, and some Celeron and Pentium models). Off by default; enables faster gain processing and mixer math while preserving results. In the launcher: SETTINGS → AUDIO FOR OLDER CPUS. Restart the game after changing it |
+| `--fm4_audio_pop_fix=false` | AUDIO POP FIX off: the engine sounds pop where their loops start over and click when revving and shifting, as on a console. In the launcher: SETTINGS → AUDIO POP FIX |
 | `--fm4_menu_music_folder=<folder>` | Shuffled menu MP3/WAV playlist; empty uses original music. Restart required; see [Custom soundtrack](#custom-soundtrack) |
 | `--fm4_race_music_folder=<folder>` | Shuffled race MP3/WAV playlist; empty uses original music. Restart required |
 | `--fm4_language=<code>` | The game's language (see [Languages](#languages)) |
@@ -30,12 +30,12 @@ or in the launcher's SETTINGS.
 | `--window_width=<n>`, `--window_height=<n>` | The window's size, multiplied by Windows' display scale (at 150 %, 1600 opens 2400 pixels wide). In the launcher, WINDOW SIZE is in real pixels |
 | `--window_aspect_ratio=16:9` | The shape the window keeps while resized and at its start (the default); `free` leaves it free, with black bars around the 16:9 picture |
 | `--vulkan_present_via_dxgi=true` | Present through DXGI, for [frame generation tools](#frame-generation) |
-| `--pad_rumble_strength=0..200` | Controller vibration in percent of the game's own (`100`); above 100 each motor tops out at full speed, `0` turns it off. In the launcher: SETTINGS → VIBRATION STRENGTH (from 0.3.2) |
+| `--pad_rumble_strength=0..200` | Controller vibration in percent of the game's own (`100`); above 100 each motor tops out at full speed, `0` turns it off. In the launcher: SETTINGS → VIBRATION STRENGTH |
 | `--pad_chord_game_menu=BACK+START` | Controller buttons held together that open the GRAPHICS page (`A`, `B`, `X`, `Y`, `LB`, `RB`, `LS`, `RS`, `BACK`, `START`, `UP`, `DOWN`, `LEFT`, `RIGHT` joined by `+`); empty turns it off |
 
 ## Custom soundtrack
 
-From 0.3.2, open launcher SETTINGS → CUSTOM SOUNDTRACK and choose separate **MENU MUSIC FOLDER**
+Open launcher SETTINGS → CUSTOM SOUNDTRACK and choose separate **MENU MUSIC FOLDER**
 and **RACE MUSIC FOLDER** locations, then SAVE and restart the game. Each folder is shuffled,
 including its subfolders. MP3 and WAV (16-bit PCM or 32-bit float) are supported.
 

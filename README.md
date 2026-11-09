@@ -86,9 +86,9 @@ the command line? See the [manual install](guide/manual-install.md).
 | [Common problems](guide/troubleshooting.md) | Project Forza Plus 4 next to a vanilla install, crashes from overclocks, stutter, sound on older CPUs, upscalers that stay off, and their fixes |
 | [Reporting issues](guide/reporting-issues.md) | Checklist and template for a bug report |
 
-CUSTOM SOUNDTRACK (launcher SETTINGS, from 0.3.2) selects separate shuffled menu and race MP3/WAV folders, following the game’s music timing and volume. See [custom soundtrack](guide/launch-options.md#custom-soundtrack).
+CUSTOM SOUNDTRACK (launcher SETTINGS) selects separate shuffled menu and race MP3/WAV folders, following the game’s music timing and volume. See [custom soundtrack](guide/launch-options.md#custom-soundtrack).
 
-AUDIO COMPATIBILITY (launcher SETTINGS, from 0.3.2) offers an optional faster mixer path for repeated or slowed race audio on older CPUs. It is **off by default** and independent of AUDIO POP FIX; [launch options](guide/launch-options.md) explain how to enable it.
+AUDIO FOR OLDER CPUS (launcher SETTINGS) offers an optional faster mixer path for repeated or slowed race audio, most of all on processors without FMA instructions (most made before 2013, and some Celeron and Pentium models). It is **off by default** and independent of AUDIO POP FIX; [launch options](guide/launch-options.md) explain how to enable it.
 
 ## Features
 
@@ -214,6 +214,8 @@ Known problems are tracked as
 - [Project Forza Plus 4](https://www.reddit.com/user/Gas-and-Games/comments/17b9k70) by
   Gas-and-Games: the car, career and physics mod the launcher sets up. This repository holds
   none of its files; you download the mod from its author.
+
+The people who contributed pull requests are listed in [CONTRIBUTORS.md](CONTRIBUTORS.md).
 
 **AI use:** code, scripts, documentation and reverse engineering of the game binary are
 AI-assisted.

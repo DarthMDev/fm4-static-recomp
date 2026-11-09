@@ -1,3 +1,5 @@
+# Copyright (c) 2026, i2kiselev
+# BSD 3-Clause License: see LICENSE in the repository root.
 """python -I tools/render-test.py --tier short|long|full: builds the game, plays the scenarios of
 a tier on a fresh copy of a seed, then a PASS/FAIL line per check. Exit 0 all passed, 1 a check
 failed, 2 the run broke (the build failed, the game exited, a wait timed out)."""
@@ -8,6 +10,8 @@ import sys
 import traceback
 from datetime import datetime
 from pathlib import Path
+
+from code_images import identify
 
 from . import report, scenarios, seed
 from .checks import hook_census_check, pipeline_list_check
@@ -78,7 +82,8 @@ def main(argv=None):
         if broken:
             return report.write(run_dir, [], broken)
     seed.prepare_run(seed_dir, run_dir)
-    run = scenarios.Run(run_dir, seed_dir, RENDER_TESTS / "references", args.record, args.force)
+    run = scenarios.Run(run_dir, seed_dir, RENDER_TESTS / "references", args.record, args.force,
+                        counter_tolerance=scenarios.counter_tolerance(identify(seed.GAME_ROOT).name))
     run.add(pipeline_list_check(seed.sdk_root(), seed.PIPELINE_LIST))
     names = [args.only] if args.only else scenarios.TIERS[args.tier]
     broken = None
