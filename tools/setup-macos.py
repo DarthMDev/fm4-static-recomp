@@ -50,7 +50,8 @@ def build(args):
     receipt = ROOT / '.local/logs/macos-sdk.json'
     receipt.parent.mkdir(parents=True, exist_ok=True)
     receipt.write_text(json.dumps(sdk_identity, indent=2) + '\n')
-    common = ['-G', 'Ninja', f'-DCMAKE_C_COMPILER={cc}', f'-DCMAKE_CXX_COMPILER={cxx}',
+    # Apple Clang 21.0.0 crashes while compiling the precompiled headers.
+    common = ['-G', 'Ninja', '-DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON', f'-DCMAKE_C_COMPILER={cc}', f'-DCMAKE_CXX_COMPILER={cxx}',
               f'-DCMAKE_OSX_SYSROOT={sysroot}', '-DCMAKE_BUILD_TYPE=Release', '-DCMAKE_OSX_ARCHITECTURES=arm64',
               f'-DCMAKE_OSX_DEPLOYMENT_TARGET={config["minimum_macos"]}', '-DREXGLUE_USE_VULKAN=ON',
               '-DREXGLUE_USE_D3D12=OFF', '-DREXGLUE_ENABLE_TRACY=OFF', '-DSDL_HIDAPI_LIBUSB=OFF',
