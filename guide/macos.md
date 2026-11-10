@@ -45,9 +45,9 @@ game program is distributed.
 
    Setup verifies the disc, downloads the SDK and builds the game; the originals you chose stay
    where they are.
-6. Press **PLAY**. The first start prepares shaders before the title with a progress bar; how
-   long it takes depends on your Mac. Finished work is saved every 10 seconds and at the end,
-   so later starts are much faster.
+6. Press **PLAY**. Unlike on Windows, the first start reaches the title in seconds: on a Mac,
+   shaders compile while you play, so the first races can stutter briefly. The game saves the
+   shaders it compiled, and later starts prepare them before the title with a progress bar.
 
 Start with vanilla FM4 and a 60 FPS limit. Project Forza Plus 4 can be chosen at setup, but it
 has not been tested on a Mac yet.
@@ -64,7 +64,7 @@ The external volume must be writable on macOS and support creating and following
 directory symbolic links. APFS and Mac OS Extended support these features natively.
 Other formats can work when their macOS driver provides both. NTFS was tested
 successfully with a compatible third-party driver. macOS's built-in NTFS support
-provides read access only. [Apple's external drive guidance](https://support.apple.com/en-gb/101830)
+provides read access only; see [Apple's guidance on external drives](https://support.apple.com/en-gb/101830).
 
 The game's logs are in the data folder's `logs` folder.
 
